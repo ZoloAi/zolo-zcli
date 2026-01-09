@@ -1,6 +1,6 @@
 /**
  * ════════════════════════════════════════════════════════════════════════════
- * zCLI - CacheOrchestrator (Tier 3 - Mirrors zLoader Backend)
+ * zKernel - CacheOrchestrator (Tier 3 - Mirrors zLoader Backend)
  * ════════════════════════════════════════════════════════════════════════════
  *
  * Coordinates 5 cache tiers for progressive enhancement and offline-first UX.

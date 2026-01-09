@@ -1,6 +1,6 @@
 # zCLI/subsystems/zDisplay/zDisplay.py
 """
-Display & Rendering Subsystem for zCLI.
+Display & Rendering Subsystem for zKernel.
 
 This module provides the primary facade for all display capabilities in zCLI,
 including event-driven rendering, input collection, and multi-mode output.
@@ -107,7 +107,7 @@ Error Handling:
 
 Auto-Initialization:
     zDisplay automatically:
-    1. Validates zCLI instance (session, logger required)
+    1. Validates zKernel instance (session, logger required)
     2. Extracts session and logger references
     3. Detects mode from session
     4. Initializes primitives and events modules
@@ -115,9 +115,9 @@ Auto-Initialization:
     6. Emits ready message via zDeclare event
 """
 
-from zCLI import Colors, Any, Dict, Optional, Callable
-from zCLI.utils import validate_zcli_instance
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZMODE
+from zKernel import Colors, Any, Dict, Optional, Callable
+from zKernel.utils import validate_zkernel_instance
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZMODE
 from .zDisplay_modules.display_primitives import zPrimitives
 from .zDisplay_modules.display_events import zEvents
 from .zDisplay_modules.display_delegates import zDisplayDelegates
@@ -199,7 +199,7 @@ class zDisplay(zDisplayDelegates):
     """
 
     # Type hints for instance attributes
-    zcli: Any  # zCLI instance
+    zcli: Any  # zKernel instance
     session: Dict[str, Any]  # Session dictionary
     logger: Any  # Logger instance
     mode: str  # Display mode (Terminal or zBifrost)
@@ -214,7 +214,7 @@ class zDisplay(zDisplayDelegates):
         """Initialize zDisplay subsystem.
         
         Initialization Order:
-            1. Validate zCLI instance (fail fast)
+            1. Validate zKernel instance (fail fast)
             2. Extract session and logger references
             3. Detect mode from session
             4. Initialize primitives and events modules
@@ -222,13 +222,13 @@ class zDisplay(zDisplayDelegates):
             6. Emit ready message
         
         Args:
-            zcli: zCLI instance (required, must have session and logger)
+            zcli: zKernel instance (required, must have session and logger)
             
         Raises:
             ValueError: If zcli is invalid or missing required attributes
         """
-        # Validate zCLI instance FIRST
-        validate_zcli_instance(zcli, SUBSYSTEM_NAME)
+        # Validate zKernel instance FIRST
+        validate_zkernel_instance(zcli, SUBSYSTEM_NAME)
 
         # Core dependencies from zCLI
         self.zcli = zcli

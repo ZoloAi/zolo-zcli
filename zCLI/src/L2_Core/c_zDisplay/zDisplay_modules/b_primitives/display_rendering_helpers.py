@@ -41,7 +41,7 @@ Purpose:
 
 Dependencies:
     - typing: Type hints only
-    - No zCLI subsystem dependencies (pure utilities)
+    - No zKernel subsystem dependencies (pure utilities)
 
 Usage:
     from ..b_primitives.display_rendering_helpers import (

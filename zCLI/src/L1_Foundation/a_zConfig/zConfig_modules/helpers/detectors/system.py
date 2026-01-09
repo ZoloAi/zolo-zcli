@@ -3,7 +3,7 @@
 
 import logging
 import sys
-from zCLI import os, platform, socket, Path
+from zKernel import os, platform, socket, Path
 from typing import Dict, Any, Optional
 from importlib.metadata import distribution, PackageNotFoundError
 
@@ -51,7 +51,7 @@ zMachine:
   libc_ver: "{libc_ver}"
   python_executable: "{python_executable}"
   
-  # zCLI Installation (auto-detected, useful for troubleshooting)
+  # zKernel Installation (auto-detected, useful for troubleshooting)
   zcli_install_path: "{zcli_install_path}"
   zcli_install_type: "{zcli_install_type}"
 
@@ -86,7 +86,7 @@ zMachine:
   cpu_efficiency: {cpu_efficiency}    # E-cores (Apple Silicon, null otherwise)
   memory_gb: {memory_gb}              # Total system RAM
   
-  # Resource Limits (optional, editable - limit what zCLI can use)
+  # Resource Limits (optional, editable - limit what zKernel can use)
   # cpu_cores_limit: 4                # Limit to 4 cores (even if more detected)
   # memory_gb_limit: 8                # Limit to 8GB (even if more detected)
   
@@ -113,7 +113,7 @@ zMachine:
 
 
 def detect_zcli_install_info() -> Dict[str, str]:
-    """Detect zCLI installation path and type."""
+    """Detect zKernel installation path and type."""
     try:
         dist = distribution("zolo-zcli")
         
@@ -139,7 +139,7 @@ def detect_zcli_install_info() -> Dict[str, str]:
             "zcli_install_type": install_type
         }
     except (PackageNotFoundError, Exception):
-        # zCLI not installed or error detecting
+        # zKernel not installed or error detecting
         return {
             "python_executable": sys.executable,
             "zcli_install_path": "not_installed",
@@ -218,7 +218,7 @@ def auto_detect_machine(log_level: Optional[str] = None, is_production: bool = F
     if not is_production:
         logger.debug("[MachineConfig] Auto-detecting machine information...")
 
-    # Detect zCLI installation info
+    # Detect zKernel installation info
     zcli_info = detect_zcli_install_info()
     
     # Detect CPU architecture details
@@ -254,7 +254,7 @@ def auto_detect_machine(log_level: Optional[str] = None, is_production: bool = F
         "python_compiler": platform.python_compiler(), # Compiler used
         "libc_ver": libc_ver,                       # libc version (Linux-specific)
         "python_executable": zcli_info["python_executable"],  # Path to Python executable
-        "zcli_install_path": zcli_info["zcli_install_path"],  # Where zCLI is installed
+        "zcli_install_path": zcli_info["zcli_install_path"],  # Where zKernel is installed
         "zcli_install_type": zcli_info["zcli_install_type"],  # editable vs standard
 
         # User tools (system defaults, user can override)

@@ -86,7 +86,7 @@ Facade Integration
 All components are designed to be accessed via the zNavigation facade, which
 provides a clean, consistent public API:
 
-    # Recommended: Use facade (from zCLI.py)
+    # Recommended: Use facade (from zKernel.py)
     zcli.navigation.create(["Option A", "Option B"], title="Menu")
     zcli.navigation.navigate_to("path.to.file.block")
     zcli.navigation.add_crumb("Menu", "option_key")
@@ -94,7 +94,7 @@ provides a clean, consistent public API:
 Direct component usage is supported but not recommended for most use cases:
 
     # Advanced: Direct component usage (from navigation_modules)
-    from zCLI.L2_Core.f_zNavigation.navigation_modules import MenuSystem
+    from zKernel.L2_Core.f_zNavigation.navigation_modules import MenuSystem
     menu_system = MenuSystem(navigation)
     choice = menu_system.create(["A", "B"], walker=walker)
 
@@ -118,7 +118,7 @@ Via Facade (Recommended)::
 
 Direct Component Usage (Advanced)::
 
-    from zCLI.L2_Core.f_zNavigation.navigation_modules import (
+    from zKernel.L2_Core.f_zNavigation.navigation_modules import (
         MenuSystem, Breadcrumbs, Navigation, Linking
     )
 
@@ -141,7 +141,7 @@ Layer 1, Position 4 (zNavigation) - Specialized Modules
 Integration
 -----------
 - Parent: zNavigation facade (zNavigation.py)
-- Used By: zCLI core, zDispatch (menu system)
+- Used By: zKernel core, zDispatch (menu system)
 - Uses: zSession, zDisplay, zParser, zLoader, zFunc, zWalker
 
 See Also
@@ -151,7 +151,7 @@ See Also
 - zSession : Stores breadcrumbs, navigation state
 """
 
-from zCLI import List
+from zKernel import List
 
 from .navigation_constants import *  # noqa: F403, F401
 from .navigation_menu_system import MenuSystem

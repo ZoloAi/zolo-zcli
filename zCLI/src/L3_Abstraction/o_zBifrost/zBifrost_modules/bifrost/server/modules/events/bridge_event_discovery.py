@@ -55,7 +55,7 @@ Module Structure:
     - _extract_user_context: Extracts authentication context from WebSocket
 """
 
-from zCLI import json, Dict, Any, Optional
+from zKernel import json, Dict, Any, Optional
 from .base_event_handler import BaseEventHandler
 
 # ═══════════════════════════════════════════════════════════

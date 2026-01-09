@@ -4,14 +4,14 @@ Level 1: Echo Test
 Two-way communication - send a message, get it echoed back!
 Goal: Prove browser can send TO server and receive responses
 """
-from zCLI import zCLI
+from zKernel import zKernel
 import asyncio
 import json
 
 print("Starting zBlog Server (Level 1: Echo Test)...")
 print("Goal: Send messages from browser, get echo responses\n")
 
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {
         "host": "127.0.0.1",

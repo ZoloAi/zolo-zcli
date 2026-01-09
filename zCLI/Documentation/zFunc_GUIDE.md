@@ -2,10 +2,10 @@
 
 ## Overview
 
-**zFunc** is zCLI's **Function Execution & Python Integration** subsystem. It enables dynamic loading and execution of Python functions from plugins, external files, or inline code, with intelligent argument parsing, automatic dependency injection, and context-aware parameter resolution.
+**zFunc** is zKernel's **Function Execution & Python Integration** subsystem. It enables dynamic loading and execution of Python functions from plugins, external files, or inline code, with intelligent argument parsing, automatic dependency injection, and context-aware parameter resolution.
 
 ### Executive Summary
-zFunc is the bridge between zCLI's declarative YAML configuration and Python's imperative code. It allows developers to call any Python function using a simple path syntax, while automatically injecting framework dependencies (like `zcli`, `session`) and context data (like `zHat`, `zConv`) based on function signatures. This eliminates boilerplate and makes extending zCLI applications seamless.
+zFunc is the bridge between zKernel's declarative YAML configuration and Python's imperative code. It allows developers to call any Python function using a simple path syntax, while automatically injecting framework dependencies (like `zcli`, `session`) and context data (like `zHat`, `zConv`) based on function signatures. This eliminates boilerplate and makes extending zKernel applications seamless.
 
 **Key Value**: Write Python functions naturally, call them from YAML, and let zFunc handle all the wiring automatically.
 
@@ -78,7 +78,7 @@ my_key:
 ```
 
 **Supported Parameters**:
-- `zcli` - Full zCLI instance
+- `zcli` - Full zKernel instance
 - `session` - Session dictionary
 - `context` - Current execution context
 
@@ -164,7 +164,7 @@ The only public method you need.
 
 **Example**:
 ```python
-zcli = zCLI({'zWorkspace': '.'})
+zcli = zKernel({'zWorkspace': '.'})
 
 # Simple call
 result = zcli.zfunc.handle("&calculator.add(5, 3)")
@@ -494,16 +494,16 @@ async def fetch_data(url):
 **Solution**:
 1. Verify function is declared with `async def`
 2. Check asyncio is available
-3. Ensure zCLI mode supports async (Terminal/Bifrost)
+3. Ensure zKernel mode supports async (Terminal/Bifrost)
 
 ---
 
 ## Summary
 
-**zFunc** transforms Python function execution in zCLI from manual wiring to automatic orchestration. By intelligently injecting dependencies and extracting context data based on function signatures, it eliminates boilerplate and lets developers focus on business logic.
+**zFunc** transforms Python function execution in zKernel from manual wiring to automatic orchestration. By intelligently injecting dependencies and extracting context data based on function signatures, it eliminates boilerplate and lets developers focus on business logic.
 
 **When to Use zFunc**:
-- ✅ Extending zCLI with custom Python logic
+- ✅ Extending zKernel with custom Python logic
 - ✅ Processing wizard or dialog results
 - ✅ Calling external APIs or services
 - ✅ Complex calculations or transformations

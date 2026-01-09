@@ -79,7 +79,7 @@ Version History
 - v1.5.x: Initial implementation (basic function loading)
 """
 
-from zCLI import os, importlib, Any, Callable
+from zKernel import os, importlib, Any, Callable
 
 
 # ============================================================================

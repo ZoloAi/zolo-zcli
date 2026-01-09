@@ -1,5 +1,5 @@
 # zUI.rbac_test.yaml - RBAC Testing Demo (v1.5.4 Week 3.3)
-# Terminal mode demo - proper zCLI syntax with INLINE RBAC
+# Terminal mode demo - proper zKernel syntax with INLINE RBAC
 # Default: PUBLIC ACCESS (no zRBAC = no restrictions)
 # Only add zRBAC when you need to RESTRICT access
 

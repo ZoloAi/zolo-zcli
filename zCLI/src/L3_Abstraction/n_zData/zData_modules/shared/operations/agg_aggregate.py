@@ -129,7 +129,7 @@ See Also
 - csv_adapter.py: pandas aggregate implementation
 """
 
-from zCLI import Dict, List, Optional, Any
+from zKernel import Dict, List, Optional, Any
 
 # ============================================================
 # Constants

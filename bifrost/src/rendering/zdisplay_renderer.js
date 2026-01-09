@@ -17,7 +17,7 @@
 export class ZDisplayRenderer {
   constructor(logger = null) {
     this.logger = logger || console;
-    this.defaultZone = 'zVaF-content'; // Default zCLI content area (the div inside zVaF tag)
+    this.defaultZone = 'zVaF-content'; // Default zKernel content area (the div inside zVaF tag)
   }
 
   /**

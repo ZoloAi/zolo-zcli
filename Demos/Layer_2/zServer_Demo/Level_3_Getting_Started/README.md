@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
 **Flask**: ~17 lines of Python
 
-### zCLI Equivalent:
+### zKernel Equivalent:
 
 **Backend** (`level3_backend.py`): ~10 lines of Python
 **Routes** (`zServer.routes.yaml`): ~12 lines of YAML (declarative, with inline content!)
@@ -85,7 +85,7 @@ def home():
 - **Coupled**: Routes and logic mixed together
 - **Runtime**: Routes registered at import time
 
-### zCLI Approach:
+### zKernel Approach:
 ```yaml
 routes:
   /:
@@ -128,9 +128,9 @@ routes:
 
 ---
 
-## Key Differences: Flask vs. zCLI
+## Key Differences: Flask vs. zKernel
 
-| Feature | Flask | zCLI |
+| Feature | Flask | zKernel |
 |---------|-------|------|
 | **Routes** | Python decorators | YAML file |
 | **Server** | HTTP only | HTTP only (WebSocket comes later!) |

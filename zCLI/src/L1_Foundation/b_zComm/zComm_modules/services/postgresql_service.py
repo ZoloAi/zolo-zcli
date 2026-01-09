@@ -1,13 +1,13 @@
 # zCLI/subsystems/zComm/zComm_modules/services/postgresql_service.py
 """
-PostgreSQL Service Manager for zCLI.
+PostgreSQL Service Manager for zKernel.
 
 Cross-platform PostgreSQL service management supporting macOS (Homebrew, pg_ctl),
 Linux (systemd, pg_ctl), and Windows (Windows services). Provides start/stop/status
 operations and connection information retrieval.
 """
 
-from zCLI import subprocess, socket, platform, Path, Any, Dict, Optional, List
+from zKernel import subprocess, socket, platform, Path, Any, Dict, Optional, List
 
 # Module Constants
 

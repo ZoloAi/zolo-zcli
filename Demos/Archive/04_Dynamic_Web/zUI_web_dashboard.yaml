@@ -7,7 +7,7 @@ zVaF:
   WelcomeHeader:
     zDisplay:
       event: header
-      content: "🎨 Welcome to zCLI Dashboard"
+      content: "🎨 Welcome to zKernel Dashboard"
       indent: 0
   
   WelcomeText:

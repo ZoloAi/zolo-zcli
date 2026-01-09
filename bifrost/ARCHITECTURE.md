@@ -99,7 +99,7 @@
 ---
 
 ### **Layer 1: Core Primitives** (`core/`)
-**Purpose:** Abstract platform primitives with zCLI-specific concerns
+**Purpose:** Abstract platform primitives with zKernel-specific concerns
 
 | File | Purpose | Pattern | Exports |
 |------|---------|---------|---------|
@@ -113,7 +113,7 @@
 
 **Key Principles:**
 - ✅ Abstract platform complexity
-- ✅ Provide zCLI-specific defaults
+- ✅ Provide zKernel-specific defaults
 - ✅ Can import from Layer 2 (utils)
 - ❌ NO business logic
 - ❌ NO DOM rendering (except error_display)
@@ -489,7 +489,7 @@ Before considering a layer "complete":
 ## 📚 Further Reading
 
 - `PATTERNS.md` - Coding patterns for each layer
-- Backend architecture: `zCLI/ARCHITECTURE.md` (similar principles)
+- Backend architecture: `zKernel/ARCHITECTURE.md` (similar principles)
 - zTheme documentation: `https://github.com/ZoloAi/zTheme`
 
 ---

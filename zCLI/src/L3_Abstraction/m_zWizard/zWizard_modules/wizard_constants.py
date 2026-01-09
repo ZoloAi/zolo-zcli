@@ -27,12 +27,12 @@ INTERNAL Constants:
     - Indent levels
 
 Usage:
-    >>> from zCLI.L3_Abstraction.m_zWizard.zWizard_modules import SUBSYSTEM_NAME
-    >>> from zCLI.L3_Abstraction.m_zWizard.zWizard_modules.wizard_constants import _MSG_READY
+    >>> from zKernel.L3_Abstraction.m_zWizard.zWizard_modules import SUBSYSTEM_NAME
+    >>> from zKernel.L3_Abstraction.m_zWizard.zWizard_modules.wizard_constants import _MSG_READY
 """
 
 # Import dependencies
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_WIZARD_MODE
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_WIZARD_MODE
 
 # ═══════════════════════════════════════════════════════════════════════════
 # PUBLIC CONSTANTS (API)

@@ -70,10 +70,10 @@ BLOG_POSTS = [
     {
         "id": 1,
         "title": "Welcome to zBlog!",
-        "author": "zCLI Team",
+        "author": "zKernel Team",
         "date": "2024-01-15",
         "excerpt": "Learn how to build...",
-        "tags": ["tutorial", "welcome", "zCLI"]
+        "tags": ["tutorial", "welcome", "zKernel"]
     },
     {
         "id": 2,

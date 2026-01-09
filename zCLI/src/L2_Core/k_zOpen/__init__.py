@@ -4,7 +4,7 @@
 zOpen Subsystem - Package Root
 
 This module serves as the package root for the zOpen subsystem, providing file and URL
-opening functionality for the zCLI framework.
+opening functionality for the zKernel framework.
 
 Architecture Position:
     - Tier 3 (Package Root) of zOpen's 3-tier architecture
@@ -59,8 +59,8 @@ Supported Operations:
         - Content display fallback if IDE fails
 
 Integration with zCLI:
-    Initialized in zCLI.__init__() (line ~210):
-        from zCLI.L2_Core.k_zOpen import zOpen
+    Initialized in zKernel.__init__() (line ~210):
+        from zKernel.L2_Core.k_zOpen import zOpen
         self.open = zOpen(self)
 
     Called from zDispatch (dispatch_launcher.py):
@@ -79,7 +79,7 @@ Usage Example:
     result = zcli.open.handle("zOpen(/path/to/file.txt)")
 
     # From custom code (direct usage)
-    from zCLI.subsystems.zOpen import zOpen
+    from zKernel.subsystems.zOpen import zOpen
     
     zopen = zOpen(zcli)
     
@@ -123,7 +123,7 @@ Version History:
     - v1.5.4: Enhanced documentation to industry-grade standards
     - v1.5.4: Added type hints and constants throughout
 
-Author: zCLI Development Team
+Author: zKernel Development Team
 """
 
 from .zOpen import zOpen  # Main facade class (Tier 2) # noqa: F401

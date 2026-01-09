@@ -120,7 +120,7 @@ See Also
 - BaseDataAdapter: Backend adapter interface (uses parsed dictionaries)
 """
 
-from zCLI import Dict, Optional, Any, re
+from zKernel import Dict, Optional, Any, re
 
 # Import from same directory
 try:

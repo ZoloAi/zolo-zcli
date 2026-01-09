@@ -6,7 +6,7 @@ Learn to use the built-in logger. No configuration needed!
 Run:
     python3 Demos/Layer_0/zConfig_Demo/lvl2_settings/1_logger_basics.py
 """
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
@@ -17,7 +17,7 @@ def run_demo():
         "deployment": "Production",   # Minimal (active)
         "logger": "INFO",           # But with DEBUG logging for troubleshooting
     }
-    z = zCLI(zSpark)
+    z = zKernel(zSpark)
 
     print("\n# Using z.logger in your code:")
     print("# Five log levels, from most to least verbose:\n")

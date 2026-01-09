@@ -62,7 +62,7 @@ Plugin Support
 -------------
 Plugins can register custom adapters dynamically:
 ```python
-from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends.adapter_factory import AdapterFactory
+from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends.adapter_factory import AdapterFactory
 
 class RedisAdapter(BaseDataAdapter):
     # ... implement adapter ...
@@ -81,7 +81,7 @@ All adapter types normalized to lowercase:
 Usage Examples
 -------------
 Basic adapter creation:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends.adapter_factory import AdapterFactory
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends.adapter_factory import AdapterFactory
     >>> config = {"path": "/data/myapp", "label": "sqlite"}
     >>> adapter = AdapterFactory.create_adapter("sqlite", config)
     >>> adapter.connect()
@@ -106,7 +106,7 @@ This module is used by:
 - Plugin system: Calls register_adapter() for custom adapters
 """
 
-from zCLI import Any, Dict, List
+from zKernel import Any, Dict, List
 
 # ============================================================
 # Module Constants - Error Messages
@@ -238,7 +238,7 @@ class AdapterFactory:
 
         Example:
             >>> import logging
-            >>> logger = logging.getLogger("zCLI.zData")
+            >>> logger = logging.getLogger("zKernel.zData")
             >>> AdapterFactory.set_logger(logger)
             >>> # Now all created adapters will use this logger
 
@@ -268,7 +268,7 @@ class AdapterFactory:
             None
 
         Example:
-            >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends.base_adapter import BaseDataAdapter
+            >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends.base_adapter import BaseDataAdapter
             >>> 
             >>> class RedisAdapter(BaseDataAdapter):
             ...     # ... implement adapter methods ...

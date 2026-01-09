@@ -197,7 +197,7 @@ export function createDescriptionList(attributes = {}) {
  *
  * // FAQ question
  * const question = createDescriptionTerm({ id: 'faq-1' });
- * question.textContent = 'What is zCLI?';
+ * question.textContent = 'What is zKernel?';
  */
 export function createDescriptionTerm(attributes = {}) {
   const dt = createElement('dt');
@@ -232,7 +232,7 @@ export function createDescriptionTerm(attributes = {}) {
  *
  * // FAQ answer
  * const answer = createDescriptionDetails({ 'data-answer-id': '1' });
- * answer.textContent = 'zCLI is a command-line interface framework.';
+ * answer.textContent = 'zKernel is a command-line interface framework.';
  */
 export function createDescriptionDetails(attributes = {}) {
   const dd = createElement('dd');

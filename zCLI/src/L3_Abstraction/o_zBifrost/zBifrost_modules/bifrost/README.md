@@ -1,6 +1,6 @@
-# zBifrost - WebSocket Bridge for zCLI
+# zBifrost - WebSocket Bridge for zKernel
 
-Real-time WebSocket communication between zCLI backends and web frontends, enabling dual-mode applications (CLI + Web) with zero configuration.
+Real-time WebSocket communication between zKernel backends and web frontends, enabling dual-mode applications (CLI + Web) with zero configuration.
 
 ---
 
@@ -55,14 +55,14 @@ bifrost/
 ### Python Backend
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-# Auto-start via zCLI (zBifrost mode)
-z = zCLI({"zMode": "zBifrost"})
+# Auto-start via zKernel (zBifrost mode)
+z = zKernel({"zMode": "zBifrost"})
 z.walker.run()
 
 # Programmatic control
-from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
+from zKernel.subsystems.zComm.zComm_modules.bifrost import zBifrost
 
 bifrost = zBifrost(zcli_instance, logger)
 await bifrost.start_socket_server(socket_ready_event)
@@ -74,7 +74,7 @@ await bifrost.broadcast({"event": "message", "data": "Hello"})
 #### Via CDN (jsDelivr)
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zKernel/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
 
 <script>
   const client = new BifrostClient('ws://localhost:8765', {
@@ -96,7 +96,7 @@ await bifrost.broadcast({"event": "message", "data": "Hello"})
 #### Local Development
 
 ```html
-<script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
+<script src="../../../../zKernel/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
 ```
 
 ---
@@ -118,7 +118,7 @@ await bifrost.broadcast({"event": "message", "data": "Hello"})
 - ✅ Hooks system (onConnected, onDisconnected, onMessage, etc.)
 - ✅ CRUD operations (`create()`, `read()`, `update()`, `delete()`)
 - ✅ Auto-rendering (`renderTable()`, `renderForm()`, `renderMenu()`)
-- ✅ zCLI integration (`zFunc()`, `zLink()`, `zOpen()`)
+- ✅ zKernel integration (`zFunc()`, `zLink()`, `zOpen()`)
 
 ---
 
@@ -165,7 +165,7 @@ See [`../../../../Demos/Layer_0/zBifrost_Demo/`](../../../../Demos/Layer_0/zBifr
 
 **Python imports** (no changes needed):
 ```python
-from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
+from zKernel.subsystems.zComm.zComm_modules.bifrost import zBifrost
 # Still works! __init__.py handles the new structure
 ```
 

@@ -120,7 +120,7 @@ signals.error("Critical error")
 ```
 """
 
-from zCLI import Any, Optional
+from zKernel import Any, Optional
 
 # Import constants from centralized module
 from ..display_constants import (

@@ -32,8 +32,8 @@ Dependencies:
     - zConfig constants: SESSION_KEY_ZSPACE for session dict keys
 
 Usage Example:
-    from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZSPACE
-    from zCLI.L2_Core.k_zOpen.open_modules.open_paths import resolve_zpath, validate_zpath
+    from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZSPACE
+    from zKernel.L2_Core.k_zOpen.open_modules.open_paths import resolve_zpath, validate_zpath
 
     session = {SESSION_KEY_ZSPACE: "/home/user/project"}
     
@@ -47,13 +47,13 @@ Version History:
     - v1.5.4: Added type hints, constants, and validation helper
     - v1.5.4: Modernized session key access (SESSION_KEY_ZSPACE)
 
-Author: zCLI Development Team
+Author: zKernel Development Team
 """
 
-from zCLI import os, Optional, Any
+from zKernel import os, Optional, Any
 
 # Import centralized session constants
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZSPACE
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZSPACE
 from .open_constants import (
     ZPATH_SEPARATOR,
     ZPATH_SYMBOL_ABSOLUTE,
@@ -99,7 +99,7 @@ def resolve_zpath(
 
     Args:
         zpath: zPath string in dot notation (e.g., "@.folder.file.ext" or "~.Users.file.txt")
-        session: zCLI session dictionary containing workspace and machine context
+        session: zKernel session dictionary containing workspace and machine context
         logger: Logger instance for debug/error output
 
     Returns:

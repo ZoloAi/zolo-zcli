@@ -82,7 +82,7 @@ Connection Lifecycle
 Usage Examples
 -------------
 Basic connection and CRUD:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends.sqlite_adapter import SQLiteAdapter
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends.sqlite_adapter import SQLiteAdapter
     >>> config = {"path": "/data/myapp", "label": "users"}
     >>> adapter = SQLiteAdapter(config, logger=logger)
     >>> adapter.connect()
@@ -142,7 +142,7 @@ See Also
 - postgresql_adapter.py: PostgreSQL implementation
 """
 
-from zCLI import sqlite3, Dict, List, Any
+from zKernel import sqlite3, Dict, List, Any
 from .sql_adapter import SQLAdapter
 
 # ============================================================
@@ -738,7 +738,7 @@ class SQLiteAdapter(SQLAdapter):
         Map abstract schema type to SQLite storage class.
         
         SQLite uses 5 storage classes: TEXT, INTEGER, REAL, BLOB, NULL.
-        This method maps zCLI abstract types to appropriate storage classes.
+        This method maps zKernel abstract types to appropriate storage classes.
         
         Args:
             abstract_type: Abstract type (str, int, float, bool, datetime, json, etc.)

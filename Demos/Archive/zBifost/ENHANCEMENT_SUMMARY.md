@@ -55,11 +55,11 @@ async renderTable(data, container) {
 ✅ **Progressive loading** - Only load modules you actually use  
 ✅ **Stays modular** - Source files remain separate  
 ✅ **No build step** - Works directly in browser  
-✅ **zCLI philosophy** - Load only what's needed  
+✅ **zKernel philosophy** - Load only what's needed  
 
 ## Files Modified
 
-1. `/zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modular.js`
+1. `/zKernel/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modular.js`
    - Refactored to use lazy loading (425 lines)
    - Version bumped to 1.5.5
 
@@ -79,7 +79,7 @@ async renderTable(data, container) {
 
 ```html
 <!-- Simple! Just load from CDN -->
-<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.4/zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modular.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.4/zKernel/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modular.js"></script>
 <script>
 const client = new BifrostClient('ws://localhost:8765', {
     hooks: { onConnected: (info) => console.log(info) }
@@ -97,7 +97,7 @@ await client.connect();  // Modules load here!
 
 ## Architecture Philosophy
 
-This enhancement aligns with **zCLI's original vision**:
+This enhancement aligns with **zKernel's original vision**:
 - **No monoliths** - Source stays modular
 - **Progressive loading** - Load what you need, when you need it
 - **Developer experience** - Works out of the box via CDN

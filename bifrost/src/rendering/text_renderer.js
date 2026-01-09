@@ -3,7 +3,7 @@
  * Text Renderer - Plain & Rich Text Display
  * ═══════════════════════════════════════════════════════════════
  *
- * Renders text events from zCLI backend, supporting both plain text
+ * Renders text events from zKernel backend, supporting both plain text
  * and rich text with markdown inline formatting.
  *
  * @module rendering/text_renderer
@@ -11,7 +11,7 @@
  * @pattern Strategy (single event type)
  *
  * Philosophy:
- * - "Terminal first" - text is the foundation of all zCLI output
+ * - "Terminal first" - text is the foundation of all zKernel output
  * - Pure rendering (no WebSocket, no state, no side effects)
  * - Uses Layer 2 utilities exclusively (no inline logic)
  *
@@ -45,7 +45,7 @@
  *
  * // Plain text (returns element, orchestrator handles appending)
  * const textEl = renderer.render({
- *   content: 'Hello, zCLI!',
+ *   content: 'Hello, zKernel!',
  *   color: 'primary',
  *   indent: 1
  * }, 'zVaF');
@@ -73,7 +73,7 @@ import { withErrorBoundary } from '../utils/error_boundary.js';
  * TextRenderer - Renders plain text events
  *
  * Handles the 'text' zDisplay event, which is the most basic
- * output primitive in zCLI. Renders a paragraph element with
+ * output primitive in zKernel. Renders a paragraph element with
  * optional color and indentation.
  */
 export class TextRenderer {

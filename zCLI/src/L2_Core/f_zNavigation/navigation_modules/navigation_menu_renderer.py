@@ -109,7 +109,7 @@ LOG_* : str
     Logging message templates
 """
 
-from zCLI import Any, Optional, Dict, List
+from zKernel import Any, Optional, Dict, List
 
 from .navigation_constants import (
     KEY_OPTIONS,
@@ -147,7 +147,7 @@ class MenuRenderer:
     menu : MenuSystem
         Reference to parent menu system
     zcli : zCLI
-        Reference to zCLI core instance
+        Reference to zKernel core instance
     logger : logging.Logger
         Logger instance for rendering operations
     
@@ -190,7 +190,7 @@ class MenuRenderer:
 
     # Class-level type declarations
     menu: Any  # MenuSystem reference
-    zcli: Any  # zCLI core instance
+    zcli: Any  # zKernel core instance
     logger: Any  # Logger instance
 
     def __init__(self, menu: Any) -> None:

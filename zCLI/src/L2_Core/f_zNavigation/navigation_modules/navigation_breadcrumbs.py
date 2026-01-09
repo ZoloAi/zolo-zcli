@@ -172,8 +172,8 @@ CRUMB_* : int
     Magic numbers for crumb parsing (minimum parts, indices)
 """
 
-from zCLI import Any, Dict, List, Optional, Tuple
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
+from zKernel import Any, Dict, List, Optional, Tuple
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZCRUMBS,
     SESSION_KEY_ZVAFOLDER,
     SESSION_KEY_ZVAFILE,
@@ -260,7 +260,7 @@ class Breadcrumbs:
     navigation : Any
         Reference to parent navigation system
     zcli : Any
-        Reference to zCLI core instance
+        Reference to zKernel core instance
     logger : Any
         Logger instance for breadcrumb operations
     
@@ -309,7 +309,7 @@ class Breadcrumbs:
 
     # Class-level type declarations
     navigation: Any  # Navigation system reference
-    zcli: Any  # zCLI core instance
+    zcli: Any  # zKernel core instance
     logger: Any  # Logger instance
 
     def __init__(self, navigation: Any) -> None:

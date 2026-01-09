@@ -12,7 +12,7 @@ class zTraceback:
     """Enhanced error handling with consistent traceback formatting."""
 
     def __init__(self, logger=None, zcli=None):
-        """Initialize zTraceback with optional logger and zCLI instance."""
+        """Initialize zTraceback with optional logger and zKernel instance."""
         self.logger = logger
         self.zcli = zcli
 
@@ -146,18 +146,18 @@ class zTraceback:
 
         # Launch Walker UI for interactive error handling
         try:
-            # Import zCLI here to avoid circular dependency (zCLI.zCLI imports zTraceback)
-            import zCLI
+            # Import zKernel here to avoid circular dependency (zKernel.zCLI imports zTraceback)
+            import zKernel
 
             # Get package directory to find UI file
-            zcli_package_dir = Path(zCLI.__file__).parent
+            zcli_package_dir = Path(zKernel.__file__).parent
 
             # Get parent's deployment mode and logger level to inherit
             parent_deployment = self.zcli.config.get_environment('deployment') if self.zcli and hasattr(self.zcli, 'config') else 'Development'
             parent_logger_level = self.zcli.session.get('zLogger', 'INFO') if self.zcli and hasattr(self.zcli, 'session') else 'INFO'
 
-            # Create new zCLI instance for traceback UI (inherit deployment and logger from parent)
-            traceback_cli = zCLI.zCLI({
+            # Create new zKernel instance for traceback UI (inherit deployment and logger from parent)
+            traceback_cli = zKernel.zCLI({
                 "zSpace": str(zcli_package_dir),
                 "zVaFile": "@.UI.zUI.zcli_sys",
                 "zBlock": "Traceback",
@@ -217,7 +217,7 @@ def display_error_summary(zcli):
         zcli.display.handle({"event": "header", "label": "Context", "color": "CYAN", "style": "single"})
         zcli.display.json_data(handler.last_context, indent=1, color=False)
     
-    # Actionable hint (if available from zCLIException)
+    # Actionable hint (if available from zKernelException)
     if hasattr(exc, 'hint') and exc.hint:
         zcli.display.handle({"event": "header", "label": "Hint", "color": "GREEN", "style": "single"})
         hint_lines = exc.hint.split('\n')

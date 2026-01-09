@@ -4,7 +4,7 @@
 zParser facade - unified interface for all parsing operations.
 
 This module provides the zParser facade class, which serves as the primary
-interface for all parsing operations in the zCLI framework. The facade delegates
+interface for all parsing operations in the zKernel framework. The facade delegates
 to specialized parser modules organized in a three-tier architecture.
 
 Facade Pattern:
@@ -61,25 +61,25 @@ Method Categories:
        - parse_function_path (for zFunc)
 
 Initialization:
-    zParser requires a zCLI instance during initialization. The instance must have:
+    zParser requires a zKernel instance during initialization. The instance must have:
     - session attribute (zSession dict)
     - logger attribute (logging instance)
     - display attribute (zDisplay instance)
     
     On initialization, zParser:
-    1. Validates the zCLI instance
+    1. Validates the zKernel instance
     2. Extracts dependencies (session, logger, display)
     3. Declares readiness via display
 
 External Usage:
-    zParser is initialized by zCLI.py during framework startup and is accessible
+    zParser is initialized by zKernel.py during framework startup and is accessible
     as self.parser or zcli.parser throughout the framework. All subsystems that
     need parsing functionality use this facade.
 
 Design Principles:
     1. **Delegation**: All methods delegate to specialized modules
-    2. **Dependency Injection**: zCLI instance provides all dependencies
-    3. **Validation**: Validates zCLI instance and attributes
+    2. **Dependency Injection**: zKernel instance provides all dependencies
+    3. **Validation**: Validates zKernel instance and attributes
     4. **Consistency**: Consistent parameter passing (logger, session, display)
     5. **Type Safety**: 100% type hint coverage
 
@@ -129,7 +129,7 @@ See Also:
     - zDispatch: Uses parser for plugin resolution
 """
 
-from zCLI import Any, Dict, Optional, Union
+from zKernel import Any, Dict, Optional, Union
 
 # Import from parser_modules aggregator (Week 6.8.8)
 from .parser_modules import (
@@ -194,8 +194,8 @@ PATH_PREFIX_ZMACHINE: str = "~.zMachine."
 PATH_PREFIX_WORKSPACE: str = "@"
 
 # Error messages
-ERROR_MSG_NO_ZCLI: str = "zParser requires a zCLI instance"
-ERROR_MSG_NO_SESSION: str = "Invalid zCLI instance: missing 'session' attribute"
+ERROR_MSG_NO_ZCLI: str = "zParser requires a zKernel instance"
+ERROR_MSG_NO_SESSION: str = "Invalid zKernel instance: missing 'session' attribute"
 
 
 # ============================================================================
@@ -212,7 +212,7 @@ class zParser:
     and zVaFile parsing.
     
     Attributes:
-        zcli: zCLI instance (dependency injection)
+        zcli: zKernel instance (dependency injection)
         zSession: Session dict from zCLI
         logger: Logger instance from zCLI
         display: zDisplay instance from zCLI
@@ -230,19 +230,19 @@ class zParser:
 
     def __init__(self, zcli: Any) -> None:
         """
-        Initialize zParser with zCLI instance.
+        Initialize zParser with zKernel instance.
         
-        Validates the zCLI instance and extracts required dependencies
+        Validates the zKernel instance and extracts required dependencies
         (session, logger, display). Declares readiness via display.
         
         Args:
-            zcli: zCLI instance providing dependencies
+            zcli: zKernel instance providing dependencies
         
         Raises:
             ValueError: If zcli is None or missing 'session' attribute
         
         Examples:
-            >>> parser = zParser(zcli)  # Done by zCLI during initialization
+            >>> parser = zParser(zcli)  # Done by zKernel during initialization
         """
         if zcli is None:
             raise ValueError(ERROR_MSG_NO_ZCLI)
@@ -250,7 +250,7 @@ class zParser:
         if not hasattr(zcli, 'session'):
             raise ValueError(ERROR_MSG_NO_SESSION)
 
-        # Modern architecture: zCLI instance provides all dependencies
+        # Modern architecture: zKernel instance provides all dependencies
         self.zcli = zcli
         self.zSession: Dict[str, Any] = zcli.session
         self.logger: Any = zcli.logger
@@ -377,7 +377,7 @@ class zParser:
 
         # Handle @ workspace paths
         if data_path.startswith(PATH_PREFIX_WORKSPACE):
-            from zCLI import Path
+            from zKernel import Path
             workspace = self.zSession.get(SESSION_KEY_WORKSPACE)
             if not workspace:
                 workspace = Path.cwd()
@@ -682,7 +682,7 @@ class zParser:
             This method contains inline logic (not delegated to modules).
             Future: Consider moving to parser_modules.parser_utils
         """
-        from zCLI import os
+        from zKernel import os
         
         # Handle dict format
         if isinstance(zFunc_spec, dict):

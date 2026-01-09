@@ -65,25 +65,25 @@ Usage Patterns
 **Primary API (Recommended)**:
     Use CacheOrchestrator for most use cases. It provides a unified interface to all
     cache tiers and handles routing automatically:
-        >>> from zCLI.L2_Core.h_zLoader.loader_modules import CacheOrchestrator
+        >>> from zKernel.L2_Core.h_zLoader.loader_modules import CacheOrchestrator
         >>> cache = CacheOrchestrator(session, logger, zcli)
         >>> data = cache.get("zUI.users.yaml", cache_type="system")
 
 **Advanced API (Custom Implementations)**:
     Import direct cache implementations for custom cache logic or when you need
     direct access to specific cache tier features:
-        >>> from zCLI.L2_Core.h_zLoader.loader_modules import SystemCache, PinnedCache
+        >>> from zKernel.L2_Core.h_zLoader.loader_modules import SystemCache, PinnedCache
         >>> system_cache = SystemCache(session, logger, max_size=50)
         >>> pinned_cache = PinnedCache(session, logger)
 
 **Foundation API (Bypass Cache)**:
     Use load_file_raw to bypass all caching and read files directly from disk:
-        >>> from zCLI.L2_Core.h_zLoader.loader_modules import load_file_raw
+        >>> from zKernel.L2_Core.h_zLoader.loader_modules import load_file_raw
         >>> content = load_file_raw("/path/to/file.yaml")
 
 **User Utilities API (Cache Management)**:
     Use cache_utils module for cache inspection and management:
-        >>> from zCLI.L2_Core.h_zLoader.loader_modules import cache_utils
+        >>> from zKernel.L2_Core.h_zLoader.loader_modules import cache_utils
         >>> files = cache_utils.get_cached_files(zcli)
         >>> stats = cache_utils.get_cached_files_count(zcli)
         >>> cache_utils.clear_system_cache(zcli)

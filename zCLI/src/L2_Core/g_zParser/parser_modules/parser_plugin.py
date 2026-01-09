@@ -5,7 +5,7 @@ Plugin invocation parser with unified filename-based syntax for zParser subsyste
 
 This module provides comprehensive plugin detection, loading, caching, and execution
 with support for both synchronous and asynchronous functions. It uses a unified
-filename-based syntax (&PluginName.function) with automatic zCLI dependency injection.
+filename-based syntax (&PluginName.function) with automatic zKernel dependency injection.
 
 **⚠️ CRITICAL: This module is used externally by zDispatch for ALL plugin invocations.**
 
@@ -84,7 +84,7 @@ The module automatically injects the zcli instance if the plugin function accept
 
 **Plugin Function with zcli Parameter**:
     def my_function(arg1, arg2, zcli):
-        # Access full zCLI functionality
+        # Access full zKernel functionality
         zcli.display.handle("Processing...")
         result = zcli.zdata.read("users")
         return result
@@ -92,7 +92,7 @@ The module automatically injects the zcli instance if the plugin function accept
 **Auto-Injection Process**:
     1. Use inspect.signature() to analyze function parameters
     2. If 'zcli' parameter found, inject it as keyword argument
-    3. Plugin gets full access to zCLI subsystems
+    3. Plugin gets full access to zKernel subsystems
     4. Transparent to caller (no manual injection needed)
 
 **Benefits**:
@@ -174,13 +174,13 @@ Usage Examples
     False
 
 **resolve_plugin_invocation** - Full resolution:
-    >>> zcli = zCLI()
+    >>> zcli = zKernel()
     
     # Simple function call
     >>> resolve_plugin_invocation("&test_plugin.hello_world('Alice')", zcli)
     "Hello, Alice!"
     
-    # Function with zCLI access
+    # Function with zKernel access
     >>> resolve_plugin_invocation("&data_processor.analyze()", zcli)
     # Plugin internally uses zcli.zdata.read(), zcli.display.handle(), etc.
     {"result": "analysis complete"}
@@ -203,7 +203,7 @@ Internal:
     - None (Tier 0 - Foundation)
 
 External:
-    - zCLI typing imports (Any, Dict, List, Tuple, Callable, Optional, Union)
+    - zKernel typing imports (Any, Dict, List, Tuple, Callable, Optional, Union)
     - Python standard library: re, pathlib, inspect, asyncio, concurrent.futures
 
 See Also
@@ -217,7 +217,7 @@ import re
 import inspect
 import asyncio
 from pathlib import Path
-from zCLI import Any, Dict, List, Tuple, Callable, Optional
+from zKernel import Any, Dict, List, Tuple, Callable, Optional
 
 # ============================================================================
 # MODULE CONSTANTS
@@ -361,7 +361,7 @@ def resolve_plugin_invocation(value: str, zcli: Any, context: Optional[Any] = No
     
     Main entry point for plugin resolution. Handles the full lifecycle from
     parsing to execution, with support for caching, async functions, and
-    automatic zCLI dependency injection and context (zHat) support.
+    automatic zKernel dependency injection and context (zHat) support.
     
     Process Flow:
         1. **Parse**: Extract plugin name, function name, args from syntax
@@ -384,18 +384,18 @@ def resolve_plugin_invocation(value: str, zcli: Any, context: Optional[Any] = No
         - zBifrost mode: Uses run_coroutine_threadsafe()
         - 300-second timeout for async execution
     
-    zCLI Auto-Injection:
+    zKernel Auto-Injection:
         - Inspects function signature for 'zcli' parameter
         - Automatically injects zcli instance as kwarg
         - Transparent to caller (no manual injection needed)
-        - Enables plugins to access all zCLI subsystems
+        - Enables plugins to access all zKernel subsystems
     
     Syntax:
         &PluginName.function_name(args)
     
     Args:
         value: Plugin invocation string (e.g., "&test_plugin.hello('Alice')")
-        zcli: zCLI instance with plugin cache, loader, parser, logger
+        zcli: zKernel instance with plugin cache, loader, parser, logger
     
     Returns:
         Any: Result of plugin function execution (depends on function return type)
@@ -404,7 +404,7 @@ def resolve_plugin_invocation(value: str, zcli: Any, context: Optional[Any] = No
         ValueError: If syntax invalid, plugin not found, or execution fails
     
     Examples:
-        >>> zcli = zCLI()
+        >>> zcli = zKernel()
         
         # Simple function call
         >>> resolve_plugin_invocation("&test_plugin.hello_world('Alice')", zcli)
@@ -426,7 +426,7 @@ def resolve_plugin_invocation(value: str, zcli: Any, context: Optional[Any] = No
         >>> resolve_plugin_invocation("&api_client.fetch_data()", zcli)
         {"data": [...]}  # Coroutine automatically awaited
         
-        # Function with zCLI access (auto-injected)
+        # Function with zKernel access (auto-injected)
         >>> resolve_plugin_invocation("&data_processor.analyze()", zcli)
         # Plugin internally uses zcli.display, zcli.zdata, etc.
         {"result": "complete"}
@@ -446,7 +446,7 @@ def resolve_plugin_invocation(value: str, zcli: Any, context: Optional[Any] = No
     See Also:
         - is_plugin_invocation: Quick detection before resolution
         - _parse_invocation: Regex-based syntax parsing
-        - _execute_function: Async handling and zCLI injection
+        - _execute_function: Async handling and zKernel injection
         - dispatch_launcher.py: External usage
     """
     if not isinstance(value, str) or not value.startswith(CHAR_AMPERSAND):
@@ -596,7 +596,7 @@ def _resolve_zpath(zpath: str, zcli: Any) -> str:
     
     Args:
         zpath: zPath string (e.g., "@.utils.test_plugin")
-        zcli: zCLI instance with zparser subsystem
+        zcli: zKernel instance with zparser subsystem
     
     Returns:
         str: Absolute file path (without .py extension)
@@ -703,17 +703,17 @@ def _execute_function(
     context: Optional[Any] = None
 ) -> Any:
     """
-    Execute plugin function with async support, error handling, zCLI and context auto-injection.
+    Execute plugin function with async support, error handling, zKernel and context auto-injection.
     
     Comprehensive function execution that handles:
-    - zCLI auto-injection (inspect-based parameter detection)
+    - zKernel auto-injection (inspect-based parameter detection)
     - Async function detection and execution (event loop handling)
     - Error handling with detailed messages
     
-    zCLI Auto-Injection:
+    zKernel Auto-Injection:
         1. Use inspect.signature() to get function parameters
         2. If 'zcli' parameter exists, inject as keyword argument
-        3. Plugin gains access to all zCLI subsystems
+        3. Plugin gains access to all zKernel subsystems
         4. Transparent to caller (no manual injection needed)
     
     Async Support:
@@ -738,7 +738,7 @@ def _execute_function(
         args: Positional arguments for function
         kwargs: Keyword arguments for function
         original_value: Original invocation string (for error messages)
-        zcli: zCLI instance for auto-injection
+        zcli: zKernel instance for auto-injection
     
     Returns:
         Any: Result of function execution (depends on function return type)

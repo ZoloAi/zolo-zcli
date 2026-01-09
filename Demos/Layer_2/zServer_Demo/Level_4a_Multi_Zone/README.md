@@ -102,7 +102,7 @@ Level 4 uses **pure Bootstrap 4.0.0** (no custom CSS):
 
 This matches Corey Schafer's Flask tutorial exactly!
 
-## Flask vs. zCLI Comparison
+## Flask vs. zKernel Comparison
 
 ### Flask (Part 2)
 
@@ -126,7 +126,7 @@ if __name__ == '__main__':
 
 **Lines of code**: ~15 lines Python + ~50 lines HTML templates = **~65 lines**
 
-### zCLI (Level 4)
+### zKernel (Level 4)
 
 ```yaml
 # zServer.routes.yaml
@@ -146,9 +146,9 @@ routes:
 
 ```python
 # level4_backend.py (simplified)
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"zWorkspace": current_dir, "zMode": "Terminal"})
+z = zKernel({"zWorkspace": current_dir, "zMode": "Terminal"})
 z.server = z.comm.create_http_server(port=8000, routes_file="zServer.routes.yaml")
 z.server.start()
 ```
@@ -174,9 +174,9 @@ lsof -ti:8000 | xargs kill -9
 
 ## What's Next?
 
-**Level 5** will add **forms** with validation, matching Flask Part 3 (Flask-WTF). We'll use Bootstrap forms and eventually transition to zCLI's declarative `z.display.form()` for auto-generated forms!
+**Level 5** will add **forms** with validation, matching Flask Part 3 (Flask-WTF). We'll use Bootstrap forms and eventually transition to zKernel's declarative `z.display.form()` for auto-generated forms!
 
 ---
 
-**Key Takeaway**: Level 4 proves that zCLI's `zServer` can handle Jinja2 templates just like Flask, but with **declarative YAML routing** instead of Python decorators. The real magic starts in Level 5+ when we introduce zCLI's auto-rendering!
+**Key Takeaway**: Level 4 proves that zKernel's `zServer` can handle Jinja2 templates just like Flask, but with **declarative YAML routing** instead of Python decorators. The real magic starts in Level 5+ when we introduce zKernel's auto-rendering!
 

@@ -4,14 +4,14 @@ Level 2: Post Feed
 Display multiple blog posts as cards - like a real blog homepage!
 Goal: Show how to work with arrays of structured data
 """
-from zCLI import zCLI
+from zKernel import zKernel
 import asyncio
 import json
 
 print("Starting zBlog Server (Level 2: Post Feed)...")
 print("Goal: Display 5 blog posts in a feed, like a real blog homepage\n")
 
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {
         "host": "127.0.0.1",

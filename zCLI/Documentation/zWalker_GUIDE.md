@@ -7,7 +7,7 @@
 
 ## What It Does
 
-**zWalker** is the orchestration engine that brings all zCLI subsystems together into navigable UI experiences:
+**zWalker** is the orchestration engine that brings all zKernel subsystems together into navigable UI experiences:
 
 - ✅ **YAML-based menus** - Define interactive UIs without code
 - ✅ **Breadcrumb navigation** - Automatic back/forward tracking
@@ -110,10 +110,10 @@ zVaF:
 ### 2. Run Your App
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Initialize
-zcli = zCLI()
+zcli = zKernel()
 
 # Configure walker
 zcli.zspark_obj['zVaFile'] = '@.zUI.my_app'
@@ -362,7 +362,7 @@ navigation_callbacks = {
 
 ```yaml
 "Enter Shell":
-  zFunc: "@.zCLI.subsystems.zShell.zShell.interactive()"
+  zFunc: "@.zKernel.subsystems.zShell.zShell.interactive()"
 
 "Run Command":
   zShell:
@@ -398,7 +398,7 @@ navigation_callbacks = {
 ### Run Tests
 
 ```bash
-# From zCLI main menu
+# From zKernel main menu
 python main.py
 # Select: zWalker
 
@@ -572,7 +572,7 @@ Features:
 
 - **Declarative** - Define UIs in YAML, not code
 - **Navigable** - Automatic breadcrumbs and back navigation
-- **Powerful** - Access to all 11 zCLI subsystems
+- **Powerful** - Access to all 11 zKernel subsystems
 - **Flexible** - Works in Terminal and web (zBifrost)
 - **Production-ready** - 88 tests, 100% coverage
 

@@ -39,8 +39,8 @@ Auto-Discovery from zSchema:
 
 import bcrypt
 
-from zCLI import Any, Dict, Optional
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
+from zKernel import Any, Dict, Optional
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import (
     SESSION_KEY_ZAUTH,
     SESSION_KEY_ZMODE,
     ZMODE_ZBIFROST,
@@ -57,7 +57,7 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
     CONTEXT_ZSESSION,
     CONTEXT_DUAL
 )
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SessionConfig
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SessionConfig
 
 # Constants
 # Import centralized constants
@@ -85,7 +85,7 @@ def handle_zLogin(
     """
     Built-in zLogin handler - auto-discovers authentication from schema.
     
-    This is the main entry point for declarative authentication in zCLI.
+    This is the main entry point for declarative authentication in zKernel.
     It requires NO plugin code - everything is auto-discovered from the
     zSchema model specified in the zDialog.
     
@@ -93,7 +93,7 @@ def handle_zLogin(
         app_or_type: Application name (e.g., "zCloud") or "zolo" for platform auth
         zConv: Form data collected from zDialog (e.g., {"email": "...", "password": "..."})
         zContext: Dialog context containing model path and schema info
-        zcli: zCLI instance (provides data, loader, session, logger access)
+        zcli: zKernel instance (provides data, loader, session, logger access)
     
     Returns:
         Dict[str, Any]: Response dict for form rendering
@@ -397,7 +397,7 @@ def _is_bifrost_mode(zcli: Any) -> bool:
     Check if current mode is Bifrost (GUI).
     
     Args:
-        zcli: zCLI instance
+        zcli: zKernel instance
     
     Returns:
         bool: True if Bifrost mode, False if Terminal mode

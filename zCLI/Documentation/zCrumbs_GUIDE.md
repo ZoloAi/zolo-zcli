@@ -23,7 +23,7 @@
 
 ## Overview
 
-**zCrumbs** is zCLI's breadcrumb navigation system that tracks user navigation paths through hierarchical UI structures. It provides intelligent back-navigation, context preservation, and visual orientation across Terminal and Bifrost modes.
+**zCrumbs** is zKernel's breadcrumb navigation system that tracks user navigation paths through hierarchical UI structures. It provides intelligent back-navigation, context preservation, and visual orientation across Terminal and Bifrost modes.
 
 ### Key Features
 
@@ -1131,7 +1131,7 @@ dispatch.handle(key, value, walker=zcli.walker)
 
 ## Credits
 
-**Original Design**: Gal Nachshon (zCLI Creator)  
+**Original Design**: Gal Nachshon (zKernel Creator)  
 **Phase 0.5 (Enhanced Arrays)**: December 2022  
 **Phase 0 (OP_RESET)**: December 2022  
 **Testing**: Monster Test (20+ depth), Ultra Monster Test (30+ depth)  

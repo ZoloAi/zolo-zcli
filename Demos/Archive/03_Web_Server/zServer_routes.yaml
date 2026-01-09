@@ -1,5 +1,5 @@
 # zServer.demo_routes.yaml - Declarative HTTP Routing Demo
-# Philosophy: "Routes are data, not code" - Flask blueprint style for zCLI
+# Philosophy: "Routes are data, not code" - Flask blueprint style for zKernel
 # v1.5.4 Phase 2
 
 Meta:

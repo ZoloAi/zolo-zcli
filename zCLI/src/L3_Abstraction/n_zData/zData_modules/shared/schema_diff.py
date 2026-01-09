@@ -71,7 +71,7 @@ The diff is returned as a structured dictionary:
 Usage Examples
 -------------
 Basic schema diff:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.schema_diff import diff_schemas
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.schema_diff import diff_schemas
     >>> old_schema = {'Tables': {'users': {'Columns': {'id': {'type': 'integer'}}}}}
     >>> new_schema = {'Tables': {'users': {'Columns': {'id': {'type': 'integer'}, 'name': {'type': 'string'}}}}}
     >>> diff = diff_schemas(old_schema, new_schema)
@@ -96,7 +96,7 @@ Generate human-readable report:
 Integration
 ----------
 - **Used By**: ddl_migrate.py (migration executor)
-- **Depends On**: None (pure Python, no zCLI dependencies)
+- **Depends On**: None (pure Python, no zKernel dependencies)
 - **Output To**: zDisplay (formatted reports)
 
 See Also
@@ -106,7 +106,7 @@ See Also
 - validator.py: Schema validation before diffing
 """
 
-from zCLI import Dict, List, Any
+from zKernel import Dict, List, Any
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MODULE CONSTANTS

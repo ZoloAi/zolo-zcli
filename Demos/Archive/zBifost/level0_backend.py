@@ -4,9 +4,9 @@ Level 0: Bare WebSocket Connection
 Most primitive zBifrost demo - just prove WebSocket works
 No UI, no database, no commands
 """
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {
         "host": "127.0.0.1",

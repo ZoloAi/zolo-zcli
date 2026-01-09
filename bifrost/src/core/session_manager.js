@@ -1,6 +1,6 @@
 /**
  * ════════════════════════════════════════════════════════════════════════════
- * zCLI - SessionManager (Layer 1 Primitive)
+ * zKernel - SessionManager (Layer 1 Primitive)
  * ════════════════════════════════════════════════════════════════════════════
  *
  * Manages public session data on the frontend, synced with backend zSession.

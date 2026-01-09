@@ -13,7 +13,7 @@ Key Discovery:
   - Both are Layer 0 subsystems (foundation)
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 def run_demo():
     """Initialize zCLI and observe zComm auto-initialization."""
@@ -31,7 +31,7 @@ def run_demo():
     print("\nWatch the initialization order above...")
     print("Look for: [zConfig Ready] → [zComm Ready]\n")
     
-    z = zCLI(zSpark)
+    z = zKernel(zSpark)
     
     print("\n" + "="*60)
     print("# What you discovered:")

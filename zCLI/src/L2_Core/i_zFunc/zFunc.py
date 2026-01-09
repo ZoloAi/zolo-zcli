@@ -2,7 +2,7 @@
 
 """External Python function loader and executor."""
 
-from zCLI import inspect
+from zKernel import inspect
 
 
 def _mask_passwords_in_data(data, mask='********'):
@@ -37,7 +37,7 @@ class zFunc:
     """Function loading and execution subsystem."""
 
     def __init__(self, zcli):
-        """Initialize zFunc with zCLI instance."""
+        """Initialize zFunc with zKernel instance."""
         self.zcli = zcli
         self.logger = zcli.logger
         self.session = zcli.session

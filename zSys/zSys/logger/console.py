@@ -11,9 +11,9 @@ from .formats import format_log_message
 
 class ConsoleLogger:
     """
-    Minimal console logger for contexts where full zCLI logger isn't available.
+    Minimal console logger for contexts where full zKernel logger isn't available.
     
-    Used primarily in WSGI workers where the full zCLI instance isn't accessible.
+    Used primarily in WSGI workers where the full zKernel instance isn't accessible.
     Uses the same unified format as Bootstrap, Framework, and App loggers for
     consistency across all logging outputs.
     

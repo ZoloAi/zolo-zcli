@@ -179,7 +179,7 @@ def process_form_submission(
     Args:
         route: Form route definition from routes.yaml
         form_data: Parsed form data from parse_form_data()
-        zcli: zCLI instance (for dispatch, validation, etc.)
+        zcli: zKernel instance (for dispatch, validation, etc.)
         logger: Logger instance
     
     Returns:
@@ -239,7 +239,7 @@ def process_form_submission(
         }
         
         try:
-            # Dispatch via zCLI (same pattern as zDialog.handle_submit)
+            # Dispatch via zKernel (same pattern as zDialog.handle_submit)
             _execute_dispatch(on_submit, context, zcli, logger)
             logger.info(LOG_MSG_SUCCESS)
         except Exception as e:
@@ -270,7 +270,7 @@ def _validate_form_data(
     Args:
         model: Schema path (e.g., "@.zSchema.contacts")
         zConv: Form data dict
-        zcli: zCLI instance
+        zcli: zKernel instance
         logger: Logger instance
     
     Returns:
@@ -319,14 +319,14 @@ def _execute_dispatch(
     Args:
         on_submit: onSubmit expression from route definition
         context: Context with model, fields, zConv
-        zcli: zCLI instance
+        zcli: zKernel instance
         logger: Logger instance
     
     Returns:
         Any: Result from zDispatch
     """
     # Import zDialog's submission handler to reuse logic
-    from zCLI.L2_Core.j_zDialog.dialog_modules.dialog_submit import handle_submit
+    from zKernel.L2_Core.j_zDialog.dialog_modules.dialog_submit import handle_submit
     
     # Create a minimal walker-like object for handle_submit
     class MinimalWalker:

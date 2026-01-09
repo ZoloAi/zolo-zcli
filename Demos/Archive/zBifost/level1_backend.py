@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from pathlib import Path
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({
+z = zKernel({
     "zWorkspace": str(Path(__file__).parent),
     "zVaFile": "@.zUI.level1",
     "zBlock": "Level1Menu",

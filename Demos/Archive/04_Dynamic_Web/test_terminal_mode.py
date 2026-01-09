@@ -10,7 +10,7 @@ import sys
 # Add zCLI to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Test the dashboard in Terminal mode
 print("=" * 60)
@@ -18,7 +18,7 @@ print("🧪 Testing Dashboard in Terminal Mode")
 print("=" * 60)
 print()
 
-z = zCLI({
+z = zKernel({
     'zSpace': os.path.dirname(os.path.abspath(__file__)),
     'zVaFile': 'zUI_web_dashboard.yaml',
     'zBlock': 'zVaF',

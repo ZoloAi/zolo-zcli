@@ -15,7 +15,7 @@
 
 **<span style="color:#8FBE6D">Every modern app needs real-time communication.</span>** WebSocket servers, message routing, event handling—the real struggle is keeping your Python backend's JSON in sync with your JavaScript frontend, let alone setting it up. **One schema change breaks everything.**
 
-<span style="color:#8FBE6D">**zBifrost**</span> is zCLI's **<span style="color:#F8961F">Layer 0 WebSocket bridge</span>**, providing a **production-ready server** (Python) and **standalone JavaScript client**. Don't need the full framework? **<span style="color:#8FBE6D">Import zCLI, use just the server.</span>** Or use the JavaScript client standalone with any WebSocket backend. Get **<span style="color:#8FBE6D">event-driven architecture</span>**, **<span style="color:#F8961F">CRUD operations via WebSocket</span>**, **<span style="color:#F8961F">auto-rendering with zTheme</span>**, and **<span style="color:#F8961F">hooks for customization</span>** in one unified bridge.<br>**No websockets library, no message juggling, no boilerplate.**
+<span style="color:#8FBE6D">**zBifrost**</span> is zKernel's **<span style="color:#F8961F">Layer 0 WebSocket bridge</span>**, providing a **production-ready server** (Python) and **standalone JavaScript client**. Don't need the full framework? **<span style="color:#8FBE6D">Import zKernel, use just the server.</span>** Or use the JavaScript client standalone with any WebSocket backend. Get **<span style="color:#8FBE6D">event-driven architecture</span>**, **<span style="color:#F8961F">CRUD operations via WebSocket</span>**, **<span style="color:#F8961F">auto-rendering with zTheme</span>**, and **<span style="color:#F8961F">hooks for customization</span>** in one unified bridge.<br>**No websockets library, no message juggling, no boilerplate.**
 
 > **Coming from zComm?** You've learned client-side HTTP and service management. zBifrost adds **server-side WebSocket** for real-time Terminal ↔ Web communication.
 
@@ -28,7 +28,7 @@ zBifrost uses an **<span style="color:#8FBE6D">event-driven architecture</span>*
   <div style="border-left:4px solid #8FBE6D; padding:1rem; background:rgba(143,190,109,0.08);">
     <strong style="color:#8FBE6D;">Server (Python)</strong><br>
     Event-driven WebSocket server with authentication, caching, and command dispatch<br>
-    <code style="color:#999;">zCLI/subsystems/zComm/zComm_modules/bifrost/</code>
+    <code style="color:#999;">zKernel/subsystems/zComm/zComm_modules/bifrost/</code>
   </div>
 
   <div style="border-left:4px solid #F8961F; padding:1rem; background:rgba(248,150,31,0.08);">
@@ -50,13 +50,13 @@ zBifrost uses an **<span style="color:#8FBE6D">event-driven architecture</span>*
 zBifrost works in any Python project—just needs zConfig for paths and logging.<br>**Two imports, full WebSocket stack.**
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Minimal setup (zConfig auto-initializes)
-z = zCLI()
+z = zKernel()
 
 # WebSocket server ready
-z = zCLI({"zMode": "zBifrost"})
+z = zKernel({"zMode": "zBifrost"})
 z.walker.run()  # ws://localhost:8765
 
 # Programmatic control
@@ -80,7 +80,7 @@ await z.comm.start_websocket(socket_ready)
 
 > **<span style="color:#8FBE6D">Learn zBifrost step-by-step.</span>**<br>Each level builds on the previous, adding complexity gradually. All demos live in [`Demos/Layer_0/zBifrost_Demo`](../Demos/Layer_0/zBifrost_Demo).
 
-**The Progression:** Four levels take you from imperative to declarative, showing **<span style="color:#F8961F">the evolution of WebSocket development</span>** with zCLI:
+**The Progression:** Four levels take you from imperative to declarative, showing **<span style="color:#F8961F">the evolution of WebSocket development</span>** with zKernel:
 
 **Levels 0-2: Imperative Foundation** (raw WebSocket mechanics, full control)
 - **Level 0**: Hello zBlog - Basic connection lifecycle
@@ -210,7 +210,7 @@ python3 hello_zTheme.py
 
 **Success**: Page auto-connects (no button), content renders beautifully with zero custom CSS/JS
 
-**Ultimate Simplicity**: Both frontend AND backend are declarative. Just describe what you want, zCLI handles the rest!
+**Ultimate Simplicity**: Both frontend AND backend are declarative. Just describe what you want, zKernel handles the rest!
 
 ---
 
@@ -221,10 +221,10 @@ zBifrost server auto-starts when `zMode: "zBifrost"` is set, or can be created p
 ### Auto-Start (Recommended)
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Set zMode to zBifrost - server auto-starts
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {
         "port": 8765,
@@ -241,9 +241,9 @@ z.walker.run()  # Your YAML now renders in browser via WebSocket
 
 ```python
 import asyncio
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI()
+z = zKernel()
 
 # Create WebSocket server
 websocket = z.comm.create_websocket(port=8765, host="127.0.0.1")
@@ -293,7 +293,7 @@ The BifrostClient is a **<span style="color:#8FBE6D">standalone JavaScript libra
 **Option 1: CDN (Recommended)**
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.5/zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.5/zKernel/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js"></script>
 ```
 
 **Option 2: ES6 Module**
@@ -392,7 +392,7 @@ new BifrostClient(url, {
 
 ## CRUD Operations
 
-BifrostClient provides high-level CRUD methods that communicate with zCLI's zData subsystem via WebSocket.
+BifrostClient provides high-level CRUD methods that communicate with zKernel's zData subsystem via WebSocket.
 
 ```javascript
 // Create
@@ -527,9 +527,9 @@ const client = new BifrostClient('ws://localhost:8765', {
 });
 ```
 
-## zCLI Integration Methods
+## zKernel Integration Methods
 
-BifrostClient provides convenience methods for zCLI-specific operations:
+BifrostClient provides convenience methods for zKernel-specific operations:
 
 ```javascript
 // Execute zFunc

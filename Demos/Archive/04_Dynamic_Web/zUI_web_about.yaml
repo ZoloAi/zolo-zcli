@@ -5,13 +5,13 @@ zVaF:
   PageHeader:
     zDisplay:
       event: header
-      content: "ℹ️  About zCLI"
+      content: "ℹ️  About zKernel"
       indent: 0
   
   Intro:
     zDisplay:
       event: text
-      content: "zCLI is a declarative command-line interface framework"
+      content: "zKernel is a declarative command-line interface framework"
       indent: 1
   
   Divider1:

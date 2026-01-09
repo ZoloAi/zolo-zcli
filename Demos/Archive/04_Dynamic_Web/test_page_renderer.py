@@ -6,11 +6,11 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from zCLI import zCLI
+from zKernel import zKernel
 from zCLI.subsystems.zServer.zServer_modules.page_renderer import PageRenderer
 
 # Initialize zCLI
-z = zCLI({
+z = zKernel({
     'zSpace': os.path.dirname(os.path.abspath(__file__)),
     'zMode': 'Terminal'
 })

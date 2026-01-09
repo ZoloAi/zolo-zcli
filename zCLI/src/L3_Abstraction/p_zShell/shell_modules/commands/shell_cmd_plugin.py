@@ -1,9 +1,9 @@
 # zCLI/subsystems/zShell/shell_modules/commands/shell_cmd_plugin.py
 
 """
-Unified plugin command router for zCLI shell.
+Unified plugin command router for zKernel shell.
 
-This module provides the main entry point for all plugin-related commands in the zCLI
+This module provides the main entry point for all plugin-related commands in the zKernel
 shell, routing requests to either execution (plugin_exec.py) or management (plugin_mgmt.py)
 submodules based on the requested action. It implements a clean separation between
 plugin function execution and plugin cache management.
@@ -100,7 +100,7 @@ EXAMPLES
 AUTHOR & VERSION
 ═══════════════════════════════════════════════════════════════════════════════
 
-Author: zCLI Development Team
+Author: zKernel Development Team
 Version: 1.5.4
 Last Updated: 2025-11-07
 """
@@ -144,7 +144,7 @@ def execute_plugin(zcli: Any, parsed: Dict[str, Any]) -> None:
     Parameters
     ----------
     zcli : Any
-        zCLI instance providing access to subsystems (utils, loader, display, logger)
+        zKernel instance providing access to subsystems (utils, loader, display, logger)
     parsed : Dict[str, Any]
         Parsed command dictionary with keys:
             - "action": Command action (exec, run, load, show, clear, reload)

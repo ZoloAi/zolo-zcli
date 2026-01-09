@@ -7,7 +7,7 @@ Requirements are defined in .zEnv file.
 Run: python3 Demos/Layer_0/zConfig_Demo/lvl4_usecase/1_system_checker.py
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 import sys
 
 
@@ -78,7 +78,7 @@ def main():
         "logger": "INFO",             # Show INFO level and above
         "logger_path": "./logs",      # Save logs in local folder
     }
-    z = zCLI(zSpark)  # Create zCLI instance
+    z = zKernel(zSpark)  # Create zCLI instance
 
     # Step 2: Get project info from .zEnv
     # .zEnv file is auto-loaded from workspace

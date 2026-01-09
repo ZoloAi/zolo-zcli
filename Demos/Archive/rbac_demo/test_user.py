@@ -2,9 +2,9 @@
 """RBAC Test - User role (v1.5.4 Week 3.3)"""
 
 from pathlib import Path
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({
+z = zKernel({
     "zWorkspace": str(Path(__file__).parent),
     "zVaFile": "@.zUI.rbac_test",
     "zBlock": "zVaF",

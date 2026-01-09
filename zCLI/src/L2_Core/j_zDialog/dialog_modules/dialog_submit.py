@@ -91,8 +91,8 @@ Integration Points
 - ✅ Week 6.6 (zDispatch): VERIFIED - handle_zDispatch signature is compatible
 """
 
-from zCLI import Any, Dict, Optional
-from zCLI.L2_Core.e_zDispatch import handle_zDispatch
+from zKernel import Any, Dict, Optional
+from zKernel.L2_Core.e_zDispatch import handle_zDispatch
 
 from .dialog_context import inject_placeholders, KEY_MODEL, KEY_ZCONV
 from .dialog_constants import (

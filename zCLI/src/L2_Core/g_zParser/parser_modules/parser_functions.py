@@ -8,7 +8,7 @@ directly from YAML configuration.
 """
 
 import re
-from zCLI import Any
+from zKernel import Any
 
 
 def resolve_variables(value: str, zcli: Any, context: Any = None) -> str:
@@ -25,7 +25,7 @@ def resolve_variables(value: str, zcli: Any, context: Any = None) -> str:
     
     Args:
         value: String potentially containing %variable references
-        zcli: zCLI instance for session access
+        zcli: zKernel instance for session access
         context: Optional execution context (contains _resolved_data from queries)
         
     Returns:
@@ -128,7 +128,7 @@ def resolve_function_call(value: str, zcli: Any) -> str:
     
     Args:
         value: String potentially containing &function calls
-        zcli: zCLI instance for function execution
+        zcli: zKernel instance for function execution
         
     Returns:
         String with function calls resolved to their values

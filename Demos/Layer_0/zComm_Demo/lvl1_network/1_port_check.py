@@ -13,7 +13,7 @@ Key Discovery:
   - Check before starting servers (prevents conflicts)
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 def run_demo():
     """Check common ports for availability."""
@@ -24,7 +24,7 @@ def run_demo():
         "logger": "INFO",
         "logger_path": "./logs",
     }
-    z = zCLI(zSpark)
+    z = zKernel(zSpark)
     
     print("\n" + "="*60)
     print("  NETWORK PORTS - AVAILABILITY CHECK")

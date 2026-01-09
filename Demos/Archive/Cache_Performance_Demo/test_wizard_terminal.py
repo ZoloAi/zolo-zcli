@@ -12,7 +12,7 @@ workspace_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(workspace_root))
 print(f"🔧 Using local zCLI from: {workspace_root}")
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 def main():
     print("=" * 60)
@@ -25,7 +25,7 @@ def main():
     print(f"📁 Workspace: {current_dir}")
     
     # Initialize zCLI in Terminal mode
-    z = zCLI({
+    z = zKernel({
         "zWorkspace": str(current_dir),
         "zVaFile": "@.zUI.cache_demo",
         "zBlock": "zVaF",

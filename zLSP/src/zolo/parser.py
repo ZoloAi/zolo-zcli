@@ -2439,7 +2439,7 @@ def _process_escape_sequences(value: str) -> str:
 
 def _is_zpath_value(value: str) -> bool:
     """
-    Check if value is a zPath (zCLI path resolution syntax).
+    Check if value is a zPath (zKernel path resolution syntax).
     
     zPath format:
     - Starts with @ or ~ modifier

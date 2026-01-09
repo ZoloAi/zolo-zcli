@@ -18,11 +18,11 @@ Run:
 import sys
 sys.path.insert(0, '/Users/galnachshon/Projects/zolo-zcli')
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 def run_demo():
     """Demonstrate swiper interactive slideshow."""
-    z = zCLI({"logger": "PROD"})
+    z = zKernel({"logger": "PROD"})
     
     z.display.line("")
     z.display.line("=== Level 5: Swiper (Interactive Slideshow) ===")
@@ -58,7 +58,7 @@ def run_demo():
     z.display.text("")
     
     tutorial_slides = [
-        "Step 1: Initialize zCLI\n\n  from zCLI import zCLI\n  z = zCLI()",
+        "Step 1: Initialize zCLI\n\n  from zKernel import zCLI\n  z = zKernel()",
         "Step 2: Display Progress Bar\n\n  z.display.progress_bar(50, 100, 'Processing')",
         "Step 3: Show Spinner\n\n  with z.display.spinner('Loading'):\n      time.sleep(2)",
         "Step 4: Create Interactive Tables\n\n  z.display.zTable(title='Users', columns=[...], rows=[...])",

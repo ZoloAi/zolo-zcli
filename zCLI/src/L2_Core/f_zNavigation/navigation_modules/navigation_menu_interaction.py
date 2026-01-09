@@ -132,7 +132,7 @@ WARN_* : str
     Warning messages for user feedback
 """
 
-from zCLI import Any, Dict, List, Union
+from zKernel import Any, Dict, List, Union
 
 from .navigation_constants import (
     SESSION_KEY_VAFOLDER,
@@ -183,7 +183,7 @@ class MenuInteraction:
     menu : MenuSystem
         Reference to parent menu system
     zcli : zCLI
-        Reference to zCLI core instance
+        Reference to zKernel core instance
     logger : logging.Logger
         Logger instance for interaction operations
     
@@ -241,7 +241,7 @@ class MenuInteraction:
 
     # Class-level type declarations
     menu: Any  # MenuSystem reference
-    zcli: Any  # zCLI core instance
+    zcli: Any  # zKernel core instance
     logger: Any  # Logger instance
 
     def __init__(self, menu: Any) -> None:
@@ -458,7 +458,7 @@ class MenuInteraction:
                     return self.get_choice_from_list(options, display)
                 
                 # Construct proper zLink for hierarchical navigation
-                # Terminal: Navigate to UI/zProducts/zUI.zCLI.yaml → zCLI_Details block
+                # Terminal: Navigate to UI/zProducts/zUI.zKernel.yaml → zCLI_Details block
                 # Pattern: @.UI.{parent_name}.zUI.{sub_choice}.{sub_choice}_Details
                 parent_name = display_name
                 block_name = f"{sub_choice}_Details"

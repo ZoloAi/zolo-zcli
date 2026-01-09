@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 from pathlib import Path
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({
+z = zKernel({
     "zSpace": str(Path(__file__).parent),
     "zVaFile": "@.zUI.users_sqlite",
     "zBlock": "zVaF",

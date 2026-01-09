@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/shell_modules/commands/shell_cmd_utils.py
 
 """
-Utility command execution for zCLI (DEPRECATED).
+Utility command execution for zKernel (DEPRECATED).
 
 ⚠️ DEPRECATION WARNING ⚠️
 
@@ -43,7 +43,7 @@ def execute_utils(zcli: Any, parsed: Dict[str, Any]) -> None:
     Parameters
     ----------
     zcli : Any
-        zCLI instance
+        zKernel instance
     parsed : Dict[str, Any]
         Parsed command dictionary with keys:
             - "action": Function name

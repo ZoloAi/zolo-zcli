@@ -12,12 +12,12 @@ Run:
     python Demos/Layer_1/zDisplay_Demo/output/Level_1_Primitives/write_raw.py
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
     """Demonstrate raw output without automatic newlines."""
-    z = zCLI({"logger": "PROD"})
+    z = zKernel({"logger": "PROD"})
 
     print()
     print("=== Level 1A: raw() - No newline added ===")

@@ -87,7 +87,7 @@ document.getElementById('runAllTests').onclick = async () => {
 };
 ```
 
-### ✅ Declarative Approach (zCLI Way)
+### ✅ Declarative Approach (zKernel Way)
 ```yaml
 # zUI.cache_demo.yaml (12 lines)
 "^Run All Cache Tests":

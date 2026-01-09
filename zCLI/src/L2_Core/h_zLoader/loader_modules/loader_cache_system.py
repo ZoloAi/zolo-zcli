@@ -46,7 +46,7 @@ Design Decisions
    LRU operations without needing a custom data structure.
 
 2. **Session Storage**: Cache stored in session dict rather than class attributes
-   to support session isolation and persistence across zCLI operations.
+   to support session isolation and persistence across zKernel operations.
 
 3. **Mtime Freshness**: Checking file mtime on cache hit ensures cached data is
    always fresh, trading slight overhead for correctness.
@@ -131,7 +131,7 @@ Internal:
     - loader_io.py: Raw file loading (indirect, via zLoader facade)
 
 External:
-    - zCLI imports: os, time, OrderedDict, Any, Dict, Optional
+    - zKernel imports: os, time, OrderedDict, Any, Dict, Optional
     - zConfig constants: SESSION_KEY_ZCACHE, ZCACHE_KEY_SYSTEM
 
 Performance Considerations
@@ -163,8 +163,8 @@ Version History
 - v1.5.3: Original implementation (186 lines, basic LRU + mtime)
 """
 
-from zCLI import os, time, OrderedDict, Any, Dict, Optional
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZCACHE, ZCACHE_KEY_SYSTEM
+from zKernel import os, time, OrderedDict, Any, Dict, Optional
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZCACHE, ZCACHE_KEY_SYSTEM
 
 # ============================================================================
 # MODULE CONSTANTS
@@ -242,7 +242,7 @@ class SystemCache:
 
         Args:
             session (Dict[str, Any]): Session dictionary to store cache data.
-                Must be a mutable dict that persists across zCLI operations.
+                Must be a mutable dict that persists across zKernel operations.
             logger (Any): Logger instance for debug/error messages. Typically
                 from zConfig.logger.
             max_size (int, optional): Maximum number of cache entries before LRU

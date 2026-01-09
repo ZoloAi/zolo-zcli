@@ -102,7 +102,7 @@ _TIMESTAMP_FORMAT : str
     ISO-style timestamp format for metadata
 """
 
-from zCLI import time, Any, Optional, Dict, List, Union, Callable
+from zKernel import time, Any, Optional, Dict, List, Union, Callable
 
 from .navigation_constants import (
     NAV_ZBACK,
@@ -143,7 +143,7 @@ class MenuBuilder:
     menu : MenuSystem
         Reference to parent menu system
     zcli : zCLI
-        Reference to zCLI core instance
+        Reference to zKernel core instance
     logger : logging.Logger
         Logger instance for menu creation
     
@@ -189,7 +189,7 @@ class MenuBuilder:
 
     # Class-level type declarations
     menu: Any  # MenuSystem reference
-    zcli: Any  # zCLI core instance
+    zcli: Any  # zKernel core instance
     logger: Any  # Logger instance
 
     def __init__(self, menu: Any) -> None:

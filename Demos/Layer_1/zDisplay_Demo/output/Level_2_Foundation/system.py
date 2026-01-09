@@ -13,11 +13,11 @@ Run:
     python Demos/Layer_1/zDisplay_Demo/Level_4_System/system_declare.py
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 def run_demo():
     """Demonstrate system display events."""
-    z = zCLI({"logger": "PROD"})
+    z = zKernel({"logger": "PROD"})
     
     print()
     print("=== Level 4: System Display Events ===")

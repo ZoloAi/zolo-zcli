@@ -2,14 +2,14 @@
 
 ## Overview
 
-**zDialog** is zCLI's **Interactive Form/Dialog Subsystem**. It handles form rendering, data collection, auto-validation against zSchema, and submission processing with mode-agnostic support for both Terminal and Bifrost (GUI) environments.
+**zDialog** is zKernel's **Interactive Form/Dialog Subsystem**. It handles form rendering, data collection, auto-validation against zSchema, and submission processing with mode-agnostic support for both Terminal and Bifrost (GUI) environments.
 
 ### Start Here: First Tutorials
 - **Display primitives first.** Run the new micro-step demos in `Demos/Layer_1/zDisplay_Demo/output/Level_1_Primitives/` (write_raw, write_line, write_block) to see how raw text flows through zDisplay before adding form-specific rendering.
 - These three scripts mirror the zConfig/zComm tutorial style—quick, copy/paste-ready steps—and form the entry point for this guide before you move into zDialog-specific YAML forms.
 
 ### Executive Summary
-zDialog enables developers to create interactive forms declaratively using YAML, with automatic validation against data schemas and intelligent placeholder injection. Forms work seamlessly in both command-line (Terminal) and web-based (Bifrost) modes. The subsystem handles complex workflows like multi-field data collection, nested placeholder resolution, and submission routing—all while maintaining zCLI's pure declarative paradigm.
+zDialog enables developers to create interactive forms declaratively using YAML, with automatic validation against data schemas and intelligent placeholder injection. Forms work seamlessly in both command-line (Terminal) and web-based (Bifrost) modes. The subsystem handles complex workflows like multi-field data collection, nested placeholder resolution, and submission routing—all while maintaining zKernel's pure declarative paradigm.
 
 **Key Value**: Define forms once in YAML, get automatic validation, mode-agnostic rendering, and seamless submission handling across Terminal and GUI environments.
 
@@ -90,7 +90,7 @@ Tier 1: Foundation (dialog_context.py)                [350 lines]
 **zDialog.handle(zHorizontal, context=None)**
 
 ```python
-# Initialize (done by zCLI.py)
+# Initialize (done by zKernel.py)
 dialog = zDialog(zcli_instance)
 
 # Define form
@@ -515,8 +515,8 @@ walker.display.zDeclare("zDialog", color="ZDIALOG", indent=1, style="single")
 ### zData Direct Imports
 **Current** (documented as temporary):
 ```python
-from zCLI.subsystems.zData.zData_modules.shared.validator import DataValidator
-from zCLI.subsystems.zData.zData_modules.shared.operations.helpers import display_validation_errors
+from zKernel.subsystems.zData.zData_modules.shared.validator import DataValidator
+from zKernel.subsystems.zData.zData_modules.shared.operations.helpers import display_validation_errors
 ```
 
 **Future** (when zData is refactored):

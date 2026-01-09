@@ -11,11 +11,11 @@ Demonstrates zCLI's foundation caching system:
 Key Concept: Simple in-memory caching speeds up expensive operations
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 import time
 
 # Initialize zCLI
-z = zCLI()
+z = zKernel()
 
 # Initialize cache (if not exists)
 if 'zCache' not in z.session:

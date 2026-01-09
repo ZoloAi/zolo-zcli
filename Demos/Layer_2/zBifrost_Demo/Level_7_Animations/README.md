@@ -284,7 +284,7 @@ for batch in range(5):
 **Problem:** The CSS renderer for `progress_bar` may not be fully implemented yet.
 
 **Solution:**
-1. Check `zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/rendering/zdisplay_renderer.js`
+1. Check `zKernel/subsystems/zComm/zComm_modules/bifrost/client/src/rendering/zdisplay_renderer.js`
 2. Look for `_renderProgressBar()` method
 3. If missing, progress bars will display as text (still functional!)
 

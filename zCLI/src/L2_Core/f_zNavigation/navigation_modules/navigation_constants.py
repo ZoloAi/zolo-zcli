@@ -223,7 +223,7 @@ _TIMESTAMP_FORMAT: str = "%Y-%m-%d %H:%M:%S"
 # ============================================================================
 
 # General Errors (PRIVATE - internal error handling)
-_ERROR_MSG_NO_ZCLI: str = "zNavigation requires a zCLI instance"
+_ERROR_MSG_NO_ZCLI: str = "zNavigation requires a zKernel instance"
 _ERROR_MSG_NO_WALKER: str = "requires walker parameter"
 _MSG_NO_WALKER: str = "[ERROR] No walker instance provided to zLink."
 _MSG_PERMISSION_DENIED: str = "Permission denied for this section."

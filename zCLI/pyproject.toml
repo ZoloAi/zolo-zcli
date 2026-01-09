@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "zCLI"
+name = "zKernel"
 dynamic = ["version"]
-description = "A full-stack CLI framework powered by declerative zVaFiles, WebSocket server, interactive navigation, and pluggable data backends"
+description = "A declarative Python kernel that orchestrates 17 subsystems across Terminal and Web contexts"
 authors = [
     {name = "Gal Nachshon", email = "gal@zolo.media"}
 ]
@@ -29,6 +29,7 @@ classifiers = [
 keywords = ["cli", "framework", "yaml", "interactive", "shell", "declarative", "configuration", "menu-driven", "plugin-system", "session-management"]
 dependencies = [
     "zolo>=1.0.0",
+    "zSys",
     "PyYAML>=6.0",
     "websockets>=15.0",
     "requests>=2.32",
@@ -57,8 +58,8 @@ dev = [
 ]
 
 [project.scripts]
-zolo = "zCLI.main:main"
-zTests = "zCLI.main:ztests_main"
+zolo = "zKernel.main:main"
+zTests = "zKernel.main:ztests_main"
 
 [project.urls]
 Homepage = "https://github.com/ZoloAi/Zolo"
@@ -67,9 +68,9 @@ Repository = "https://github.com/ZoloAi/Zolo"
 "Bug Tracker" = "https://github.com/ZoloAi/Zolo/issues"
 
 [tool.setuptools]
-# Map src/ directory to be the zCLI package  
-package-dir = {"zCLI" = "src", "zSys" = "src/zSys"}
-packages = ["zCLI", "zSys"]
+# Map src/ directory to be the zKernel package  
+package-dir = {"zKernel" = "src"}
+packages = ["zKernel"]
 
 [tool.setuptools.package-data]
 # Include non-Python files in packages
@@ -84,16 +85,16 @@ zTestRunner = [
     "*.md",
     "*.sh",
 ]
-zCLI = [
-    "subsystems/*/zCLI_modules/*.yaml",
+zKernel = [
+    "subsystems/*/zKernel_modules/*.yaml",
     "utils/*.md",
     "UI/*.yaml",
 ]
 
 [tool.setuptools.dynamic]
 # Dynamically read the version string from the attribute
-# version module in src/ (mapped to zCLI package)
-version = {attr = "zCLI.version.__version__"}
+# version module in src/ (mapped to zKernel package)
+version = {attr = "zKernel.version.__version__"}
 
 [tool.uv]
 # uv configuration for modern Python package management

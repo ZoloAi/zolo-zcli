@@ -8,7 +8,7 @@
 
 **What is zLoader?**
 
-zLoader is zCLI's file loading and multi-tier caching engine. It loads configuration files, UI definitions, and schemas with intelligent caching to minimize disk I/O and maximize performance.
+zLoader is zKernel's file loading and multi-tier caching engine. It loads configuration files, UI definitions, and schemas with intelligent caching to minimize disk I/O and maximize performance.
 
 **Why it matters:**
 - **Performance**: Caches frequently accessed files (100x faster than disk I/O)
@@ -588,7 +588,7 @@ When `zPath=None`, uses session keys:
 
 ## Summary
 
-**zLoader** is zCLI's intelligent file loading and caching engine:
+**zLoader** is zKernel's intelligent file loading and caching engine:
 
 ✅ **6-Tier Architecture** - Clean separation (Package → Facade → Orchestrator → 4 Caches → I/O)  
 ✅ **Intelligent Caching** - UI/Config cached, Schemas fresh, Plugins cached  

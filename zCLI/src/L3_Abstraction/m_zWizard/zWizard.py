@@ -298,7 +298,7 @@ Notes
 - Uses UI Adapter pattern (returns None, outputs via zDisplay)
 """
 
-from zCLI import Any, Dict, Optional
+from zKernel import Any, Dict, Optional
 
 from .zWizard_modules.wizard_hat import WizardHat
 from .zWizard_modules.wizard_interpolation import interpolate_zhat
@@ -314,7 +314,7 @@ from .zWizard_modules.wizard_exceptions import (
 )
 
 # Import session constants from zConfig
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_WIZARD_MODE
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_WIZARD_MODE
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -521,7 +521,7 @@ class zWizard:
         # ════════════════════════════════════════════════════════════
         # Bifrost mode uses chunked execution (progressive rendering at ! gates)
         # Terminal mode uses sequential blocking execution
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules import ZMODE_ZBIFROST
+        from zKernel.L1_Foundation.a_zConfig.zConfig_modules import ZMODE_ZBIFROST
         mode = self.zcli.session.get("zMode", "Terminal")
         
         if mode == ZMODE_ZBIFROST:
@@ -808,7 +808,7 @@ class zWizard:
                     result = await wait_for_form_submit()
                     gen.send(result)  # Resume with result
         """
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules import ZMODE_ZBIFROST
+        from zKernel.L1_Foundation.a_zConfig.zConfig_modules import ZMODE_ZBIFROST
         
         self.logger.info("[zWizard] ⚡ Generator-based chunked execution for Bifrost")
         

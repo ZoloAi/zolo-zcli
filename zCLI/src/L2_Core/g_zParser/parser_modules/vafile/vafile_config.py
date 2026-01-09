@@ -8,7 +8,7 @@ This is a NEW module to properly handle zConfig files (previously falling throug
 to generic parsing).
 """
 
-from zCLI import Any, Dict, List, Optional
+from zKernel import Any, Dict, List, Optional
 
 # Import constants from parent package
 from . import (

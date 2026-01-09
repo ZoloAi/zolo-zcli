@@ -9,7 +9,7 @@ import os
 
 
 class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
-    """HTTP request handler with zCLI logger integration + routing (v1.5.5: Flask conventions)"""
+    """HTTP request handler with zKernel logger integration + routing (v1.5.5: Flask conventions)"""
     
     def __init__(self, *args, logger=None, router=None, static_folder="static", template_folder="templates", ui_folder="UI", serve_path=".", static_mounts=None, **kwargs):
         self.zcli_logger = logger
@@ -22,7 +22,7 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         super().__init__(*args, **kwargs)
     
     def log_message(self, format, *args):
-        """Override to use zCLI logger instead of stderr"""
+        """Override to use zKernel logger instead of stderr"""
         if self.zcli_logger:
             self.zcli_logger.info(f"[zServer] {self.address_string()} - {format % args}")
         else:
@@ -905,10 +905,10 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
     
     def _convert_zpath_to_url(self, zpath: str) -> str:
         """
-        Convert zCLI zPath to URL path for client-side fetching.
+        Convert zKernel zPath to URL path for client-side fetching.
         
         Args:
-            zpath: zCLI path, can be:
+            zpath: zKernel path, can be:
                 - Absolute: "@.UI.zUI.index.zVaF" (workspace/UI/zUI.index.yaml)
                 - Relative: "zUI.index.zVaF" (assumes UI folder)
         
@@ -1304,7 +1304,7 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         
         Args:
             data_block: _data section from route definition
-            zcli: zCLI instance for data access
+            zcli: zKernel instance for data access
         
         Returns:
             Dictionary of query results: {"user": {...}, "stats": [...]}
@@ -1325,7 +1325,7 @@ class LoggingHTTPRequestHandler(SimpleHTTPRequestHandler):
         
         if not zcli:
             if hasattr(self, 'zcli_logger') and self.zcli_logger:
-                self.zcli_logger.warning("[Handler] No zCLI instance - cannot resolve _data")
+                self.zcli_logger.warning("[Handler] No zKernel instance - cannot resolve _data")
             return results
         
         for key, query_def in data_block.items():

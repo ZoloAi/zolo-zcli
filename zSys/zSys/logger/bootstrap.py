@@ -3,7 +3,7 @@
 Bootstrap logger for pre-boot logging (Layer 0).
 
 Uses Python's standard logging.MemoryHandler for industry-grade buffering.
-Buffers log messages before zCLI framework is initialized, then flushes
+Buffers log messages before zKernel framework is initialized, then flushes
 them into zcli-framework.log once the framework logger is available.
 
 Supports --verbose flag for CLI commands to display bootstrap process.
@@ -41,7 +41,7 @@ class BootstrapLogger:
         boot_logger.debug("Parsing arguments...")
         
         try:
-            cli = zCLI()
+            cli = zKernel()
             # Inject buffered logs (verbose=True shows on stdout)
             boot_logger.flush_to_framework(
                 cli.logger,  # Pass LoggerConfig instance
@@ -53,7 +53,7 @@ class BootstrapLogger:
             sys.exit(1)
     """
     
-    def __init__(self, name: str = "zCLI.bootstrap"):
+    def __init__(self, name: str = "zKernel.bootstrap"):
         """Initialize bootstrap logger with Python's MemoryHandler."""
         self.start_time = datetime.now()
         
@@ -179,7 +179,7 @@ class BootstrapLogger:
         """
         Print all buffered logs to stdout (for cases without framework logger).
         
-        Used when running commands that don't initialize zCLI (e.g., info banner)
+        Used when running commands that don't initialize zKernel (e.g., info banner)
         but still want to show bootstrap process with --verbose flag.
         """
         if not self.buffered_records:
@@ -213,7 +213,7 @@ class BootstrapLogger:
             exception: The exception that caused init failure (if any)
         """
         print("\n" + "=" * 70, file=sys.stderr)
-        print("❌ CRITICAL: zCLI Framework Initialization Failed", file=sys.stderr)
+        print("❌ CRITICAL: zKernel Framework Initialization Failed", file=sys.stderr)
         print("=" * 70, file=sys.stderr)
         
         if exception:

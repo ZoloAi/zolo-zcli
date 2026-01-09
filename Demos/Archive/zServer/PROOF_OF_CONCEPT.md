@@ -101,9 +101,9 @@ console.log('✅ JavaScript loaded successfully from zServer!');
 ## Code Used
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"zWorkspace": "."})
+z = zKernel({"zWorkspace": "."})
 
 http_server = z.comm.create_http_server(
     port=8080,
@@ -260,7 +260,7 @@ October 26, 2025
 
 ---
 
-**Conclusion**: zServer successfully serves static files using Python's built-in http.server with zero external dependencies, full CORS support, and clean integration with the zCLI framework.
+**Conclusion**: zServer successfully serves static files using Python's built-in http.server with zero external dependencies, full CORS support, and clean integration with the zKernel framework.
 
 ✅ **PROOF COMPLETE**
 

@@ -14,12 +14,12 @@ Run:
 import sys
 sys.path.insert(0, '/Users/galnachshon/Projects/zolo-zcli')
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
     """Demonstrate masked password input collection."""
-    z = zCLI({"logger": "PROD"})
+    z = zKernel({"logger": "PROD"})
 
     z.display.line("")
     z.display.line("=== Level 1E: read_password() - Masked input ===")

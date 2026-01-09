@@ -19,15 +19,15 @@ Key Responsibilities:
     - Client connection management (authentication, registration, cleanup)
     - Message routing and event dispatch
     - Broadcasting to multiple clients
-    - Integration with zCLI configuration and logging systems
+    - Integration with zKernel configuration and logging systems
 """
 
-from zCLI import (
+from zKernel import (
     asyncio, json, time,
     Optional, Dict, Any,
     ws_serve, WebSocketServerProtocol, ws_exceptions
 )
-from zCLI.L1_Foundation.b_zComm.zComm_modules.comm_websocket_auth import WebSocketAuth
+from zKernel.L1_Foundation.b_zComm.zComm_modules.comm_websocket_auth import WebSocketAuth
 from .modules import (
     CacheManager,
     AuthenticationManager,
@@ -191,8 +191,8 @@ class zBifrost:
     
     Args:
         logger: Logger instance (required)
-        walker: Optional Walker instance for zCLI integration
-        zcli: Optional zCLI instance (falls back to walker.zcli if not provided)
+        walker: Optional Walker instance for zKernel integration
+        zcli: Optional zKernel instance (falls back to walker.zcli if not provided)
         port: WebSocket server port (defaults to config or 56891)
         host: WebSocket server host (defaults to config or 127.0.0.1)
     
@@ -215,7 +215,7 @@ class zBifrost:
         Args:
             logger: Logger instance (required, cannot be None)
             walker: Optional Walker instance
-            zcli: Optional zCLI instance (or derived from walker)
+            zcli: Optional zKernel instance (or derived from walker)
             port: Server port (1-65535, defaults to config or 56891)
             host: Server host (defaults to config or 127.0.0.1)
         
@@ -233,7 +233,7 @@ class zBifrost:
         self.zcli = zcli or (walker.zcli if walker else None)
         self.logger = logger
 
-        # Load WebSocket configuration from zCLI config system
+        # Load WebSocket configuration from zKernel config system
         if self.zcli and hasattr(self.zcli, 'config') and hasattr(self.zcli.config, 'websocket'):
             self.ws_config = self.zcli.config.websocket
             self.port = port or self.ws_config.port
@@ -241,7 +241,7 @@ class zBifrost:
             require_auth = self.ws_config.require_auth
             allowed_origins = self.ws_config.allowed_origins
         else:
-            # Fallback to defaults if zCLI config not available
+            # Fallback to defaults if zKernel config not available
             self.port = port or _DEFAULT_PORT
             self.host = host or _DEFAULT_HOST
             require_auth = _DEFAULT_REQUIRE_AUTH
@@ -401,7 +401,7 @@ class zBifrost:
                 # Mask passwords in logged messages
                 try:
                     import json
-                    from zCLI.L2_Core.j_zDialog.dialog_modules.dialog_submit import _mask_passwords_in_dict
+                    from zKernel.L2_Core.j_zDialog.dialog_modules.dialog_submit import _mask_passwords_in_dict
                     msg_dict = json.loads(message)
                     masked_msg = _mask_passwords_in_dict(msg_dict)
                     self.logger.info(_LOG_RECEIVED.format(message=json.dumps(masked_msg)))
@@ -815,7 +815,7 @@ class zBifrost:
         """
         Synchronous shutdown for when event loop is already running.
         
-        This is called from zCLI.shutdown() when the event loop is active
+        This is called from zKernel.shutdown() when the event loop is active
         and we can't use async/await. Does minimal cleanup to free the port.
         
         Note: This skips sending shutdown notifications to clients and just

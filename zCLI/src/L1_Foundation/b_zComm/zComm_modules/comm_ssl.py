@@ -10,7 +10,7 @@ Architecture:
     Consumers: WebSocketServer, zServer (via zComm)
 """
 
-from zCLI import ssl, Path, Optional, Any
+from zKernel import ssl, Path, Optional, Any
 
 # Module Constants
 
@@ -32,7 +32,7 @@ def create_ssl_context(
     """
     Create SSL context for server-side TLS encryption (Layer 0 primitive).
     
-    This is the canonical SSL context creation function for all zCLI servers
+    This is the canonical SSL context creation function for all zKernel servers
     (HTTP, WebSocket, etc.). Provides consistent SSL handling across the framework.
     
     Args:
@@ -53,7 +53,7 @@ def create_ssl_context(
     
     Example:
         ```python
-        from zCLI.L1_Foundation.b_zComm.zComm_modules.comm_ssl import create_ssl_context
+        from zKernel.L1_Foundation.b_zComm.zComm_modules.comm_ssl import create_ssl_context
         
         ssl_context = create_ssl_context(
             ssl_enabled=True,

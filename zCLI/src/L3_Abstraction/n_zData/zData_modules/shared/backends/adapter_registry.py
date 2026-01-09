@@ -60,7 +60,7 @@ Custom Adapter Registration
 --------------------------
 Plugins can register custom adapters using `register_custom_adapter()`:
 
-    from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends.adapter_registry import register_custom_adapter
+    from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends.adapter_registry import register_custom_adapter
     
     class MyCustomAdapter(BaseDataAdapter):
         # ... implement adapter ...
@@ -71,13 +71,13 @@ Usage Examples
 -------------
 Built-in adapters (auto-registered):
     >>> # Just import the module - adapters auto-register
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends import adapter_registry
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends import adapter_registry
     >>> # Adapters now available via AdapterFactory.create_adapter()
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends.adapter_factory import AdapterFactory
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends.adapter_factory import AdapterFactory
     >>> adapter = AdapterFactory.create_adapter("sqlite", config, logger)
 
 Custom adapter registration:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends.adapter_registry import register_custom_adapter
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends.adapter_registry import register_custom_adapter
     >>> register_custom_adapter("redis", RedisAdapter)
     >>> adapter = AdapterFactory.create_adapter("redis", config, logger)
 
@@ -96,7 +96,7 @@ Note:
 """
 
 import logging
-from zCLI import Any
+from zKernel import Any
 from .adapter_factory import AdapterFactory
 
 # ============================================================
@@ -140,7 +140,7 @@ _ERR_PSYCOPG2_MISSING = "psycopg2 not installed"
 # ============================================================
 
 # Get logger for this module
-logger = logging.getLogger("zCLI.zData")
+logger = logging.getLogger("zKernel.zData")
 
 # ============================================================
 # Public API
@@ -171,7 +171,7 @@ def register_builtin_adapters() -> None:
 
     Example:
         >>> # Auto-registration on module import
-        >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends import adapter_registry
+        >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends import adapter_registry
         >>> # SQLite, CSV (if pandas), PostgreSQL (if psycopg2) now registered
 
     Note:
@@ -222,8 +222,8 @@ def register_custom_adapter(data_type: str, adapter_class: Any) -> None:
         None
 
     Example:
-        >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends.base_adapter import BaseDataAdapter
-        >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends.adapter_registry import register_custom_adapter
+        >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends.base_adapter import BaseDataAdapter
+        >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends.adapter_registry import register_custom_adapter
         >>> 
         >>> class RedisAdapter(BaseDataAdapter):
         ...     def connect(self):

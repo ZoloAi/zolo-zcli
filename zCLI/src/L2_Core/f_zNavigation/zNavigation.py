@@ -1,10 +1,10 @@
 # zCLI/subsystems/zNavigation/zNavigation.py
 
 """
-zNavigation - Unified Navigation System Subsystem for zCLI.
+zNavigation - Unified Navigation System Subsystem for zKernel.
 
 This module provides the zNavigation facade class, which serves as the primary
-interface for navigation operations in zCLI. It orchestrates four specialized
+interface for navigation operations in zKernel. It orchestrates four specialized
 components to deliver menu creation, breadcrumb management, navigation state
 tracking, and inter-file linking.
 
@@ -84,7 +84,7 @@ Layer 1, Position 4 (zNavigation) - Facade
 
 Integration
 -----------
-- Parent: zCLI core (zCLI.py)
+- Parent: zKernel core (zKernel.py)
 - Used By: zDispatch (menu system), zWalker (navigation), external clients
 - Uses: MenuSystem, Breadcrumbs, Navigation, Linking components
 
@@ -92,8 +92,8 @@ Usage Examples
 --------------
 Via facade (recommended)::
 
-    # Initialize zCLI (done automatically)
-    zcli = zCLI()
+    # Initialize zKernel (done automatically)
+    zcli = zKernel()
     
     # Create navigation menu
     choice = zcli.navigation.create(
@@ -115,7 +115,7 @@ Via facade (recommended)::
 Via standalone functions (backward compatibility)::
 
     # Legacy Walker integration
-    from zCLI.L2_Core.f_zNavigation import handle_zLink, handle_zCrumbs
+    from zKernel.L2_Core.f_zNavigation import handle_zLink, handle_zCrumbs
     
     # These delegate to the facade internally
     result = handle_zLink("zLink(path)", walker)
@@ -128,7 +128,7 @@ See Also
 - zWalker : Navigation orchestration
 """
 
-from zCLI import Any, Dict, List, Optional, Tuple, Union
+from zKernel import Any, Dict, List, Optional, Tuple, Union
 
 from .navigation_modules.navigation_menu_system import MenuSystem
 from .navigation_modules.navigation_breadcrumbs import Breadcrumbs
@@ -151,7 +151,7 @@ from .navigation_modules.navigation_constants import (
 
 class zNavigation:
     """
-    Unified navigation system facade for zCLI.
+    Unified navigation system facade for zKernel.
     
     Provides a clean, consistent interface to the navigation subsystem by
     orchestrating four specialized components: MenuSystem, Breadcrumbs,
@@ -161,7 +161,7 @@ class zNavigation:
     Attributes
     ----------
     zcli : Any
-        Reference to zCLI core instance
+        Reference to zKernel core instance
     session : Dict
         Session dictionary for state management
     logger : Any
@@ -219,13 +219,13 @@ class zNavigation:
     
     Integration
     -----------
-    - Initialized by: zCLI.py core
+    - Initialized by: zKernel.py core
     - Used by: zDispatch, zWalker, external clients
     - Delegates to: MenuSystem, Breadcrumbs, Navigation, Linking
     """
 
     # Class-level type declarations
-    zcli: Any  # zCLI core instance
+    zcli: Any  # zKernel core instance
     session: Dict[str, Any]  # Session dictionary
     logger: Any  # Logger instance
     mycolor: str  # Display color
@@ -241,7 +241,7 @@ class zNavigation:
         Args
         ----
         zcli : Any
-            zCLI core instance (required)
+            zKernel core instance (required)
         
         Raises
         ------
@@ -293,7 +293,7 @@ class zNavigation:
         zConfig.load_dotenv() loads zEnv.base.yaml + zEnv.{environment}.yaml and injects into os.environ.
         
         Supports multiple formats (priority order):
-        1. os.environ["ZNAVBAR"] (from zConfig's zEnv YAML loading) - THE zCLI WAY
+        1. os.environ["ZNAVBAR"] (from zConfig's zEnv YAML loading) - THE zKernel WAY
         2. Legacy .zEnv file parsing (backward compatibility only)
         3. Legacy comma-separated: ZNAVBAR=zVaF,zAbout,zLogin
         
@@ -325,7 +325,7 @@ class zNavigation:
         import json
         from pathlib import Path
         
-        # Priority 1: Check os.environ (from zConfig's zEnv YAML loading - THE zCLI WAY)
+        # Priority 1: Check os.environ (from zConfig's zEnv YAML loading - THE zKernel WAY)
         navbar_env = os.getenv("ZNAVBAR", "").strip()
         
         # Priority 2: Fallback to legacy .zEnv file (backward compatibility only)
@@ -1084,7 +1084,7 @@ def handle_zLink(zHorizontal: str, walker: Optional[Any] = None) -> str:
     --------
     Legacy Walker usage::
     
-        from zCLI.L2_Core.f_zNavigation import handle_zLink
+        from zKernel.L2_Core.f_zNavigation import handle_zLink
         result = handle_zLink("zLink(path)", walker)
     
     Notes
@@ -1133,7 +1133,7 @@ def handle_zCrumbs(
     --------
     Walker usage::
     
-        from zCLI.L2_Core.f_zNavigation import handle_zCrumbs
+        from zKernel.L2_Core.f_zNavigation import handle_zCrumbs
         handle_zCrumbs("key", walker)
     
     Notes

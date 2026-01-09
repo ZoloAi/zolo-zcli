@@ -2,16 +2,16 @@
 
 ---
 
-# zCLI Installation
+# zKernel Installation
 
-Everything you need, **from zero to a working zCLI installtion**
+Everything you need, **from zero to a working zKernel installtion**
 
-**About zCLI:**  
-`zCLI` is a **Python package** that can be installed either **system-wide** (OS-level) or in a **virtual environment**.
+**About zKernel:**  
+`zKernel` is a **Python package** that can be installed either **system-wide** (OS-level) or in a **virtual environment**.
 
-While both are supported, we **recommend system-wide installation**. Why? Because zCLI is more than a coding framework. With **zShell**, it provides a **near-declarative OS**.
+While both are supported, we **recommend system-wide installation**. Why? Because zKernel is more than a coding framework. With **zShell**, it provides a **near-declarative OS**.
 
-Installing it system-wide makes **zCLI** available across all your projects and terminals, treating it as **a foundational tool** rather than a project-specific dependency.
+Installing it system-wide makes **zKernel** available across all your projects and terminals, treating it as **a foundational tool** rather than a project-specific dependency.
 
 ## Requirements Checklist
 
@@ -23,7 +23,7 @@ Installing it system-wide makes **zCLI** available across all your projects and 
 
 **Why Python Setup Instructions?**
 
-zCLI is not only a powerful framework—it's a **wonderful entry point for computer science** in general. Whether you're **13+ starting your coding journey**, or an **experienced developer**, Zolo wants to meet you where you are.
+zKernel is not only a powerful framework—it's a **wonderful entry point for computer science** in general. Whether you're **13+ starting your coding journey**, or an **experienced developer**, Zolo wants to meet you where you are.
 
 > **Never used a terminal before?** If words like "command line" or "terminal" are completely new to you, start with our **[Terminal Basics Guide](BASICS_GUIDE.md)**—it will get you comfortable in just a few minutes.
 
@@ -89,7 +89,7 @@ python3 -m pip install ...
 
 **Why Git?**
 
-zCLI is distributed via GitHub, so you'll need Git to install it. 
+zKernel is distributed via GitHub, so you'll need Git to install it. 
 
 **New to Git?**
 
@@ -135,9 +135,9 @@ xcode-select --install
 - **macOS/Linux**: Make sure `/usr/local/bin` or `/opt/homebrew/bin` is in your PATH
 - Test again with `git --version`
 
-## 3. Installing zCLI
+## 3. Installing zKernel
 
-### 3a. Pick your zCLI package
+### 3a. Pick your zKernel package
 
 - **Basic** – SQLite only (fastest install)
 - **CSV** – Basic + CSV tooling (`pandas`)
@@ -146,7 +146,7 @@ xcode-select --install
 
 ### 3b. Install from GitHub (HTTPS)
 
-**Open your terminal** (macOS/Linux) or **Command Prompt/PowerShell** (Windows), then run your desired **zCLI** install command:
+**Open your terminal** (macOS/Linux) or **Command Prompt/PowerShell** (Windows), then run your desired **zKernel** install command:
 
 ```bash
 # Basic (SQLite only)
@@ -174,12 +174,12 @@ pip install git+https://github.com/ZoloAi/zolo-zcli.git@abc1234
 
 ### 3d. Editable install (contributors)
 
-**zCLI is open source!** You can clone the entire repository, modify the code, and contribute back to the project.
+**zKernel is open source!** You can clone the entire repository, modify the code, and contribute back to the project.
 
 An **editable install** (`-e`) means changes you make to the source code are immediately reflected without reinstalling. Perfect for:
 - Contributing new features or bug fixes
 - Experimenting with subsystem modifications
-- Learning how zCLI works under the hood
+- Learning how zKernel works under the hood
 
 ```bash
 git clone https://github.com/ZoloAi/zolo-zcli.git
@@ -187,7 +187,7 @@ cd zolo-zcli
 pip install -e .
 ```
 
-Now any edits to the `zCLI/` source folder take effect immediately.
+Now any edits to the `zKernel/` source folder take effect immediately.
 
 ---
 
@@ -321,18 +321,18 @@ This script will:
 
 ## 4. Verify Installation
 
-After installation completes, **test that zCLI is working** by running these commands in your terminal:
+After installation completes, **test that zKernel is working** by running these commands in your terminal:
 
 ```bash
 zolo --version
 ```
 
-You should see the version number (e.g., `v1.5.6`). This confirms zCLI is installed and accessible.
+You should see the version number (e.g., `v1.5.6`). This confirms zKernel is installed and accessible.
 
 
 ## 5. Updating
 
-To update zCLI to a newer version, run the install command again with `--upgrade`:
+To update zKernel to a newer version, run the install command again with `--upgrade`:
 
 ```bash
 # Update to latest version
@@ -362,7 +362,7 @@ This launches an **interactive menu** where you can choose:
 
 1. **Framework Only** (default) - Removes the package, keeps your data and optional dependencies
 2. **Clean Uninstall** - Removes package AND all user data (configs, databases, cache)
-3. **Dependencies Only** - Removes optional dependencies (pandas, psycopg2) but keeps zCLI
+3. **Dependencies Only** - Removes optional dependencies (pandas, psycopg2) but keeps zKernel
 
 Each option shows you exactly what will be removed and asks for confirmation before proceeding.
 
@@ -393,23 +393,23 @@ rm -rf ~/.local/share/zolo-zcli
 Remove-Item -Recurse -Force $env:LOCALAPPDATA\zolo-zcli
 ```
 
-This removes all zCLI data including:
+This removes all zKernel data including:
 - **Configuration files**: `zConfig.machine.yaml`, `zConfig.environment.yaml` (in `zConfigs/`)
 - **UI customizations**: User-defined UI files (in `zUIs/`)
 - **Application logs**: All log files (in `logs/`)
 - **User data**: All `zMachine.*` folders containing databases, CSVs, test files, etc.
 
-> **What are zMachine directories?** See [zConfig Guide](zConfig_GUIDE.md) for details on how zCLI manages cross-platform paths.
+> **What are zMachine directories?** See [zConfig Guide](zConfig_GUIDE.md) for details on how zKernel manages cross-platform paths.
 
 ## What's next?
 
-Now that **zCLI** is installed, you have three paths forward:
+Now that **zKernel** is installed, you have three paths forward:
 
 **1. New to Zolo?**  
-Start with **[The zPhilosophy](zPhilosophy.md)**. It introduces the core concepts of **zCLI** and smoothly leads into the layer-by-layer guides with ready-made demos.
+Start with **[The zPhilosophy](zPhilosophy.md)**. It introduces the core concepts of **zKernel** and smoothly leads into the layer-by-layer guides with ready-made demos.
 
 **2. Comfortable with zPhilosophy?**  
-Jump straight into learning with **[zConfig Guide](zConfig_GUIDE.md)**. The cornerstone of zCLI and the first declerative subsystem you'll master.
+Jump straight into learning with **[zConfig Guide](zConfig_GUIDE.md)**. The cornerstone of zKernel and the first declerative subsystem you'll master.
 
 **3. Need a specific capability?**  
 Review to the **[zArchitecture](../README.md#architecture)** and jump directly to the subsystem guide you need (zConfig, zComm, zData, etc.).

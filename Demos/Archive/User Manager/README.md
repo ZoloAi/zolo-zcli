@@ -1,12 +1,12 @@
 # User Manager Demo
 
-A complete, production-ready **User Management System** built with **zCLI** — demonstrating full CRUD operations with a modern declarative interface.
+A complete, production-ready **User Management System** built with **zKernel** — demonstrating full CRUD operations with a modern declarative interface.
 
 ## 🪄 What it does
 - Complete user management: Create, Read, Update, Delete users
 - SQLite database stored locally (project directory)
 - **zUI-based interactive menu** with **zDialog forms** for data validation
-- zCLI automatically creates tables and manages connections
+- zKernel automatically creates tables and manages connections
 - No external dependencies, no server setup needed
 
 ## 🚀 Quick start

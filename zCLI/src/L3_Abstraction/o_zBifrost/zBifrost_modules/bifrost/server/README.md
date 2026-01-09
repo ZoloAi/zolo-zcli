@@ -1,6 +1,6 @@
 # zBifrost Server (Python)
 
-WebSocket server implementation for zCLI's zBifrost bridge.
+WebSocket server implementation for zKernel's zBifrost bridge.
 
 ## Structure
 
@@ -23,14 +23,14 @@ server/
 ## Usage
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-# Auto-start via zCLI (zBifrost mode)
-z = zCLI({"zMode": "zBifrost"})
+# Auto-start via zKernel (zBifrost mode)
+z = zKernel({"zMode": "zBifrost"})
 z.walker.run()
 
 # Programmatic control
-from zCLI.subsystems.zComm.zComm_modules.bifrost import zBifrost
+from zKernel.subsystems.zComm.zComm_modules.bifrost import zBifrost
 
 bifrost = zBifrost(zcli_instance, logger)
 await bifrost.start_socket_server(socket_ready_event)

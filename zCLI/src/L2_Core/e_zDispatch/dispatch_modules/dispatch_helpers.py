@@ -48,10 +48,10 @@ Version History:
       * Established pattern for shared dispatch utilities
 """
 
-from zCLI import Any, Dict, Optional
+from zKernel import Any, Dict, Optional
 
 # Import canonical constants from zConfig
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZMODE
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZMODE
 
 # Import mode constants from dispatch_constants
 from .dispatch_constants import MODE_BIFROST

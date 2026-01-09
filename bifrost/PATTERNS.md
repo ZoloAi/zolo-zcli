@@ -1,5 +1,5 @@
 # BifrostClient Coding Patterns
-## Industry-Grade JavaScript Patterns for zCLI Frontend
+## Industry-Grade JavaScript Patterns for zKernel Frontend
 
 **Version:** 2.0  
 **Last Updated:** Dec 18, 2025  
@@ -198,8 +198,8 @@ import { createElement, appendChildren } from './dom_utils.js';
 
 ```javascript
 /**
- * Get zTheme button color class from zCLI color name
- * @param {string} zColor - zCLI color (primary, danger, etc)
+ * Get zTheme button color class from zKernel color name
+ * @param {string} zColor - zKernel color (primary, danger, etc)
  * @returns {string} zTheme class (zBtnPrimary, etc)
  */
 export function getButtonColorClass(zColor) {
@@ -675,7 +675,7 @@ export function createElement(tag, classNames = [], attributes = {}) {
 /**
  * Renders button input events for zDisplay
  * 
- * Handles the 'button' event type from zCLI backend, creating
+ * Handles the 'button' event type from zKernel backend, creating
  * interactive button elements with zTheme styling and WebSocket
  * response handling.
  * 

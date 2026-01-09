@@ -175,7 +175,7 @@ Example 4: Ensure tables exist
 
 """
 
-from zCLI import Any, Dict, List, Optional
+from zKernel import Any, Dict, List, Optional
 from .operations import (
     handle_insert,
     handle_read,
@@ -313,7 +313,7 @@ class DataOperations:
         validator: Data validator instance
         schema: Schema dictionary (tables + Meta)
         logger: Logger instance
-        zcli: zCLI core instance
+        zcli: zKernel core instance
     
     Notes:
         - This class is instantiated by classical_data.py and quantum_data.py
@@ -337,7 +337,7 @@ class DataOperations:
                      - validator: Data validator instance
                      - schema: Schema dictionary (tables + Meta)
                      - logger: Logger instance
-                     - zcli: zCLI core instance
+                     - zcli: zKernel core instance
         
         Returns:
             None

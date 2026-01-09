@@ -1,7 +1,7 @@
 # zCLI/subsystems/zDisplay/__init__.py
 
 """
-zDisplay: Layer 1 UI subsystem for zCLI.
+zDisplay: Layer 1 UI subsystem for zKernel.
 
 Provides event-driven rendering, input collection, and multi-mode output
 supporting both Terminal and zBifrost (WebSocket/GUI) modes.

@@ -24,7 +24,7 @@ Package Structure:
 See module docstring in original parser_vafile.py for complete documentation.
 """
 
-from zCLI import Any, Dict, List, Optional, Tuple
+from zKernel import Any, Dict, List, Optional, Tuple
 
 # ============================================================================
 # MODULE CONSTANTS (Shared across all vafile modules)

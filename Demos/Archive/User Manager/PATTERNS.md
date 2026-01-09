@@ -2,14 +2,14 @@
 
 ## The "3 Steps Always" Pattern
 
-All zCLI applications follow the same 3-step pattern, regardless of mode:
+All zKernel applications follow the same 3-step pattern, regardless of mode:
 
 ```python
-# Step 1: Import zCLI
-from zCLI import zCLI
+# Step 1: Import zKernel
+from zKernel import zKernel
 
 # Step 2: Create zSpark
-z = zCLI({...})
+z = zKernel({...})
 
 # Step 3: RUN walker
 z.walker.run()
@@ -24,9 +24,9 @@ The **only** difference between Terminal and zBifrost modes is the `zMode` flag 
 ```python
 #!/usr/bin/env python3
 from pathlib import Path
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({
+z = zKernel({
     "zWorkspace": str(Path(__file__).parent),
     "zVaFile": "@.zUI.users_menu",
     "zBlock": "zVaF",
@@ -45,9 +45,9 @@ z.walker.run()  # Starts interactive menu
 ```python
 #!/usr/bin/env python3
 from pathlib import Path
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({
+z = zKernel({
     "zWorkspace": str(Path(__file__).parent),
     "zVaFile": "@.zUI.users_menu",
     "zBlock": "zVaF",
@@ -74,7 +74,7 @@ The same pattern works for different data backends:
 
 ### SQLite (test_sqlite.py)
 ```python
-z = zCLI({
+z = zKernel({
     "zWorkspace": str(Path(__file__).parent),
     "zVaFile": "@.zUI.users_sqlite",  # ← SQLite UI
     "zBlock": "zVaF",
@@ -86,7 +86,7 @@ z.walker.run()
 
 ### CSV (test_csv.py)
 ```python
-z = zCLI({
+z = zKernel({
     "zWorkspace": str(Path(__file__).parent),
     "zVaFile": "@.zUI.users_csv",  # ← CSV UI
     "zBlock": "zVaF",

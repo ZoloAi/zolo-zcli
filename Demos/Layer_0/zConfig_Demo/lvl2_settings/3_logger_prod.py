@@ -13,7 +13,7 @@ Key Discovery:
   - File: DEBUG level (captures everything)
   - Perfect for: APIs, daemons, background services
 """
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
@@ -38,7 +38,7 @@ def run_demo():
         "logger_path": "./logs",
         "zTraceback": True,
     }
-    z = zCLI(zSpark)
+    z = zKernel(zSpark)
     
     print("\n# Notice: Console is SILENT below this line!")
     print("# (All logs go to file only)")

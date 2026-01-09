@@ -11,7 +11,7 @@
 #   def about():
 #       return "<h1>About Page</h1>"
 #
-# zCLI: Declarative routes with inline content (no decorators!)
+# zKernel: Declarative routes with inline content (no decorators!)
 
 Meta:
   base_path: "."

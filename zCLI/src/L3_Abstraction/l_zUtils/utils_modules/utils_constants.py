@@ -22,11 +22,11 @@ INTERNAL Constants:
     - Mtime configuration (prefixed with _MTIME_)
 
 Usage:
-    >>> from zCLI.L3_Abstraction.l_zUtils.utils_modules import SUBSYSTEM_NAME
-    >>> from zCLI.L3_Abstraction.l_zUtils.utils_modules.utils_constants import _LOG_MSG_LOADING
+    >>> from zKernel.L3_Abstraction.l_zUtils.utils_modules import SUBSYSTEM_NAME
+    >>> from zKernel.L3_Abstraction.l_zUtils.utils_modules.utils_constants import _LOG_MSG_LOADING
 """
 
-from zCLI import Any, Dict
+from zKernel import Any, Dict
 
 # ============================================================================
 # PUBLIC CONSTANTS (API)

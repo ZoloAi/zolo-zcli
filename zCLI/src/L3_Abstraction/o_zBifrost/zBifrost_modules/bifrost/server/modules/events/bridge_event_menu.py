@@ -39,7 +39,7 @@ Module Structure:
     - MenuEvents class: Main event handler for menu navigation
 """
 
-from zCLI import json, Dict, Any, Optional
+from zKernel import json, Dict, Any, Optional
 
 # ═══════════════════════════════════════════════════════════
 # Module Constants
@@ -83,7 +83,7 @@ class MenuEvents:
     Attributes:
         bifrost: zBifrost instance (provides logger, zcli, walker)
         logger: Logger instance from bifrost
-        zcli: zCLI instance for navigation and walker access
+        zcli: zKernel instance for navigation and walker access
     """
     
     def __init__(self, bifrost: Any) -> None:

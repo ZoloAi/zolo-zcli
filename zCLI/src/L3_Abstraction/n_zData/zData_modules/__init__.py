@@ -68,13 +68,13 @@ The zData_modules package is internal infrastructure. External code should use
 the zData.py facade, not import from zData_modules directly.
 
 Correct usage (via facade):
-    >>> from zCLI import zCLI
-    >>> z = zCLI()
+    >>> from zKernel import zKernel
+    >>> z = zKernel()
     >>> z.data.load_schema("myschema.yaml")
     >>> z.data.insert("users", {"name": "Alice", "age": 30})
 
 Incorrect usage (direct import):
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared import DataOperations
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared import DataOperations
     >>> # Don't do this - use zData facade instead
 
 Integration

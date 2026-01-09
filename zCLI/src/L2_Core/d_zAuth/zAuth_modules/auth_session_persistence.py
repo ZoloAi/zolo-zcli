@@ -78,7 +78,7 @@ Session Persistence Scope:
     - NOT PERSISTED: Dual-auth state (Layer 3)
 
 Rationale:
-    - zSession represents the zCLI/Zolo user (persistent identity)
+    - zSession represents the zKernel/Zolo user (persistent identity)
     - Application contexts are transient (per-application session)
     - Dual-auth is a runtime state (not persisted across restarts)
 
@@ -123,7 +123,7 @@ SESSION LIFECYCLE EXAMPLES
 ═══════════════════════════════════════════════════════════════════════════════
 
 Initialization:
-    >>> from zCLI.L2_Core.d_zAuth.zAuth_modules import SessionPersistence
+    >>> from zKernel.L2_Core.d_zAuth.zAuth_modules import SessionPersistence
     >>> session_mgr = SessionPersistence(zcli, session_duration_days=7)
     >>> session_mgr.ensure_sessions_db()
 
@@ -170,8 +170,8 @@ Error Recovery:
     - Provides context for debugging (operation, reason)
 """
 
-from zCLI import secrets, datetime, timedelta, Path, Optional, Any, Dict
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
+from zKernel import secrets, datetime, timedelta, Path, Optional, Any, Dict
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import (
     ZAUTH_KEY_ZSESSION,
     ZAUTH_KEY_AUTHENTICATED,
     ZAUTH_KEY_ID,
@@ -312,7 +312,7 @@ class SessionPersistence:
         - Coordinates with three-tier authentication model
     
     Attributes:
-        zcli: Any                      - zCLI instance
+        zcli: Any                      - zKernel instance
         logger: Any                    - Logger instance
         session: Dict[str, Any]        - In-memory session dictionary
         session_duration_days: int     - Session expiration period
@@ -330,7 +330,7 @@ class SessionPersistence:
         """Initialize session persistence module with configurable expiration.
         
         Args:
-            zcli: zCLI instance providing access to:
+            zcli: zKernel instance providing access to:
                 - data: zData subsystem for database operations
                 - loader: zLoader for schema loading
                 - logger: Logging instance
@@ -343,7 +343,7 @@ class SessionPersistence:
         Notes:
             - Database is NOT initialized here (lazy initialization)
             - Call ensure_sessions_db() to initialize database
-            - Gracefully handles missing zCLI subsystems
+            - Gracefully handles missing zKernel subsystems
         
         Example:
             >>> # Default 7-day expiration
@@ -475,7 +475,7 @@ class SessionPersistence:
     # ═══════════════════════════════════════════════════════════════════════════
     
     def ensure_sessions_db(self):
-        """Ensure the sessions database is initialized (declarative zCLI way).
+        """Ensure the sessions database is initialized (declarative zKernel way).
         
         This method performs lazy initialization of the SQLite database using
         zCLI's declarative zData subsystem. It loads the schema from
@@ -516,7 +516,7 @@ class SessionPersistence:
         try:
             # Get absolute path to zSchema.auth.yaml (centralized location)
             # Schema Location (v1.5.4+): Centralized in zCLI/Schemas/
-            zcli_root = Path(__file__).parent.parent.parent.parent  # Navigate to zCLI root
+            zcli_root = Path(__file__).parent.parent.parent.parent  # Navigate to zKernel root
             schema_path = zcli_root / SCHEMAS_DIR / SCHEMA_FILE_NAME
             
             if not schema_path.exists():

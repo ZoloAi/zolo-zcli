@@ -153,7 +153,7 @@ NOTES
 """
 
 import yaml  # pylint: disable=import-error
-from zCLI import Any, Dict, List, Optional
+from zKernel import Any, Dict, List, Optional
 from .commands import (
     execute_data, execute_func, execute_session, execute_walker,
     execute_open, execute_auth, execute_load,
@@ -161,7 +161,7 @@ from .commands import (
     execute_wizard_step, execute_plugin,
     execute_ls, execute_cd, execute_pwd, execute_shortcut, execute_where, execute_help
 )
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_WIZARD_MODE
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_WIZARD_MODE
 
 # ============================================================
 # WIZARD COMMANDS
@@ -294,7 +294,7 @@ class CommandExecutor:
     the interactive wizard canvas mode for building multi-step workflows.
     
     Attributes:
-        zcli: The zCLI instance (provides access to all subsystems)
+        zcli: The zKernel instance (provides access to all subsystems)
         logger: Logger instance for debugging and error tracking
     """
 
@@ -303,7 +303,7 @@ class CommandExecutor:
         Initialize command executor.
         
         Args:
-            zcli: The zCLI instance
+            zcli: The zKernel instance
         """
         self.zcli = zcli
         self.logger = zcli.logger

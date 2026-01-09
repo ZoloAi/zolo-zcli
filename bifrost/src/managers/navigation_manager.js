@@ -92,7 +92,7 @@ export class NavigationManager {
       // Parse route path to determine zBlock, zVaFile, zVaFolder
       // Supports both flat and nested routes:
       // - /zAbout → zUI.zAbout / @.UI / zAbout
-      // - /zProducts/zCLI → zUI.zCLI / @.UI.zProducts / zCLI_Details
+      // - /zProducts/zKernel → zUI.zKernel / @.UI.zProducts / zKernel_Details
       const pathParts = cleanPath.split('/');
       let zVaFile, zVaFolder, zBlock, routeName;
 
@@ -103,9 +103,9 @@ export class NavigationManager {
         zVaFolder = config.zVaFolder || '@.UI';
         zBlock = routeName;
       } else {
-        // Nested route: /zProducts/zCLI
+        // Nested route: /zProducts/zKernel
         const parentFolder = pathParts.slice(0, -1).join('.'); // e.g., "zProducts"
-        const pageName = pathParts[pathParts.length - 1]; // e.g., "zCLI"
+        const pageName = pathParts[pathParts.length - 1]; // e.g., "zKernel"
         routeName = pageName;
         
         zVaFile = `zUI.${pageName}`;

@@ -13,7 +13,7 @@ Architecture Position
 
 This module sits at the top of the zDialog subsystem's 5-tier architecture,
 orchestrating all dialog operations by delegating to lower-tier components
-(dialog_modules) and integrating with other zCLI subsystems (zDisplay, zData,
+(dialog_modules) and integrating with other zKernel subsystems (zDisplay, zData,
 zLoader, zDispatch).
 
 5-Tier Architecture Flow
@@ -34,7 +34,7 @@ zLoader, zDispatch).
    - Orchestrates form display, data collection, submission
 
 5. **Tier 5 (Package Root)**: __init__.py
-   - Top-level package interface for zCLI.py
+   - Top-level package interface for zKernel.py
 
 Key Features
 ------------
@@ -60,7 +60,7 @@ Key Features
 Integration Points
 ------------------
 **Used By**:
-- zCLI.py: Initializes zDialog subsystem (line ~200)
+- zKernel.py: Initializes zDialog subsystem (line ~200)
 - zDispatch: Routes zDialog commands via dispatch_launcher (lines 580-582)
 
 **Dependencies**:
@@ -73,9 +73,9 @@ Integration Points
 Usage Examples
 --------------
 Example 1: Terminal mode with auto-validation
-    >>> from zCLI.L2_Core.j_zDialog import zDialog
+    >>> from zKernel.L2_Core.j_zDialog import zDialog
     >>> 
-    >>> # Initialize (typically done by zCLI.py)
+    >>> # Initialize (typically done by zKernel.py)
     >>> dialog = zDialog(zcli_instance, walker=walker_instance)
     >>> 
     >>> # Define form
@@ -134,8 +134,8 @@ Version History
 - v1.4.0: Initial implementation
 """
 
-from zCLI import Any, Dict, Optional
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZMODE
+from zKernel import Any, Dict, Optional
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZMODE
 from .dialog_modules import create_dialog_context, handle_submit
 from .dialog_modules.dialog_constants import (
     COLOR_ZDIALOG,
@@ -229,7 +229,7 @@ class zDialog:
     Attributes
     ----------
     zcli : Any
-        The zCLI instance providing access to all subsystems
+        The zKernel instance providing access to all subsystems
     session : Dict[str, Any]
         The session dictionary for state management
     logger : Any
@@ -259,12 +259,12 @@ class zDialog:
 
     def __init__(self, zcli: Any, walker: Optional[Any] = None) -> None:
         """
-        Initialize zDialog subsystem with zCLI instance.
+        Initialize zDialog subsystem with zKernel instance.
         
         Parameters
         ----------
         zcli : Any
-            The zCLI instance providing access to all subsystems (required).
+            The zKernel instance providing access to all subsystems (required).
             Must have 'session' attribute for state management.
         walker : Optional[Any], default=None
             Legacy walker instance for backward compatibility.
@@ -273,9 +273,9 @@ class zDialog:
         Raises
         ------
         ValueError
-            If zcli is None (zDialog requires a zCLI instance).
+            If zcli is None (zDialog requires a zKernel instance).
         ValueError
-            If zcli is missing 'session' attribute (invalid zCLI instance).
+            If zcli is missing 'session' attribute (invalid zKernel instance).
         
         Notes
         -----
@@ -296,7 +296,7 @@ class zDialog:
         if not hasattr(zcli, 'session'):
             raise ValueError(_ERROR_INVALID_ZCLI)
 
-        # Modern architecture: zCLI instance provides all dependencies
+        # Modern architecture: zKernel instance provides all dependencies
         self.zcli = zcli
         self.session = zcli.session
         self.logger = zcli.logger
@@ -494,7 +494,7 @@ class zDialog:
                 table_name = model.split(_SCHEMA_PATH_SEPARATOR)[-1]
                 
                 # Create lightweight validator (no database connection needed)
-                from zCLI.L3_Abstraction.n_zData.zData_modules.shared.validator import DataValidator
+                from zKernel.L3_Abstraction.n_zData.zData_modules.shared.validator import DataValidator
                 validator = DataValidator(schema_dict, self.logger)
                 
                 # Validate collected form data (use validate_insert for new data)
@@ -504,7 +504,7 @@ class zDialog:
                     self.logger.warning(_LOG_AUTO_VALIDATION_FAILED, len(errors))
                     
                     # Display validation errors (zDialog has required interface: zcli, logger, display)
-                    from zCLI.L3_Abstraction.n_zData.zData_modules.shared.operations.helpers import display_validation_errors
+                    from zKernel.L3_Abstraction.n_zData.zData_modules.shared.operations.helpers import display_validation_errors
                     display_validation_errors(table_name, errors, self)
                     
                     # For zBifrost mode, also emit WebSocket event
@@ -587,7 +587,7 @@ def handle_zDialog(
     walker : Optional[Any], default=None
         Legacy walker instance. If zcli is not provided, walker.zcli will be used.
     zcli : Optional[Any], default=None
-        The zCLI instance. Preferred over walker.zcli (modern approach).
+        The zKernel instance. Preferred over walker.zcli (modern approach).
     context : Optional[Dict[str, Any]], default=None
         Execution context (see zDialog.handle() for details).
     

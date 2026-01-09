@@ -1,6 +1,6 @@
 ## lvl0_hello: Hello zComm
 
-After completing the zConfig demos, you're ready to explore zComm - zCLI's communication layer.
+After completing the zConfig demos, you're ready to explore zComm - zKernel's communication layer.
 
 ### What You'll Learn
 
@@ -13,7 +13,7 @@ After completing the zConfig demos, you're ready to explore zComm - zCLI's commu
 
 **`hello_comm.py`**
 - Use familiar zSpark pattern from zConfig
-- Initialize zCLI (auto-loads both zConfig + zComm)
+- Initialize zKernel (auto-loads both zConfig + zComm)
 - Check port 8080 availability
 - Discover zComm's "zero setup" philosophy
 
@@ -31,7 +31,7 @@ python Demos/Layer_0/zComm_Demo/lvl0_hello/1_hello_comm.py
 Port 8080: ✓ available
 
 # What you discovered:
-  ✓ zComm auto-initializes with zCLI (Layer 0)
+  ✓ zComm auto-initializes with zKernel (Layer 0)
   ✓ Same zSpark pattern as zConfig demos
   ✓ Network utilities ready instantly
   ✓ Zero configuration required
@@ -46,5 +46,5 @@ Port 8080: ✓ available
 
 **Building on zConfig**: You already know the zSpark pattern from zConfig demos. Now you're discovering that the same initialization gives you access to zComm's communication capabilities - HTTP client, service management, and network utilities - with zero additional setup.
 
-**Layer 0 Philosophy**: Both zConfig and zComm are Layer 0 subsystems, initialized together when you call `zCLI()`. This is the foundation upon which all higher layers build.
+**Layer 0 Philosophy**: Both zConfig and zComm are Layer 0 subsystems, initialized together when you call `zKernel()`. This is the foundation upon which all higher layers build.
 

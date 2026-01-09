@@ -8,7 +8,7 @@
 
 ## 🎯 Overview
 
-zMigration is zCLI's **declarative schema evolution system** that automatically tracks, applies, and manages database schema changes across CSV, SQLite, and PostgreSQL backends.
+zMigration is zKernel's **declarative schema evolution system** that automatically tracks, applies, and manages database schema changes across CSV, SQLite, and PostgreSQL backends.
 
 Unlike traditional migration systems (Django, Rails, Alembic) that require manual migration file generation, zMigration uses **schema-as-code**: your YAML schema files ARE the migrations.
 
@@ -48,7 +48,7 @@ class Migration(migrations.Migration):
 
 ### The zMigration Solution
 
-**zCLI:**
+**zKernel:**
 ```yaml
 # zSchema.users.yaml - ONLY source of truth
 Meta:
@@ -108,8 +108,8 @@ zolo migrate zTest.py
 1️⃣ Loading application configuration...
    ✅ Loaded zSpark for: zCloud
 
-2️⃣ Initializing zCLI...
-   ✅ zCLI initialized
+2️⃣ Initializing zKernel...
+   ✅ zKernel initialized
 
 3️⃣ Discovering schemas...
 📊 Discovered Schemas:
@@ -603,7 +603,7 @@ python manage.py migrate
 - ✗ Migration files can drift from models
 - ✗ Must track migration files in version control
 
-**zCLI:**
+**zKernel:**
 ```bash
 # 1. Edit zSchema.users.yaml
 # 2. Apply migration
@@ -635,7 +635,7 @@ rails db:migrate
 - ✗ Migration files separate from schema
 - ✗ Can't easily see current schema state
 
-**zCLI:**
+**zKernel:**
 - ✓ Schema IS the migration
 - ✓ Current state always visible in YAML
 - ✓ No separate migration files
@@ -660,7 +660,7 @@ alembic upgrade head
 - ✗ Auto-detection not always accurate
 - ✗ Steep learning curve
 
-**zCLI:**
+**zKernel:**
 - ✓ Simple YAML schema
 - ✓ Accurate auto-detection (compares schema YAML to database)
 - ✓ Minimal learning curve
@@ -812,7 +812,7 @@ zolo migrate zTest.py --force-sync
 6. **History Tracking** - Every migration recorded with hash and timestamp
 7. **Declarative** - No manual migration file writing
 
-### The zCLI Way
+### The zKernel Way
 
 > **"The schema IS the migration. If you're writing migration files, you're doing it wrong."**
 

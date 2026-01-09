@@ -7,8 +7,8 @@
 # This eliminates schema-switching issues and enables JOIN queries.
 #
 # LOCATION (v1.5.4+):
-#   - Centralized in: zCLI/Schemas/ (not in zAuth subsystem)
-#   - Pattern: Follows zCLI/UI/ pattern for centralized resources
+#   - Centralized in: zKernel/Schemas/ (not in zAuth subsystem)
+#   - Pattern: Follows zKernel/UI/ pattern for centralized resources
 #   - Discoverability: All schemas in one place for easy maintenance
 #
 # LOADED BY:
@@ -47,7 +47,7 @@
 #   - To modify schema: Edit this file
 #   - To migrate data: Use zData operations in migration script
 #   - To version control: Commit schema changes to git (code review)
-#   - To deploy: Schema ships with zCLI package (reproducible)
+#   - To deploy: Schema ships with zKernel package (reproducible)
 #
 # SECURITY BEST PRACTICES:
 #   - Password Storage:

@@ -22,7 +22,7 @@ Week: 6.14
 Version: v1.5.4 Phase 3 (Polish)
 """
 
-from zCLI import Any
+from zKernel import Any
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -36,9 +36,9 @@ def example_shell_mode_basic(zcli: Any) -> None:
     Use Case: User management workflow (create user, assign role, send email)
     
     Args:
-        zcli: zCLI instance
+        zcli: zKernel instance
     """
-    from zCLI.L3_Abstraction.m_zWizard import zWizard
+    from zKernel.L3_Abstraction.m_zWizard import zWizard
     
     # Initialize wizard with zcli instance
     wizard = zWizard(zcli=zcli)
@@ -143,7 +143,7 @@ def example_transactional_wizard(zcli: Any) -> None:
     Use Case: Create team and assign members atomically
     
     Args:
-        zcli: zCLI instance
+        zcli: zKernel instance
     
     YAML equivalent:
     ----------------
@@ -175,7 +175,7 @@ def example_transactional_wizard(zcli: Any) -> None:
     # All operations committed together or rolled back on error
     ```
     """
-    from zCLI.L3_Abstraction.m_zWizard import zWizard
+    from zKernel.L3_Abstraction.m_zWizard import zWizard
     
     wizard = zWizard(zcli=zcli)
     
@@ -233,7 +233,7 @@ def examplezRBAC_protected_wizard(zcli: Any) -> None:
     Use Case: Admin workflow with some public and some protected steps
     
     Args:
-        zcli: zCLI instance
+        zcli: zKernel instance
     
     YAML equivalent:
     ----------------
@@ -261,7 +261,7 @@ def examplezRBAC_protected_wizard(zcli: Any) -> None:
         where: {id: 123}
     ```
     """
-    from zCLI.L3_Abstraction.m_zWizard import zWizard
+    from zKernel.L3_Abstraction.m_zWizard import zWizard
     
     wizard = zWizard(zcli=zcli)
     
@@ -312,7 +312,7 @@ def example_zhat_interpolation(zcli: Any) -> None:
     Use Case: Multi-step workflow where later steps use earlier results
     
     Args:
-        zcli: zCLI instance
+        zcli: zKernel instance
     
     Interpolation Patterns:
     -----------------------
@@ -340,7 +340,7 @@ def example_zhat_interpolation(zcli: Any) -> None:
         content: "User {{ zHat.get_user_id }} has email {{ zHat.get_user_details.email }}"
     ```
     """
-    from zCLI.L3_Abstraction.m_zWizard import zWizard
+    from zKernel.L3_Abstraction.m_zWizard import zWizard
     
     wizard = zWizard(zcli=zcli)
     
@@ -383,9 +383,9 @@ def example_error_handling_callbacks(zcli: Any) -> None:
     Use Case: Graceful error recovery with user feedback
     
     Args:
-        zcli: zCLI instance
+        zcli: zKernel instance
     """
-    from zCLI.L3_Abstraction.m_zWizard import zWizard
+    from zKernel.L3_Abstraction.m_zWizard import zWizard
     
     wizard = zWizard(zcli=zcli)
     
@@ -450,9 +450,9 @@ def example_start_from_key(zcli: Any) -> None:
     Use Case: Resume wizard from a saved checkpoint
     
     Args:
-        zcli: zCLI instance
+        zcli: zKernel instance
     """
-    from zCLI.L3_Abstraction.m_zWizard import zWizard
+    from zKernel.L3_Abstraction.m_zWizard import zWizard
     
     wizard = zWizard(zcli=zcli)
     
@@ -483,9 +483,9 @@ def example_custom_dispatch(zcli: Any) -> None:
     Use Case: Custom step execution logic
     
     Args:
-        zcli: zCLI instance
+        zcli: zKernel instance
     """
-    from zCLI.L3_Abstraction.m_zWizard import zWizard
+    from zKernel.L3_Abstraction.m_zWizard import zWizard
     
     wizard = zWizard(zcli=zcli)
     

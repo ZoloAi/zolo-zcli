@@ -19,7 +19,7 @@ COMMAND NAMING:
     Both execute the same function but 'cwd' is the preferred modern terminology.
 
 ZPATH SYNTAX:
-    zCLI uses a dot-notation path syntax (zPath) that parallels filesystem paths:
+    zKernel uses a dot-notation path syntax (zPath) that parallels filesystem paths:
     
     • @.path.to.dir       → Workspace-relative (e.g., @.src.components)
     • ~.path.to.dir       → Home-relative (e.g., ~.Projects.zolo-zcli)
@@ -61,7 +61,7 @@ DISPLAY MODES:
 
 TYPE SAFETY:
     All functions include comprehensive type hints using types imported from
-    the zCLI namespace for consistency across the framework.
+    the zKernel namespace for consistency across the framework.
 
 ERROR HANDLING:
     Gracefully handles invalid paths, permission errors, non-existent directories,
@@ -78,7 +78,7 @@ RELATED COMMANDS:
     • shell_cmd_where: Toggle prompt display of current location
     • navigation_state: Manages navigation history in UI mode
 
-Author: zCLI Framework
+Author: zKernel Framework
 Version: 1.5.4
 Module: zShell (Command Executors - Group A: Basic Terminal Commands)
 """
@@ -86,8 +86,8 @@ Module: zShell (Command Executors - Group A: Basic Terminal Commands)
 import os
 from pathlib import Path
 
-from zCLI import Any, Dict, Optional
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZSPACE
+from zKernel import Any, Dict, Optional
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZSPACE
 
 # ============================================================================
 # MODULE CONSTANTS
@@ -147,7 +147,7 @@ def execute_cd(zcli: Any, parsed: Dict[str, Any]) -> Optional[Dict[str, str]]:
     (., .., ~). Validates the target exists and is a directory before changing.
     
     Args:
-        zcli: zCLI instance with session, config, and display access
+        zcli: zKernel instance with session, config, and display access
         parsed: Parsed command dictionary with 'args' and 'options'
     
     Returns:
@@ -245,7 +245,7 @@ def execute_pwd(zcli: Any, parsed: Dict[str, Any]) -> None:  # pylint: disable=u
         'pwd' is provided for Unix compatibility.
     
     Args:
-        zcli: zCLI instance with session and display access
+        zcli: zKernel instance with session and display access
         parsed: Parsed command dictionary (not used, but required for interface)
     
     Returns:
@@ -328,7 +328,7 @@ def _resolve_zpath(zcli: Any, target: str) -> Path:
     • rel/path      → relative to current directory
     
     Args:
-        zcli: zCLI instance for session access (to get current workspace)
+        zcli: zKernel instance for session access (to get current workspace)
         target: Path string in any supported format
     
     Returns:

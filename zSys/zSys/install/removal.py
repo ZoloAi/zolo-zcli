@@ -198,7 +198,7 @@ def cli_uninstall_complete(zcli):
     CLI handler with interactive confirmation and display.
     
     Args:
-        zcli: zCLI instance
+        zcli: zKernel instance
     
     Exits:
         0 if successful, 1 if failed
@@ -264,7 +264,7 @@ def cli_uninstall_package_only(zcli):
     CLI handler with interactive confirmation and display.
     
     Args:
-        zcli: zCLI instance
+        zcli: zKernel instance
     
     Exits:
         0 if successful, 1 if failed
@@ -305,7 +305,7 @@ def cli_uninstall_data_only(zcli):
     CLI handler with interactive confirmation and display.
     
     Args:
-        zcli: zCLI instance
+        zcli: zKernel instance
     
     Exits:
         0 if successful, 1 if failed

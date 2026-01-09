@@ -128,7 +128,7 @@ basic_outputs.header("Error", color="RED", style="single")
 ```
 """
 
-from zCLI import Any, Optional, Tuple
+from zKernel import Any, Optional, Tuple
 
 # Import DRY helpers from primitives
 from ..b_primitives.display_rendering_helpers import wrap_with_color, apply_indent_to_lines
@@ -367,13 +367,13 @@ class BasicOutputs:
         """Resolve %variables, &functions, and semantic formatting in label."""
         # Resolve %variable references
         if "%" in label:
-            from zCLI.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
+            from zKernel.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
             context = kwargs.get('_context', {})
             label = resolve_variables(label, self.display.zcli, context)
         
         # Resolve &function calls
         if "&" in label:
-            from zCLI.L2_Core.g_zParser.parser_modules.parser_functions import resolve_function_call
+            from zKernel.L2_Core.g_zParser.parser_modules.parser_functions import resolve_function_call
             label = resolve_function_call(label, self.display.zcli)
         
         # Apply semantic rendering for terminal mode
@@ -540,12 +540,12 @@ class BasicOutputs:
         # NEW: Resolve %variable references (e.g., %session.username, %myvar, %data.user.name)
         # CRITICAL: Must happen BEFORE sending GUI event!
         if "%" in content:
-            from zCLI.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
+            from zKernel.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
             content = resolve_variables(content, self.display.zcli, _context)
         
         # NEW: Resolve &function calls (e.g., &zNow, &zNow('date'))
         if "&" in content:
-            from zCLI.L2_Core.g_zParser.parser_modules.parser_functions import resolve_function_call
+            from zKernel.L2_Core.g_zParser.parser_modules.parser_functions import resolve_function_call
             content = resolve_function_call(content, self.display.zcli)
         
         # Apply semantic rendering if specified (terminal mode only)

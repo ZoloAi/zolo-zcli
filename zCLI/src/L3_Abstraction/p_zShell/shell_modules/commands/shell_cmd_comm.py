@@ -98,18 +98,18 @@ Example Usage:
 Notes:
     - Auto-install requires Homebrew (macOS) or manual sudo (Linux)
     - Windows installation requires manual download from postgresql.org
-    - All service operations log to zCLI logger
+    - All service operations log to zKernel logger
     - Connection info only available for running services
     - Service names are case-insensitive
     - Install command provides guidance only (except macOS --auto)
 
-Author: zCLI Development Team
+Author: zKernel Development Team
 Version: 1.5.4+
 Last Updated: Week 6.13
 """
 
 # Type hints (centralized import from zCLI)
-from zCLI import Any, Dict, List, Optional
+from zKernel import Any, Dict, List, Optional
 
 # =============================================================================
 # Module Constants
@@ -219,7 +219,7 @@ def execute_comm(zcli: Any, parsed: Dict[str, Any]) -> None:
     handler based on action. Lazily initializes zComm subsystem if not available.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         parsed: Parsed command dictionary with keys:
             - action (str): The command action (status, start, stop, etc.)
             - args (List[str]): Command arguments (e.g., service name)
@@ -251,7 +251,7 @@ def execute_comm(zcli: Any, parsed: Dict[str, Any]) -> None:
     # Lazy initialization of zComm subsystem
     if not hasattr(zcli, 'comm') or zcli.comm is None:
         try:
-            from zCLI.L1_Foundation.b_zComm import zComm
+            from zKernel.L1_Foundation.b_zComm import zComm
             zcli.comm = zComm(zcli)
         except Exception as e:
             zcli.display.error(f"{ERROR_ZCOMM_NOT_AVAILABLE}: {e}")
@@ -291,7 +291,7 @@ def _handle_status(zcli: Any, args: List[str], options: Dict[str, Any]) -> None:
     port, and connection information.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         args: Command arguments (optional service name)
         options: Command options (unused)
 
@@ -345,7 +345,7 @@ def _handle_start(zcli: Any, args: List[str], options: Dict[str, Any]) -> None:
     Starts the specified service and displays connection information on success.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         args: Command arguments [service_name]
         options: Command options (passed to zComm.start_service)
 
@@ -403,7 +403,7 @@ def _handle_stop(zcli: Any, args: List[str], options: Dict[str, Any]) -> None:  
     Stops the specified service and displays success/error message.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         args: Command arguments [service_name]
         options: Command options (unused)
 
@@ -447,7 +447,7 @@ def _handle_restart(zcli: Any, args: List[str], options: Dict[str, Any]) -> None
     Restarts the specified service (stops then starts).
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         args: Command arguments [service_name]
         options: Command options (unused)
 
@@ -492,7 +492,7 @@ def _handle_info(zcli: Any, args: List[str], options: Dict[str, Any]) -> None:  
     database, user, connection strings, etc.).
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         args: Command arguments [service_name]
         options: Command options (unused)
 
@@ -542,7 +542,7 @@ def _handle_install(zcli: Any, args: List[str], options: Dict[str, Any]) -> None
     auto-install support for macOS (Homebrew).
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         args: Command arguments [service_name]
         options: Command options (e.g., {"auto": True} for auto-install)
 
@@ -583,7 +583,7 @@ def _display_service_status(zcli: Any, service_name: str, status_info: Dict[str,
     and connection information.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         service_name: The service name
         status_info: Status dictionary from zComm with keys:
             - running (bool): Service running state
@@ -644,7 +644,7 @@ def _install_service_helper(zcli: Any, service_name: str, options: Dict[str, Any
     Currently supports PostgreSQL only.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         service_name: The service to install
         options: Installation options (e.g., {"auto": True})
 
@@ -678,7 +678,7 @@ def _install_postgresql(zcli: Any, options: Dict[str, Any]) -> None:
     with OS-specific instructions and driver installation info.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         options: Installation options (e.g., {"auto": True})
 
     Returns:
@@ -698,7 +698,7 @@ def _install_postgresql(zcli: Any, options: Dict[str, Any]) -> None:
         - Windows: Manual download instructions
         - Shows driver installation info for all platforms
     """
-    from zCLI import platform
+    from zKernel import platform
 
     os_type = platform.system()
     auto_install = options.get("auto", False) or options.get("y", False)
@@ -728,7 +728,7 @@ def _install_postgresql_macos(zcli: Any, auto_install: bool) -> None:
     is provided.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         auto_install: If True, execute auto-install; if False, show instructions
 
     Returns:
@@ -825,7 +825,7 @@ def _install_postgresql_linux(zcli: Any, auto_install: bool) -> None:
     Shows installation commands for Ubuntu/Debian and RHEL/CentOS/Fedora.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         auto_install: If True, show sudo warning; if False, show instructions only
 
     Returns:
@@ -843,7 +843,7 @@ def _install_postgresql_linux(zcli: Any, auto_install: bool) -> None:
         - No auto-install support (requires sudo)
         - Shows commands for apt (Ubuntu/Debian) and yum (RHEL/CentOS)
         - Includes systemctl commands for service management
-        - Shows zCLI alternative: comm start postgresql
+        - Shows zKernel alternative: comm start postgresql
     """
     zcli.display.info(INFO_LINUX_COMMANDS)
 
@@ -890,7 +890,7 @@ def _install_postgresql_windows(zcli: Any) -> None:
     Shows download URL and installation wizard steps.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
 
     Returns:
         None (uses zDisplay for output)
@@ -932,7 +932,7 @@ def _display_postgresql_driver_info(zcli: Any) -> None:
     Shows pip install commands for psycopg2 and zolo-zcli[postgresql].
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
 
     Returns:
         None (uses zDisplay for output)
@@ -971,7 +971,7 @@ def _validate_service_arg(zcli: Any, args: List[str], usage: str) -> Optional[st
     error with usage message if missing.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         args: Command arguments list
         usage: Usage message to display on error
 

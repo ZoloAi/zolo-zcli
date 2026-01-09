@@ -9,7 +9,7 @@
 ❌ Server-side rendering of zUI
 ```
 
-### YES This (The zCLI Way):
+### YES This (The zKernel Way):
 ```
 ✅ zBifrost Client (JS) + WebSocket
 ✅ Server executes zUI in "zBifrost" mode

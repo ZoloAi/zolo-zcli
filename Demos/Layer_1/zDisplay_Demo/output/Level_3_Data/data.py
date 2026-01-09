@@ -13,12 +13,12 @@ Run:
     python Demos/Layer_1/zDisplay_Demo/output/Level_3_Data/data.py
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
     """Demonstrate structured data display methods."""
-    z = zCLI({"logger": "PROD"})
+    z = zKernel({"logger": "PROD"})
 
     z.display.line("")
     z.display.header("Level 3: Data - Structured Data Display", color="YELLOW", style="wave")

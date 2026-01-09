@@ -28,7 +28,7 @@ Layer Position:
     Layer 2, Position 11 (zOpen - Constants Module)
 """
 
-from zCLI import Any
+from zKernel import Any
 
 # ============================================================================
 # COMMAND/REQUEST KEYS (PUBLIC)

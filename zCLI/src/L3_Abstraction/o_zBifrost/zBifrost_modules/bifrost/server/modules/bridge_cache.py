@@ -31,7 +31,7 @@ Example:
         result = fetch_from_database(data)
         cache.cache_query(cache_key, result)
 """
-from zCLI import hashlib, time, Optional, Dict, Any, Callable
+from zKernel import hashlib, time, Optional, Dict, Any, Callable
 
 # ═══════════════════════════════════════════════════════════
 # Module Constants

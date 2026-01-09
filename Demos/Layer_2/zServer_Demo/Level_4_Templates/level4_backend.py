@@ -25,7 +25,7 @@ zCLI Part 2:
 
 Goal: Server-side rendering with template inheritance
 """
-from zCLI import zCLI
+from zKernel import zKernel
 import os
 import time
 
@@ -40,7 +40,7 @@ print("\n" + "=" * 60)
 import os
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-z = zCLI({
+z = zKernel({
     "zWorkspace": current_dir,
     "zSpace": current_dir,
     "zMode": "Terminal"

@@ -15,7 +15,7 @@ Key Discovery:
   - Copy-paste any accessor line you need
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
@@ -40,7 +40,7 @@ def run_demo():
         "logger": "INFO",
         "logger_path": "./logs",
     }
-    z = zCLI(zSpark)
+    z = zKernel(zSpark)
 
     # Get all environment values at once (copy this pattern)
     env = z.config.get_environment()

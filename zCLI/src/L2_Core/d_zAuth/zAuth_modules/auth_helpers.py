@@ -19,10 +19,10 @@ Usage:
     context = get_active_context(self.session)
 """
 
-from zCLI import Dict, Optional, Any
+from zKernel import Dict, Optional, Any
 
 # Import all session and auth constants from config_constants (Layer 1)
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_constants import (
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_constants import (
     SESSION_KEY_ZAUTH,
     ZAUTH_KEY_ZSESSION,
     ZAUTH_KEY_APPLICATIONS,

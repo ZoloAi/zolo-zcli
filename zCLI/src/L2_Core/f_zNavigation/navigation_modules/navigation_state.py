@@ -150,7 +150,7 @@ _TIMESTAMP_FORMAT : str
     Timestamp format string
 """
 
-from zCLI import time, Any, Dict, List, Optional
+from zKernel import time, Any, Dict, List, Optional
 
 from .navigation_constants import (
     SESSION_KEY_CURRENT_LOCATION,
@@ -188,7 +188,7 @@ class Navigation:
     navigation : Any
         Reference to parent navigation system
     zcli : Any
-        Reference to zCLI core instance
+        Reference to zKernel core instance
     logger : Any
         Logger instance for navigation operations
     
@@ -243,7 +243,7 @@ class Navigation:
 
     # Class-level type declarations
     navigation: Any  # Navigation system reference
-    zcli: Any  # zCLI core instance
+    zcli: Any  # zKernel core instance
     logger: Any  # Logger instance
 
     def __init__(self, navigation: Any) -> None:

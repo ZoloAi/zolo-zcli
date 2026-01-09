@@ -7,7 +7,7 @@ This is a pure communication layer with no authentication logic - auth should be
 by the caller (e.g., zAuth subsystem).
 """
 
-from zCLI import Any, Dict, Optional, requests
+from zKernel import Any, Dict, Optional, requests
 from .comm_constants import HTTP_DEFAULT_TIMEOUT
 
 # Module Constants

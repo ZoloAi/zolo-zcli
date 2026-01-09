@@ -2,7 +2,7 @@
 """
 zBifrost - Terminal↔Web Bridge Orchestrator (Layer 2)
 
-Coordinates Terminal↔Web communication by orchestrating zCLI subsystems:
+Coordinates Terminal↔Web communication by orchestrating zKernel subsystems:
 - zDisplay: Broadcasts render events to web clients
 - zAuth: Three-tier authentication for WebSocket clients
 - zData: Handles CRUD operations from web UI
@@ -23,10 +23,10 @@ Architecture:
 
 Usage:
     ```python
-    from zCLI import zCLI
+    from zKernel import zKernel
     
-    # Initialize zCLI (zBifrost auto-initializes)
-    z = zCLI()
+    # Initialize zKernel (zBifrost auto-initializes)
+    z = zKernel()
     
     # Start WebSocket bridge
     z.bifrost.start()
@@ -42,7 +42,7 @@ Auto-Start:
     If session zMode is "zBifrost", the bridge auto-starts during initialization.
 """
 
-from zCLI import Any, Optional
+from zKernel import Any, Optional
 from .zBifrost_modules.bridge_orchestrator import BridgeOrchestrator
 
 # Module Constants
@@ -59,7 +59,7 @@ class zBifrost:
     enabling Terminal→Web GUI transformation.
     
     Attributes:
-        zcli: zCLI instance
+        zcli: zKernel instance
         logger: Logger instance
         orchestrator: BridgeOrchestrator instance
     """
@@ -69,7 +69,7 @@ class zBifrost:
         Initialize zBifrost orchestrator.
         
         Args:
-            zcli: zCLI instance (must have comm, display, auth, data initialized)
+            zcli: zKernel instance (must have comm, display, auth, data initialized)
             
         Raises:
             ValueError: If zcli is None or missing required subsystems

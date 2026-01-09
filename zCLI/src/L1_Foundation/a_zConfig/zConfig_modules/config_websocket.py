@@ -1,8 +1,8 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_websocket.py
 """WebSocket configuration management as part of zConfig."""
 
-from zCLI import Colors, os, Any, Dict, List, Optional
-from zCLI.utils import print_ready_message, validate_zcli_instance
+from zKernel import Colors, os, Any, Dict, List, Optional
+from zKernel.utils import print_ready_message, validate_zkernel_instance
 
 # Module Constants
 
@@ -59,7 +59,7 @@ class WebSocketConfig:
 
     # Type hints for instance attributes
     environment: Any  # EnvironmentConfig
-    zcli: Any  # zCLI instance
+    zcli: Any  # zKernel instance
     logger: Any  # Logger instance
     config: Dict[str, Any]
 
@@ -69,11 +69,11 @@ class WebSocketConfig:
         
         Args:
             environment_config: EnvironmentConfig instance with environment settings
-            zcli: Main zCLI instance for accessing zSpark and other subsystems
+            zcli: Main zKernel instance for accessing zSpark and other subsystems
             logger: Logger instance for configuration logging
         """
         # Validate required parameters
-        validate_zcli_instance(zcli, _SUBSYSTEM_NAME, require_session=False)
+        validate_zkernel_instance(zcli, _SUBSYSTEM_NAME, require_session=False)
 
         self.environment = environment_config
         self.zcli = zcli

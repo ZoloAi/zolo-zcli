@@ -104,7 +104,7 @@ UI ADAPTER PATTERN:
 
 TYPE SAFETY:
     All functions include comprehensive type hints using types imported from
-    the zCLI namespace for consistency across the framework.
+    the zKernel namespace for consistency across the framework.
 
 ERROR HANDLING:
     Gracefully handles missing session fields, walker import failures, walker
@@ -132,15 +132,15 @@ FUTURE ENHANCEMENTS:
     • walker status: Show current walker state (active/inactive)
     • walker list: Show available walkers in workspace
 
-Author: zCLI Framework
+Author: zKernel Framework
 Version: 1.5.4+
-Module: zShell (Command Executors - Group C: zCLI Subsystem Integration)
+Module: zShell (Command Executors - Group C: zKernel Subsystem Integration)
 """
 
-from zCLI import Any, Dict, Optional
+from zKernel import Any, Dict, Optional
 
 # Import SESSION_KEY_* constants from zConfig for refactor-proof session access
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZSPACE,
     SESSION_KEY_ZVAFILE,
     SESSION_KEY_ZVAFOLDER,
@@ -189,7 +189,7 @@ MSG_WALKER_EXIT_CODE: str = "Walker exited with code {code}"
 
 # Log Messages
 LOG_LAUNCHING_WALKER: str = "Launching Walker from session configuration..."
-LOG_CREATING_WALKER: str = "Creating zWalker instance from zCLI..."
+LOG_CREATING_WALKER: str = "Creating zWalker instance from zKernel..."
 LOG_STARTING_WALKER: str = "Starting Walker in %s mode..."
 LOG_WALKER_EXITED: str = "Walker exited normally"
 LOG_WALKER_EXIT_SYSEXIT: str = "Walker exited via sys.exit(%s)"
@@ -215,7 +215,7 @@ def execute_walker(zcli: Any, parsed: Dict[str, Any]) -> Optional[Dict[str, str]
     (Terminal/zBifrost) throughout execution.
     
     Args:
-        zcli: zCLI instance with full subsystem access
+        zcli: zKernel instance with full subsystem access
             - zcli.session: Session dictionary (reads 4 required fields)
             - zcli.zspark_obj: zSpark context (updates with walker config)
             - zcli.logger: Logger instance (logs walker lifecycle)
@@ -317,7 +317,7 @@ def execute_walker(zcli: Any, parsed: Dict[str, Any]) -> Optional[Dict[str, str]
         
         # Import and launch Walker (Phase 4)
         try:
-            from zCLI.L4_Orchestration.q_zWalker.zWalker import zWalker
+            from zKernel.L4_Orchestration.q_zWalker.zWalker import zWalker
             
             zcli.logger.info(LOG_CREATING_WALKER)
             walker = zWalker(zcli)
@@ -387,7 +387,7 @@ def _validate_walker_session(zcli: Any) -> Optional[Dict[str, str]]:
     fields and configuration hint.
     
     Args:
-        zcli: zCLI instance with session access
+        zcli: zKernel instance with session access
             - zcli.session: Session dictionary to validate
     
     Returns:
@@ -473,7 +473,7 @@ def _build_walker_zspark(zcli: Any) -> None:
     execution.
     
     Args:
-        zcli: zCLI instance with session and zspark_obj access
+        zcli: zKernel instance with session and zspark_obj access
             - zcli.session: Session dictionary (reads 5 fields)
             - zcli.zspark_obj: zSpark context dict (updates 5 fields)
     
@@ -582,7 +582,7 @@ def _restore_session_mode(zcli: Any, original_mode: str) -> None:
     walker might mutate mode state.
     
     Args:
-        zcli: zCLI instance with session access
+        zcli: zKernel instance with session access
             - zcli.session: Session dictionary (updates zMode field)
             - zcli.logger: Logger instance (logs mode restoration)
         

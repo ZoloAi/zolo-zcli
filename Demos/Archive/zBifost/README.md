@@ -8,11 +8,11 @@ Learn zBifrost from the ground up - one concept at a time.
 - Modules load dynamically only when needed (no top-level imports)
 - Works seamlessly via CDN (no import resolution issues) - once published to GitHub
 - Progressive loading (only load what you use)
-- Stays modular at runtime (zCLI philosophy)
+- Stays modular at runtime (zKernel philosophy)
 
 This solves the ES6 module CDN issue while keeping the code truly modular.
 
-**For local development**: Demos use relative path to source file (`../../zCLI/subsystems/zComm/...`)  
+**For local development**: Demos use relative path to source file (`../../zKernel/subsystems/zComm/...`)  
 **After v1.5.5 release**: Switch to CDN URL for published demos
 
 ## Level 0: Bare Connection ✅
@@ -77,14 +77,14 @@ open level1_client.html  # or just open in browser
 2. After connection, menu buttons appear
 3. Click "Ping", "Echo Test", or "Status"
 4. Watch console logs for responses
-5. All commands use `^` dispatch (zCLI abstraction, no hardcode)
+5. All commands use `^` dispatch (zKernel abstraction, no hardcode)
 
 **Success criteria**:
 - ✅ Production BifrostClient works
 - ✅ zUI file loads correctly
 - ✅ Dispatch commands execute (`^Ping`, `^Echo Test`, `^Status`)
 - ✅ Server responds with zUI-defined values
-- ✅ No hardcoded values - all from zCLI abstractions
+- ✅ No hardcoded values - all from zKernel abstractions
 
 **Alternative: Full-Stack Server** (HTTP + WebSocket in one command):
 ```bash

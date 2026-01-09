@@ -2,7 +2,7 @@
 """
 zEnv - Declarative Environment Configuration Loader
 
-THE zCLI WAY: Replace traditional .env files with declarative config files.
+THE zKernel WAY: Replace traditional .env files with declarative config files.
 
 This module provides a secure, declarative alternative to python-dotenv while
 maintaining backward compatibility. It parses zEnv config files (.zolo, .yaml, .json)
@@ -58,7 +58,7 @@ Security:
 - Audit trail via OS logging
 """
 
-from zCLI import os, sys, yaml, json, Path, Any, Dict, Optional, List, Union
+from zKernel import os, sys, yaml, json, Path, Any, Dict, Optional, List, Union
 from pathlib import Path
 
 # Module constants
@@ -74,7 +74,7 @@ ZENV_EXTENSIONS = [
 
 class zEnv:
     """
-    Declarative environment configuration loader (THE zCLI WAY).
+    Declarative environment configuration loader (THE zKernel WAY).
     
     Replaces python-dotenv with YAML/JSON declarative configs while
     maintaining security through os.environ injection.
@@ -295,7 +295,7 @@ def load_zenv(workspace_dir: str, environment: str = "development", logger=None)
         bool: True if YAML files were loaded, False if fell back to dotenv
     
     Example:
-        >>> from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_zenv import load_zenv
+        >>> from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_zenv import load_zenv
         >>> load_zenv("/path/to/workspace", "development")
         True
     """

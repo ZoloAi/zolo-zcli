@@ -3,7 +3,7 @@
 """
 zPath resolution and file discovery functionality within zParser subsystem.
 
-This module provides comprehensive path resolution utilities for the zCLI system:
+This module provides comprehensive path resolution utilities for the zKernel system:
 
 1. **zPath_decoder**: Main path decoder that resolves dotted paths to file paths
    with support for workspace-relative (@), absolute (~), and relative paths.
@@ -152,8 +152,8 @@ Internal:
     - None (Tier 0 - Foundation)
 
 External:
-    - zCLI core imports (os)
-    - zCLI typing imports (Any, Dict, List, Optional, Tuple, Union)
+    - zKernel core imports (os)
+    - zKernel typing imports (Any, Dict, List, Optional, Tuple, Union)
     - pathlib.Path (for zMachine path validation)
     - zConfig.zConfigPaths (for user data directory resolution)
     - zExceptions.zMachinePathError (for zMachine path errors)
@@ -167,7 +167,7 @@ See Also
 """
 
 from pathlib import Path
-from zCLI import os, Any, Dict, List, Optional, Tuple, Union
+from zKernel import os, Any, Dict, List, Optional, Tuple, Union
 from zSys.errors import zMachinePathError
 
 # ============================================================================
@@ -387,7 +387,7 @@ def resolve_zmachine_path(
 
     # Get config paths (import inline to avoid circular dependency)
     if not config_paths:
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules import zConfigPaths
+        from zKernel.L1_Foundation.a_zConfig.zConfig_modules import zConfigPaths
         config_paths = zConfigPaths()
 
     # Extract the subpath after zMachine prefix
@@ -424,7 +424,7 @@ def is_zvafile_type(filename_or_parts: Union[str, List[str]]) -> bool:
     Check if a filename indicates a zVaFile (zUI., zSchema., zConfig.).
     
     Detects zVaFile prefixes in either a filename string or a list of path parts.
-    zVaFiles are special declarative files in zCLI with auto-detected extensions.
+    zVaFiles are special declarative files in zKernel with auto-detected extensions.
     
     Args:
         filename_or_parts: Filename string or list of path parts to check

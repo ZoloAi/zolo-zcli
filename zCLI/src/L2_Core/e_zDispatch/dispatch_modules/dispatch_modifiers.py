@@ -4,7 +4,7 @@
 Modifier Processor for zDispatch Subsystem.
 
 This module provides the ModifierProcessor class, which handles prefix and suffix
-modifiers that alter command behavior within the zCLI framework. Modifiers enable
+modifiers that alter command behavior within the zKernel framework. Modifiers enable
 powerful command routing patterns like bounce-back navigation, menu creation, 
 required actions, and anchor points.
 
@@ -109,10 +109,10 @@ Constants:
     and reduce the risk of typos. See module-level constants below for complete list.
 """
 
-from zCLI import Any, Optional, Dict, List, Union
+from zKernel import Any, Optional, Dict, List, Union
 
 # Import SESSION_KEY_ZMODE from zConfig for mode detection
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZMODE
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZMODE
 
 # Import all dispatch constants from centralized location
 from .dispatch_constants import (
@@ -182,7 +182,7 @@ class ModifierProcessor:
     
     Attributes:
         dispatch: Parent zDispatch instance
-        zcli: Root zCLI instance
+        zcli: Root zKernel instance
         logger: Logger instance from zCLI
     
     Methods:
@@ -206,7 +206,7 @@ class ModifierProcessor:
     
     # Class-level type declarations
     dispatch: Any  # zDispatch instance
-    zcli: Any  # zCLI instance
+    zcli: Any  # zKernel instance
     logger: Any  # Logger instance
 
     def __init__(self, dispatch: Any) -> None:
@@ -214,7 +214,7 @@ class ModifierProcessor:
         Initialize modifier processor with parent dispatch instance.
         
         Args:
-            dispatch: Parent zDispatch instance providing access to zCLI and logger
+            dispatch: Parent zDispatch instance providing access to zKernel and logger
         
         Example:
             processor = ModifierProcessor(dispatch)
@@ -476,7 +476,7 @@ class ModifierProcessor:
                 filtered_with_prefix.append(item)
         
         # SET NAVBAR FLAG: Mark that next navigation is from navbar
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
+        from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
         if SESSION_KEY_ZCRUMBS not in self.zcli.session:
             self.zcli.session[SESSION_KEY_ZCRUMBS] = {}
         self.zcli.session[SESSION_KEY_ZCRUMBS]["_navbar_navigation"] = True

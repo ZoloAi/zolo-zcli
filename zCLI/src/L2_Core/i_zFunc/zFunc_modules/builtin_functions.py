@@ -1,13 +1,13 @@
 # zCLI/subsystems/zFunc/zFunc_modules/builtin_functions.py
 """
-Built-in functions for zCLI (callable via & syntax in zUI).
+Built-in functions for zKernel (callable via & syntax in zUI).
 
 Functions:
     - zNow: Get current date/time formatted per zConfig
     - (future: zUser, zEnv, zMachine, etc.)
 """
 
-from zCLI import datetime, Any, Optional
+from zKernel import datetime, Any, Optional
 
 
 def zNow(
@@ -28,7 +28,7 @@ def zNow(
     Args:
         format_type: "date", "time", or "datetime" (default: "datetime")
         custom_format: Override config format (e.g., "yyyy-mm-dd")
-        zcli: zCLI instance (required for config access)
+        zcli: zKernel instance (required for config access)
         
     Returns:
         Formatted date/time string
@@ -55,7 +55,7 @@ def zNow(
         else:  # datetime
             format_string = zcli.config.machine.get("datetime_format", "ddmmyyyy HH:MM:SS")
     
-    # Convert zCLI format to Python strftime format
+    # Convert zKernel format to Python strftime format
     py_format = _convert_format_to_strftime(format_string)
     
     # Return formatted current time
@@ -64,9 +64,9 @@ def zNow(
 
 def _convert_format_to_strftime(zcli_format: str) -> str:
     """
-    Convert zCLI date format to Python strftime format.
+    Convert zKernel date format to Python strftime format.
     
-    zCLI Format Tokens:
+    zKernel Format Tokens:
         yyyy → %Y (4-digit year)
         yy → %y (2-digit year)
         mm → %m (2-digit month)
@@ -76,7 +76,7 @@ def _convert_format_to_strftime(zcli_format: str) -> str:
         SS → %S (seconds)
     
     Args:
-        zcli_format: zCLI format string (e.g., "ddmmyyyy")
+        zcli_format: zKernel format string (e.g., "ddmmyyyy")
         
     Returns:
         Python strftime format string (e.g., "%d%m%Y")

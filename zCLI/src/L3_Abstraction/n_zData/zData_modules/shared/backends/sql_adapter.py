@@ -148,7 +148,7 @@ See Also
 """
 
 from abc import abstractmethod
-from zCLI import Dict, List, Optional, Any
+from zKernel import Dict, List, Optional, Any
 from .base_adapter import BaseDataAdapter
 
 # ============================================================

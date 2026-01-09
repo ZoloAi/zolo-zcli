@@ -63,7 +63,7 @@ Integration:
 Version: v1.5.4 Phase 2
 """
 
-from zCLI import Any, Dict, Optional
+from zKernel import Any, Dict, Optional
 
 # =============================================================================
 # MODULE CONSTANTS

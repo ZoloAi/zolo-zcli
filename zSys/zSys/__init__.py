@@ -5,7 +5,7 @@ Pre-boot system utilities shared by entry point (main.py) and framework (zCLI/).
 
 This module provides foundational utilities that are needed before the full zCLI
 framework is initialized. It is intentionally lightweight with no dependencies on
-the zCLI framework itself.
+the zKernel framework itself.
 
 Architecture:
     - Layer 0: System Foundation (this module)
@@ -23,7 +23,7 @@ Usage:
     from zSys.logger import BootstrapLogger, ConsoleLogger, UnifiedFormatter
     from zSys.install import detect_installation_type, cli_uninstall_complete
     from zSys.formatting import Colors, print_ready_message
-    from zSys.errors import zCLIException, zTraceback, validate_zcli_instance
+    from zSys.errors import zKernelException, zTraceback, validate_zkernel_instance
 """
 
 # Export all public APIs

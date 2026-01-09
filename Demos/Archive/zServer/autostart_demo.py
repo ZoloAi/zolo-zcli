@@ -13,7 +13,7 @@ Then open: http://127.0.0.1:8080/demo.html
 """
 
 from pathlib import Path
-from zCLI import zCLI
+from zKernel import zKernel
 import time
 
 # Create zCLI with auto-start configuration
@@ -21,7 +21,7 @@ print("\n" + "="*60)
 print("🚀 zServer Auto-Start Demo")
 print("="*60)
 
-z = zCLI({
+z = zKernel({
     "zWorkspace": str(Path(__file__).parent),
     "http_server": {
         "host": "127.0.0.1",

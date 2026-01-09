@@ -2,7 +2,7 @@
 """Cross-platform configuration path resolution with platformdirs."""
 
 import logging
-from zCLI import platform, Path, Colors, platformdirs, load_dotenv, Any, Dict, List, Optional, Tuple
+from zKernel import platform, Path, Colors, platformdirs, load_dotenv, Any, Dict, List, Optional, Tuple
 
 # Module-level logger
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ class zConfigPaths:
         self.zSpark = zSpark_obj if isinstance(zSpark_obj, dict) else None
         
         # Extract log level and deployment early for log-aware printing (before logger exists)
-        from zCLI.utils import get_log_level_from_zspark
+        from zKernel.utils import get_log_level_from_zspark
         self._log_level = get_log_level_from_zspark(zSpark_obj)
         self._is_production = self._check_production_from_zspark(zSpark_obj)
         self._is_testing = self._check_testing_from_zspark(zSpark_obj)
@@ -240,8 +240,8 @@ class zConfigPaths:
     def load_dotenv(self, override: bool = True) -> Optional[Path]:
         """Load environment variables with STRICT zEnv priority over dotenv.
         
-        THE zCLI WAY (v2.0): Priority-based loading with declarative-first guarantee:
-        1. Try zEnv.base.{zolo|yaml} + zEnv.{deployment}.{zolo|yaml} (declarative, THE zCLI WAY)
+        THE zKernel WAY (v2.0): Priority-based loading with declarative-first guarantee:
+        1. Try zEnv.base.{zolo|yaml} + zEnv.{deployment}.{zolo|yaml} (declarative, THE zKernel WAY)
         2. Fallback to .zEnv + .zEnv.{deployment} ONLY if NO config files exist
         
         IMPORTANT: If ANY zEnv config files exist (even if empty/malformed), 
@@ -259,7 +259,7 @@ class zConfigPaths:
         Returns:
             Path to loaded file, or None if no file found/loaded
         
-        Example (THE zCLI WAY):
+        Example (THE zKernel WAY):
             # zEnv.base.zolo
             ZNAVBAR:
               zVaF:
@@ -272,10 +272,10 @@ class zConfigPaths:
             HTTP_SSL_ENABLED(bool): true
             HTTP_SSL_CERT: /etc/ssl/cert.pem
         """
-        from zCLI import os
+        from zKernel import os
         
         # ═══════════════════════════════════════════════════════════
-        # PRIORITY 1: Try zEnv (ZOLO/YAML/JSON) - THE zCLI WAY
+        # PRIORITY 1: Try zEnv (ZOLO/YAML/JSON) - THE zKernel WAY
         # ═══════════════════════════════════════════════════════════
         
         # Determine deployment/environment
@@ -309,7 +309,7 @@ class zConfigPaths:
                 loaded = zenv_loader.load_files(base_file, env_file)
                 
                 if loaded:
-                    self._log_info(f"✅ Loaded zEnv (THE zCLI WAY) for {deployment} environment")
+                    self._log_info(f"✅ Loaded zEnv (THE zKernel WAY) for {deployment} environment")
                     # Return whichever file was found (prefer env-specific)
                     return env_file if env_file else base_file
                 else:

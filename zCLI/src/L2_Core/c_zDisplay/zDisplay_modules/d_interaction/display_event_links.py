@@ -32,7 +32,7 @@ Version: v1.6.0 (Link Event Support)
 """
 
 # Centralized imports from zCLI
-from zCLI import Dict, Any, Optional
+from zKernel import Dict, Any, Optional
 
 # Import DRY helpers from primitives
 from ..b_primitives.display_rendering_helpers import wrap_with_color
@@ -68,7 +68,7 @@ class LinkEvents:
     
     Attributes:
         display: Parent zDisplay instance
-        zcli: Root zCLI instance
+        zcli: Root zKernel instance
         logger: Logger instance
     
     Methods:

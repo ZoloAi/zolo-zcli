@@ -136,7 +136,7 @@ export class NavigationRenderer {
 
       // Check if this is a hierarchical item with zSub
       if (typeof item === 'object' && item !== null && !item.label && !item.href) {
-        // Dict format: {"zProducts": {"zSub": ["zCLI", "zBifrost", ...]}}
+        // Dict format: {"zProducts": {"zSub": ["zKernel", "zBifrost", ...]}}
         const itemName = Object.keys(item)[0];
         const itemData = item[itemName];
         

@@ -14,7 +14,7 @@
 #   def about():
 #       return render_template('about.html')
 #
-# zCLI: Declarative routes with Jinja2 templates (no decorators!)
+# zKernel: Declarative routes with Jinja2 templates (no decorators!)
 #
 # Note: /static/* is auto-served from static/ folder (Flask convention)
 #       No need to define explicit routes for static files!

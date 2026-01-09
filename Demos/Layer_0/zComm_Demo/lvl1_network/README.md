@@ -58,7 +58,7 @@ python Demos/Layer_0/zComm_Demo/lvl1_network/2_http_simple.py
 Sending POST to: https://httpbin.org/post
 Payload: {
   "message": "Hello from zComm!",
-  "framework": "zCLI",
+  "framework": "zKernel",
   "demo": "http_simple"
 }
 
@@ -67,7 +67,7 @@ Payload: {
 
 Server echoed:
   URL: https://httpbin.org/post
-  Method: {'demo': 'http_simple', 'framework': 'zCLI', 'message': 'Hello from zComm!'}
+  Method: {'demo': 'http_simple', 'framework': 'zKernel', 'message': 'Hello from zComm!'}
 
 Tip: No 'requests' library needed - zComm handles it!
 ```

@@ -6,7 +6,7 @@
 
 ## What is zUtils?
 
-**zUtils** is zCLI's plugin management facade that enables runtime extension through Python modules:
+**zUtils** is zKernel's plugin management facade that enables runtime extension through Python modules:
 - **Plugin loading** (file paths and module paths)
 - **Unified caching** (delegates to zLoader.plugin_cache)
 - **Security enforcement** (`__all__` whitelist, collision detection)
@@ -23,9 +23,9 @@
 ### Quick Start (3 Lines)
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"zWorkspace": ".", "zPlugins": ["path/to/plugin.py"]})
+z = zKernel({"zWorkspace": ".", "zPlugins": ["path/to/plugin.py"]})
 z.utils.my_function()  # Call plugin function as method
 ```
 
@@ -41,7 +41,7 @@ z.utils.my_function()  # Call plugin function as method
 
 ```python
 # Boot-time loading (preferred)
-z = zCLI({"zPlugins": ["plugins/auth.py", "plugins/utils.py"]})
+z = zKernel({"zPlugins": ["plugins/auth.py", "plugins/utils.py"]})
 
 # Runtime loading (advanced)
 z.utils.load_plugins(["plugins/new_feature.py"])
@@ -273,7 +273,7 @@ z.utils.load_plugins([
 ### With zSpark (Boot Time)
 ```python
 # Boot-time plugin loading
-z = zCLI({
+z = zKernel({
     "zWorkspace": ".",
     "zPlugins": [
         "plugins/auth.py",
@@ -321,7 +321,7 @@ stats = z.utils.get_stats()
 
 2. **Load at boot time** via zSpark (preferred)
    ```python
-   z = zCLI({"zPlugins": ["plugins/my_plugin.py"]})
+   z = zKernel({"zPlugins": ["plugins/my_plugin.py"]})
    ```
 
 3. **Use `zcli` for subsystem access**
@@ -408,7 +408,7 @@ def sanitize(text):
 
 **Usage**:
 ```python
-z = zCLI({"zPlugins": ["plugins/text_utils.py"]})
+z = zKernel({"zPlugins": ["plugins/text_utils.py"]})
 slug = z.utils.slugify("Hello World")  # "hello-world"
 ```
 
@@ -449,7 +449,7 @@ zVaF:
 
 **Plugin loaded at boot**:
 ```python
-z = zCLI({
+z = zKernel({
     "zWorkspace": ".",
     "zPlugins": ["plugins/data_processor.py"],
     "zUI": "zUI.my_app.yaml"

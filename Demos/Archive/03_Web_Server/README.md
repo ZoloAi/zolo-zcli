@@ -189,7 +189,7 @@ After this demo, you understand:
 
 - ✅ How to create HTTP server via zComm factory
 - ✅ zServer lifecycle management (start/stop)
-- ✅ How to serve static websites with zCLI
+- ✅ How to serve static websites with zKernel
 - ✅ Multi-page navigation in static sites
 - ✅ Background threading pattern
 - ✅ Health check and status monitoring

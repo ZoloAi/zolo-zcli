@@ -13,7 +13,7 @@ Key Discovery:
   - No try/except code needed in your application
   - Perfect for development and debugging
 """
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
@@ -29,7 +29,7 @@ def run_demo():
         "logger_path": "./logs",
         "zTraceback": True,  # Enable automatic exception handling
     }
-    z = zCLI(zSpark)
+    z = zKernel(zSpark)
     
     print("\n# Configuration:")
     print("  deployment : Production (clean zTraceback UI)")

@@ -133,7 +133,7 @@ LOG_* : str
     Log message templates
 """
 
-from zCLI import Any, Dict, List, Optional, Union
+from zKernel import Any, Dict, List, Optional, Union
 
 from .navigation_menu_builder import MenuBuilder
 from .navigation_menu_renderer import MenuRenderer
@@ -184,7 +184,7 @@ class MenuSystem:
     navigation : Any
         Reference to parent navigation system
     zcli : Any
-        Reference to zCLI core instance
+        Reference to zKernel core instance
     logger : Any
         Logger instance for menu operations
     builder : MenuBuilder
@@ -247,7 +247,7 @@ class MenuSystem:
 
     # Class-level type declarations
     navigation: Any  # Navigation system reference
-    zcli: Any  # zCLI core instance
+    zcli: Any  # zKernel core instance
     logger: Any  # Logger instance
     builder: MenuBuilder  # Menu builder component
     renderer: MenuRenderer  # Menu renderer component
@@ -379,7 +379,7 @@ class MenuSystem:
         # In Bifrost mode, we emit a zMenu display event that the
         # frontend will handle. The frontend renders an interactive
         # menu and sends back the user's selection.
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules import ZMODE_ZBIFROST
+        from zKernel.L1_Foundation.a_zConfig.zConfig_modules import ZMODE_ZBIFROST
         mode = self.zcli.session.get("zMode", "Terminal")
         
         if mode == ZMODE_ZBIFROST:

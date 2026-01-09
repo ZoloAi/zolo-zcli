@@ -11,7 +11,7 @@ path resolution and content parsing.
 Purpose
 -------
 The zLoader package root serves as Tier 6 (Package Root) in the zLoader architecture,
-providing the main entry point for importing zLoader into zCLI. It exposes the zLoader
+providing the main entry point for importing zLoader into zKernel. It exposes the zLoader
 facade class which provides a unified interface for file loading and caching.
 
 Architecture
@@ -19,7 +19,7 @@ Architecture
 **Tier 6 - Package Root (Entry Point)**
     - Position: Top-level package entry point
     - Exposes: zLoader facade class (Tier 5)
-    - Used By: zCLI.py (imports zLoader for zcli.loader attribute)
+    - Used By: zKernel.py (imports zLoader for zcli.loader attribute)
     - Purpose: Package initialization + public API exposure
 
 **6-Tier Architecture**:
@@ -37,8 +37,8 @@ Public API
 
 Usage Patterns
 --------------
-**Standard Import (in zCLI.py)**:
-    >>> from zCLI.L2_Core.h_zLoader import zLoader
+**Standard Import (in zKernel.py)**:
+    >>> from zKernel.L2_Core.h_zLoader import zLoader
     >>> self.loader = zLoader(self)
     >>> # Used as: zcli.loader.handle(zPath)
 

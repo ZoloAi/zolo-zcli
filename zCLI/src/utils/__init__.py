@@ -7,17 +7,17 @@ This module maintains backward compatibility by re-exporting utilities
 that have been moved to /zSys/ (Layer 0 - System Foundation).
 
 New code should import directly from zSys instead:
-    from zSys import Colors, validate_zcli_instance, zTraceback
+    from zSys import Colors, validate_zkernel_instance, zTraceback
 
 This module will be deprecated in a future version.
 """
 
 # Cache utilities - lazy import to avoid circular dependency
-# zCLI.utils is imported by zConfig, which is needed by zLoader
+# zKernel.utils is imported by zConfig, which is needed by zLoader
 # So we can't import zLoader at module level
 def _lazy_cache_utils():
     """Lazy import of cache_utils to avoid circular imports."""
-    from zCLI.L2_Core.h_zLoader.loader_modules import cache_utils
+    from zKernel.L2_Core.h_zLoader.loader_modules import cache_utils
     return cache_utils
 
 def create_shortcut_from_cache(*args, **kwargs):
@@ -46,10 +46,10 @@ cache_utils = _CacheUtilsProxy()
 
 # Import from zSys.errors
 from zSys.errors import (
-    validate_zcli_instance,
+    validate_zkernel_instance,
     zTraceback,
     ExceptionContext,
-    zCLIException,
+    zKernelException,
     SchemaNotFoundError,
     DatabaseNotInitializedError,
     TableNotFoundError,
@@ -83,10 +83,10 @@ from zSys.errors import (
 __all__ = [
     # From zSys (backward compatibility)
     "Colors",
-    "validate_zcli_instance",
+    "validate_zkernel_instance",
     "zTraceback",
     "ExceptionContext",
-    "zCLIException",
+    "zKernelException",
     "SchemaNotFoundError",
     "DatabaseNotInitializedError",
     "TableNotFoundError",

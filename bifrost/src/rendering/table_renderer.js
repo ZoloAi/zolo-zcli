@@ -3,7 +3,7 @@
  * Table Renderer - Data Tables with Pagination
  * ═══════════════════════════════════════════════════════════════
  *
- * Renders zTable events from zCLI backend (AdvancedData subsystem).
+ * Renders zTable events from zKernel backend (AdvancedData subsystem).
  * Supports semantic HTML tables with zTheme styling, pagination metadata,
  * and both array and object row formats.
  *

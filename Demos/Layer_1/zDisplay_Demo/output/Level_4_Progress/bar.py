@@ -19,11 +19,11 @@ import time
 import sys
 sys.path.insert(0, '/Users/galnachshon/Projects/zolo-zcli')
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 def run_demo():
     """Demonstrate progress bar with manual updates."""
-    z = zCLI({"logger": "PROD"})
+    z = zKernel({"logger": "PROD"})
     
     z.display.line("")
     z.display.line("=== Level 5: Progress Bar ===")

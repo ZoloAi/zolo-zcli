@@ -12,7 +12,7 @@ Key Discovery:
   - One simple pattern for all RESTful operations
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 def run_demo():
     """Showcase all 5 HTTP methods."""
@@ -23,7 +23,7 @@ def run_demo():
         "logger": "INFO",
         "logger_path": "./logs",
     }
-    z = zCLI(zSpark)
+    z = zKernel(zSpark)
 
     # GET - Retrieve data
     response = z.comm.http_get("https://httpbin.org/get", params={"key": "value"})

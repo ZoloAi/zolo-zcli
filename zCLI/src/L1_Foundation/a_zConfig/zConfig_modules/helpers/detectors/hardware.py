@@ -1,7 +1,7 @@
 # zCLI/L1_Foundation/a_zConfig/zConfig_modules/helpers/detectors/hardware.py
-"""Hardware detection (CPU, GPU, memory, network) for zCLI machine configuration."""
+"""Hardware detection (CPU, GPU, memory, network) for zKernel machine configuration."""
 
-from zCLI import os, platform, subprocess, importlib
+from zKernel import os, platform, subprocess, importlib
 from typing import Dict, Any, Optional
 from .shared import BYTES_PER_GB, KB_PER_MB, MB_PER_GB
 

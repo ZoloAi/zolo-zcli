@@ -1,5 +1,5 @@
 """
-Single source of truth for ALL zCLI logging formats.
+Single source of truth for ALL zKernel logging formats.
 
 Inspired by mkma's simple, consistent logging pattern:
 https://github.com/israellevin/mkma/blob/master/initramfs_init.sh
@@ -35,7 +35,7 @@ def format_log_message(
     lineno: Optional[int] = None
 ) -> str:
     """
-    Single format function for ALL zCLI logging.
+    Single format function for ALL zKernel logging.
     
     This is the ONLY place where log format is defined.
     Bootstrap, Framework, and App loggers ALL call this.
@@ -57,8 +57,8 @@ def format_log_message(
         >>> format_log_message(now, "INFO", "Bootstrap", "Starting...")
         '2025-12-27 18:00:00 [Bootstrap] INFO: Starting...'
         
-        >>> format_log_message(now, "ERROR", "Framework", "Failed", True, "zCLI.py", 123)
-        '2025-12-27 18:00:00 [Framework] ERROR [zCLI.py:123]: Failed'
+        >>> format_log_message(now, "ERROR", "Framework", "Failed", True, "zKernel.py", 123)
+        '2025-12-27 18:00:00 [Framework] ERROR [zKernel.py:123]: Failed'
     
     Inspired by mkma's format:
         <priority>$(date) [context]: message
@@ -128,7 +128,7 @@ class UnifiedFormatter(logging.Formatter):
     Python logging.Formatter that uses our single format function.
     
     This ensures Framework and App loggers use the SAME format as Bootstrap.
-    All zCLI loggers should use this formatter to maintain consistency.
+    All zKernel loggers should use this formatter to maintain consistency.
     
     Usage:
         # Framework logger (detailed, includes file/line)

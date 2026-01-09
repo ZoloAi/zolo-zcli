@@ -50,11 +50,11 @@ Forward Dependencies:
 
 Usage:
     # Import entire package
-    from zCLI.L2_Core import e_zDispatch as dispatch_module
+    from zKernel.L2_Core import e_zDispatch as dispatch_module
     dispatch = dispatch_module.zDispatch(zcli)
     
     # Import specific components
-    from zCLI.L2_Core.e_zDispatch import zDispatch, handle_zDispatch
+    from zKernel.L2_Core.e_zDispatch import zDispatch, handle_zDispatch
     dispatch = zDispatch(zcli)
     result = handle_zDispatch("action", cmd, zcli=zcli)
     
@@ -95,7 +95,7 @@ Version History:
 
 __version__ = "1.5.4"
 __author__ = "Zolo"
-__description__ = "Core command dispatch and routing subsystem for zCLI"
+__description__ = "Core command dispatch and routing subsystem for zKernel"
 
 # ============================================================================
 # FACADE IMPORTS

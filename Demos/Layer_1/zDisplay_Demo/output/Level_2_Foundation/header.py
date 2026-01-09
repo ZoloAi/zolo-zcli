@@ -11,12 +11,12 @@ Run:
     python Demos/Layer_1/zDisplay_Demo/output/Level_2_Foundation/header.py
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
     """Demonstrate formatted section headers."""
-    z = zCLI({"logger": "PROD"})
+    z = zKernel({"logger": "PROD"})
 
     z.display.line("")
     z.display.header("Level 2A: header() - Formatted Headers", color="CYAN", style="wave")

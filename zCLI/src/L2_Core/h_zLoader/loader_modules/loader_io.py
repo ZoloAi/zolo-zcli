@@ -25,7 +25,7 @@ Architecture
 Key Design Decisions
 --------------------
 1. **UTF-8 Encoding**: All files are read with UTF-8 encoding, which is the
-   standard for zCLI configuration files, UI definitions, and schema files.
+   standard for zKernel configuration files, UI definitions, and schema files.
 
 2. **Comprehensive Error Handling**: Three specific exception types are caught
    and re-raised as RuntimeError with descriptive messages:
@@ -52,14 +52,14 @@ External Usage
 Usage Examples
 --------------
 **Basic Usage** (without display feedback):
-    >>> from zCLI.L2_Core.h_zLoader.loader_modules import load_file_raw
+    >>> from zKernel.L2_Core.h_zLoader.loader_modules import load_file_raw
     >>> logger = get_logger()
     >>> content = load_file_raw("/path/to/file.yaml", logger)
     >>> print(len(content))
     1234
 
 **With Display Feedback** (Terminal/Bifrost modes):
-    >>> from zCLI.L2_Core.h_zLoader.loader_modules import load_file_raw
+    >>> from zKernel.L2_Core.h_zLoader.loader_modules import load_file_raw
     >>> logger = get_logger()
     >>> display = zcli.display
     >>> content = load_file_raw("/path/to/file.yaml", logger, display)
@@ -89,12 +89,12 @@ Internal:
 
 External:
     - Python stdlib: open() for file I/O
-    - zCLI typing imports: Any, Optional (for type hints)
+    - zKernel typing imports: Any, Optional (for type hints)
 
 Performance Considerations
 --------------------------
 - **File Size**: This function loads the entire file into memory. Suitable for
-  zCLI configuration files (typically < 100KB). Not suitable for large data files.
+  zKernel configuration files (typically < 100KB). Not suitable for large data files.
 - **Encoding**: UTF-8 decoding is fast for ASCII-compatible content.
 - **Error Handling**: Exception handling has minimal overhead for success path.
 
@@ -116,7 +116,7 @@ Version History
 - v1.5.3: Original implementation (27 lines, basic error handling)
 """
 
-from zCLI import Any, Optional
+from zKernel import Any, Optional
 
 # ============================================================================
 # MODULE CONSTANTS
@@ -192,7 +192,7 @@ def load_file_raw(full_path: str, logger: Any, display: Optional[Any] = None) ->
             Unable to load zFile (not found): /missing.yaml
 
     Notes:
-        - Files are read with UTF-8 encoding (standard for zCLI files)
+        - Files are read with UTF-8 encoding (standard for zKernel files)
         - Entire file is loaded into memory (suitable for config/UI files)
         - File handle is automatically closed via context manager
         - Debug logging shows file path and bytes read on success

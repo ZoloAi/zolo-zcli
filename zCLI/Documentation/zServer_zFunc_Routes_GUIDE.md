@@ -82,7 +82,7 @@ def upload_avatar(request_context):
 
 ## Schema Resolution Hierarchy
 
-zFunc routes support **two-level schema resolution** (same pattern as zCLI's config hierarchy):
+zFunc routes support **two-level schema resolution** (same pattern as zKernel's config hierarchy):
 
 ### Level 1: Meta-Level Schema (Default)
 ```yaml

@@ -43,7 +43,7 @@ Usage:
 """
 
 # Centralized imports from zCLI
-from zCLI import Any, Dict, Optional
+from zKernel import Any, Dict, Optional
 
 
 class ActiveStateManager:

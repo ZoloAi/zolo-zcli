@@ -14,7 +14,7 @@ How to run:
 4. Watch the cache comparison in real-time!
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 import time
 
 print("🌉 Starting zCache Demo Server (zBifrost mode)...")
@@ -22,7 +22,7 @@ print("📝 Goal: See cache performance comparison in a browser")
 print()
 
 # Initialize zCLI in zBifrost mode (WebSocket server)
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {
         "host": "127.0.0.1",

@@ -161,7 +161,7 @@ button.style.backgroundColor = '#007bff'; // ❌ NO!
 
 ### Button Color Classes
 
-| zCLI Color | Solid Class | Outline Class |
+| zKernel Color | Solid Class | Outline Class |
 |------------|-------------|---------------|
 | `primary` | `.zBtn-primary` | `.zBtn-outline-primary` |
 | `secondary` | `.zBtn-secondary` | `.zBtn-outline-secondary` |
@@ -506,5 +506,5 @@ grep "\.zm-\|\.zp-" /Users/galnachshon/Projects/zTheme/dist/ztheme.css
 ---
 
 **Last Updated**: Dec 18, 2025  
-**For**: BifrostClient Refactoring (zCLI Sprint 2: Button Renderer)
+**For**: BifrostClient Refactoring (zKernel Sprint 2: Button Renderer)
 

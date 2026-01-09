@@ -11,7 +11,7 @@ Week 1.1 - Layer 0: Foundation
 Week 6.2.9 - Moved to helpers/ (utility helper, not state module)
 """
 
-from zCLI import Path, Dict, List, Any
+from zKernel import Path, Dict, List, Any
 
 # Module Constants
 

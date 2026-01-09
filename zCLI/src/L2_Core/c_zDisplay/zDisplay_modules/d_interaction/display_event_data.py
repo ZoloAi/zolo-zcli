@@ -311,7 +311,7 @@ ops.zcli.display.zEvents.BasicData.json_data(schema_meta, color=True)
 ```
 """
 
-from zCLI import json, re, Any, Optional, Union, List, Dict
+from zKernel import json, re, Any, Optional, Union, List, Dict
 
 # Import DRY helpers from primitives
 from ..b_primitives.display_rendering_helpers import apply_indent_to_lines
@@ -603,7 +603,7 @@ class BasicData:
             
             # NEW v1.5.12: Resolve %variable references in list items
             if "%" in content and _context:
-                from zCLI.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
+                from zKernel.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
                 content = resolve_variables(content, self.display.zcli, _context)
             
             # Compose: use helper instead of direct BasicOutputs call
@@ -712,7 +712,7 @@ class BasicData:
                         {
                             "content": "Python Runtime Environment",
                             "children": [
-                                "zCLI framework initialization",
+                                "zKernel framework initialization",
                                 "zDisplay subsystem loading"
                             ]
                         },
@@ -727,7 +727,7 @@ class BasicData:
             # Output (default styles: number→letter→roman):
             #   1. Backend Architecture
             #      a. Python Runtime Environment
-            #         i. zCLI framework initialization
+            #         i. zKernel framework initialization
             #         ii. zDisplay subsystem loading
             #      b. Data Processing Layer
             #   2. Frontend Architecture

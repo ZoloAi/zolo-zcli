@@ -59,7 +59,7 @@ This module exposes 3 functions from Tier 1-2:
 Usage Patterns
 --------------
 **Standard Import Pattern**:
-    >>> from zCLI.L2_Core.j_zDialog.dialog_modules import (
+    >>> from zKernel.L2_Core.j_zDialog.dialog_modules import (
     ...     create_dialog_context,
     ...     inject_placeholders,
     ...     handle_submit
@@ -75,7 +75,7 @@ Usage Patterns
     >>> # Clean imports within subsystem
 
 **External Usage** (from other subsystems):
-    >>> from zCLI.L2_Core.j_zDialog.dialog_modules.dialog_context import inject_placeholders
+    >>> from zKernel.L2_Core.j_zDialog.dialog_modules.dialog_context import inject_placeholders
     >>> # Direct import for external usage (less common)
 
 Integration Points
@@ -94,7 +94,7 @@ Integration Points
 Usage Examples
 --------------
 Example 1: Context creation with placeholder injection
-    >>> from zCLI.L2_Core.j_zDialog.dialog_modules import (
+    >>> from zKernel.L2_Core.j_zDialog.dialog_modules import (
     ...     create_dialog_context,
     ...     inject_placeholders
     ... )
@@ -115,7 +115,7 @@ Example 1: Context creation with placeholder injection
     >>> # Returns: {"zCRUD": {"action": "create", "data": {"name": "alice"}}}
 
 Example 2: Direct submission handling
-    >>> from zCLI.L2_Core.j_zDialog.dialog_modules import handle_submit
+    >>> from zKernel.L2_Core.j_zDialog.dialog_modules import handle_submit
     >>> from unittest.mock import Mock
     >>> 
     >>> # Setup
@@ -140,7 +140,7 @@ Example 2: Direct submission handling
     >>> # Dispatches to zDispatch with injected placeholders and model
 
 Example 3: Complete workflow (context → submit → result)
-    >>> from zCLI.L2_Core.j_zDialog.dialog_modules import (
+    >>> from zKernel.L2_Core.j_zDialog.dialog_modules import (
     ...     create_dialog_context,
     ...     handle_submit
     ... )

@@ -105,7 +105,7 @@ Caching Strategy
 Usage Examples
 -------------
 Basic connection and CRUD:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends.csv_adapter import CSVAdapter
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends.csv_adapter import CSVAdapter
     >>> config = {"path": "/data/myapp", "label": "csvdb"}
     >>> adapter = CSVAdapter(config, logger=logger)
     >>> adapter.connect()
@@ -181,7 +181,7 @@ See Also
 - postgresql_adapter.py: SQL-based network storage
 """
 
-from zCLI import Dict, List, Optional, Any
+from zKernel import Dict, List, Optional, Any
 from .base_adapter import BaseDataAdapter
 
 try:
@@ -721,7 +721,7 @@ class CSVAdapter(BaseDataAdapter):
             table_name: Name of the table to introspect
         
         Returns:
-            Dict[str, Any]: Schema dict in zCLI format:
+            Dict[str, Any]: Schema dict in zKernel format:
             {
                 'column_name': {'type': 'int'|'float'|'str'|'bool'|'datetime'},
                 ...

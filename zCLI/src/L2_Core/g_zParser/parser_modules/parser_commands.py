@@ -3,7 +3,7 @@
 """
 Command parsing functionality for shell commands within zParser subsystem.
 
-This module provides comprehensive shell command parsing for the zCLI system,
+This module provides comprehensive shell command parsing for the zKernel system,
 supporting 20 different command types with structured argument and option extraction.
 
 **⚠️ CRITICAL: This module is used externally by zShell for ALL shell command parsing.**
@@ -128,7 +128,7 @@ Internal:
     - None (Tier 0 - Foundation)
 
 External:
-    - zCLI typing imports (Any, Dict, List)
+    - zKernel typing imports (Any, Dict, List)
 
 See Also
 --------
@@ -136,7 +136,7 @@ See Also
 - wizard_step_executor.py: External usage for wizard command parsing
 """
 
-from zCLI import Any, Dict, List
+from zKernel import Any, Dict, List
 
 # ============================================================================
 # MODULE CONSTANTS

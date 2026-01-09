@@ -1,7 +1,7 @@
 # zCLI/L1_Foundation/a_zConfig/zConfig_modules/helpers/detectors/ide.py
-"""IDE and text editor detection for zCLI machine configuration."""
+"""IDE and text editor detection for zKernel machine configuration."""
 
-from zCLI import os, platform, shutil
+from zKernel import os, platform, shutil
 from typing import Optional
 from .shared import _log_info, _log_config
 

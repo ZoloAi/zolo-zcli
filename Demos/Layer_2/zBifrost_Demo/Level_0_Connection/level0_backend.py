@@ -4,12 +4,12 @@ Level 0: Hello zBlog
 The simplest possible demo - just say hello!
 Goal: Prove WebSocket connection works
 """
-from zCLI import zCLI
+from zKernel import zKernel
 
 print("Starting zBlog Server (Level 0)...")
 print("Goal: Connect from browser and see welcome message\n")
 
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {
         "host": "127.0.0.1",

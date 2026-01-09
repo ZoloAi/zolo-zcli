@@ -71,7 +71,7 @@ Module Constants:
         WARNING_MSG_ALIAS_NOT_FOUND: Warning when alias not found in cache
 """
 
-from zCLI import Dict, Any, Optional, Union
+from zKernel import Dict, Any, Optional, Union
 
 # ============================================================================
 # STEP KEYS
@@ -155,7 +155,7 @@ def execute_wizard_step(
     schema cache connection reuse for optimal performance.
     
     Args:
-        zcli: The zCLI instance providing access to all subsystems
+        zcli: The zKernel instance providing access to all subsystems
         step_key: The step identifier/name from the workflow
         step_value: The step configuration, either:
             - Dict: Structured step with keys like zData, zFunc, zDisplay

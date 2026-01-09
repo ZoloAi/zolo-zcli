@@ -96,8 +96,8 @@ Week: 6.14
 Version: v1.5.4 Phase 1 (Industry-Grade)
 """
 
-from zCLI import Any
-from zCLI import re
+from zKernel import Any
+from zKernel import re
 
 # Import constants from centralized file
 from .wizard_constants import (

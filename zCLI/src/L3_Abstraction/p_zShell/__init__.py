@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/__init__.py
 
 """
-zShell Subsystem - Interactive REPL shell for zCLI framework.
+zShell Subsystem - Interactive REPL shell for zKernel framework.
 
 This subsystem provides a comprehensive interactive shell environment with REPL
 (Read-Eval-Print Loop) capabilities, command routing, history management, and
@@ -88,7 +88,7 @@ USAGE EXAMPLES
 
 **Basic Shell Usage:**
     ```python
-    from zCLI.L3_Abstraction.p_zShell import zShell
+    from zKernel.L3_Abstraction.p_zShell import zShell
     
     # Initialize shell
     shell = zShell(zcli)
@@ -100,7 +100,7 @@ USAGE EXAMPLES
 
 **Single Command Execution (Testing):**
     ```python
-    from zCLI.L3_Abstraction.p_zShell import zShell
+    from zKernel.L3_Abstraction.p_zShell import zShell
     
     shell = zShell(zcli)
     result = shell.execute_command("data read users")
@@ -108,11 +108,11 @@ USAGE EXAMPLES
 
 **UI Menu Integration:**
     ```python
-    from zCLI.L3_Abstraction.p_zShell import launch_zCLI_shell
+    from zKernel.L3_Abstraction.p_zShell import launch_zCLI_shell
     
     # Launch from Walker menu
     status = launch_zCLI_shell(zcli)
-    # Returns: "Returned from zCLI shell"
+    # Returns: "Returned from zKernel shell"
     ```
 
 ────────────────────────────────────────────────────────────────────────────────
@@ -139,7 +139,7 @@ KEY FEATURES
     • Buffer management (show, clear, run, stop)
 
 **Integration:**
-    • All zCLI subsystems (zAuth, zConfig, zData, zFunc, etc.)
+    • All zKernel subsystems (zAuth, zConfig, zData, zFunc, etc.)
     • UI mode (Walker) via launch_zCLI_shell()
     • Terminal mode via run_shell()
     • Bifrost mode (WebSocket) via zDisplay
@@ -196,7 +196,7 @@ NOTES
 - Package follows 6-layer bottom-up architecture
 - Facade pattern hides complexity from consumers
 - All internal modules are industry-grade (A+, 95/100)
-- Consistent with other zCLI subsystem packages
+- Consistent with other zKernel subsystem packages
 - Full backward compatibility maintained during refactor
 - Ready for production use
 """

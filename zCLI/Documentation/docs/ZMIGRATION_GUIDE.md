@@ -1,14 +1,14 @@
 # zMigration: Opt-In Schema Migrations
 
 **Version:** 1.5.13  
-**Author:** zCLI Team  
+**Author:** zKernel Team  
 **Date:** December 20, 2025
 
 ---
 
 ## 📖 **Overview**
 
-`zMigration` is zCLI's declarative schema migration system with **explicit opt-in**. It provides safe, trackable, and automated database migrations while preventing accidental schema changes.
+`zMigration` is zKernel's declarative schema migration system with **explicit opt-in**. It provides safe, trackable, and automated database migrations while preventing accidental schema changes.
 
 ### **Key Features:**
 - ✅ **Opt-in by design** - Requires explicit `zMigration: true` flag
@@ -205,9 +205,9 @@ Data/backups/{backend}_export_{timestamp}/
 ### **Python API**
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({'zMode': 'Terminal'})
+z = zKernel({'zMode': 'Terminal'})
 
 # Load current schema
 z.data.load_schema('@.models.zSchema.users')
@@ -229,7 +229,7 @@ for record in history:
 
 ```bash
 # Start zShell
-python3 -c "from zCLI import zCLI; z = zCLI(); z.shell.run()"
+python3 -c "from zKernel import zKernel; z = zKernel(); z.shell.run()"
 
 # In zShell:
 > data load --model @.models.zSchema.users
@@ -300,16 +300,16 @@ vim zCloud/models/zSchema.users.yaml
 
 # 2. Preview changes
 python3 -c "
-from zCLI import zCLI
-z = zCLI({'zMode': 'Terminal'})
+from zKernel import zKernel
+z = zKernel({'zMode': 'Terminal'})
 z.data.load_schema('@.models.zSchema.users')
 result = z.data.migrate('@.models.zSchema.users', dry_run=True)
 "
 
 # 3. Apply migration
 python3 -c "
-from zCLI import zCLI
-z = zCLI({'zMode': 'Terminal'})
+from zKernel import zKernel
+z = zKernel({'zMode': 'Terminal'})
 z.data.load_schema('@.models.zSchema.users')
 result = z.data.migrate('@.models.zSchema.users')
 "

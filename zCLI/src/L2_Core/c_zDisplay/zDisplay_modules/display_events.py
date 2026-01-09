@@ -108,7 +108,7 @@ Defines default values for styles, labels, colors, and prompts used across
 convenience delegate methods.
 """
 
-from zCLI import Any, Optional, List, Dict
+from zKernel import Any, Optional, List, Dict
 
 from .c_basic.display_event_outputs import BasicOutputs
 from .c_basic.display_event_signals import Signals
@@ -642,7 +642,7 @@ class zEvents:
             folder: Base folder for panel discovery
             sidebar: List of panel names
             default: Default panel to navigate to (optional)
-            _zcli: zCLI instance for context (optional)
+            _zcli: zKernel instance for context (optional)
             **kwargs: Additional parameters (e.g., _context)
             
         Returns:
@@ -657,7 +657,7 @@ class zEvents:
         
         Args:
             context: Dialog context/configuration
-            zcli: Optional zCLI instance
+            zcli: Optional zKernel instance
             walker: Optional walker instance
             
         Returns:

@@ -60,7 +60,7 @@ def safe_json_dumps(obj: Any, **kwargs) -> str:
     """
     Safely serialize Python objects to JSON, handling NaN and Infinity.
     
-    This is the zCLI framework primitive for JSON serialization. It ensures
+    This is the zKernel framework primitive for JSON serialization. It ensures
     that all data is JSON-safe before calling json.dumps(), preventing
     frontend parse errors from invalid JSON like NaN or Infinity.
     
@@ -80,7 +80,7 @@ def safe_json_dumps(obj: Any, **kwargs) -> str:
         '{"items": [1, null, 3]}'
     
     Note:
-        This function is exported via zCLI.__init__ and should be used
+        This function is exported via zKernel.__init__ and should be used
         throughout the framework instead of json.dumps() directly.
     """
     sanitized = _make_json_safe(obj)
@@ -98,7 +98,7 @@ def render_json_response(
     
     Args:
         route: JSON route definition from routes.yaml
-        zcli: zCLI instance (for accessing config, session, etc.)
+        zcli: zKernel instance (for accessing config, session, etc.)
         logger: Logger instance
         query_params: Query parameters from URL (optional)
     
@@ -221,7 +221,7 @@ def _resolve_placeholders(
     
     Args:
         data: Data structure (dict, list, str, etc.)
-        zcli: zCLI instance
+        zcli: zKernel instance
         query_params: Query parameters
         logger: Logger instance
     

@@ -12,7 +12,7 @@ Successfully implemented `zDelta` - a new navigation mechanism for **intra-file 
 ### Backend Changes
 
 #### 1. `dispatch_launcher.py`
-**Location**: `zCLI/subsystems/zDispatch/dispatch_modules/dispatch_launcher.py`
+**Location**: `zKernel/subsystems/zDispatch/dispatch_modules/dispatch_launcher.py`
 
 **Changes**:
 - Added `KEY_ZDELTA = "zDelta"` constant (line 137)
@@ -125,7 +125,7 @@ The walker doesn't store the loaded UI file as an instance attribute (it's a loc
 Updates `walker.session["zBlock"]` to reflect the target block for proper breadcrumb construction, but does NOT change `walker.session["zVaFile"]` since we're staying in the same file.
 
 ## Files Modified
-1. `/zCLI/subsystems/zDispatch/dispatch_modules/dispatch_launcher.py`
+1. `/zKernel/subsystems/zDispatch/dispatch_modules/dispatch_launcher.py`
 2. `/Demos/01_Foundation/zUI.foundation_demo.yaml`
 
 ## Philosophy Alignment

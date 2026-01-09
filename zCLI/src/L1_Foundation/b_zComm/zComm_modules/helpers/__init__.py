@@ -26,7 +26,7 @@ Design Patterns:
 
 Usage:
     ```python
-    from zCLI.L1_Foundation.b_zComm.zComm_modules.helpers import NetworkUtils
+    from zKernel.L1_Foundation.b_zComm.zComm_modules.helpers import NetworkUtils
     
     # Typically accessed via zComm
     utils = NetworkUtils(logger)

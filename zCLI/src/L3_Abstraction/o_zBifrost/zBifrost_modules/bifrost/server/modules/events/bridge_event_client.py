@@ -4,20 +4,20 @@ Client Event Handlers for zBifrost WebSocket Bridge.
 
 This module provides event handlers for client-side interactions with the
 zBifrost WebSocket bridge, enabling real-time bidirectional communication
-between web frontends and the zCLI backend.
+between web frontends and the zKernel backend.
 
 Features:
     - Input Response Routing: Routes user input from web clients to zDisplay.zPrimitives
     - Connection Info Delivery: Sends server metadata and authentication context to clients
     - User Context Awareness: Validates and logs authentication context for all events
-    - Error Handling: Comprehensive exception handling for WebSocket and zCLI operations
+    - Error Handling: Comprehensive exception handling for WebSocket and zKernel operations
     - Security: Integrates with three-tier authentication (zSession, application, dual)
 
 Architecture:
-    ClientEvents acts as a bridge between WebSocket events and zCLI subsystems,
+    ClientEvents acts as a bridge between WebSocket events and zKernel subsystems,
     particularly zDisplay. It ensures that client-side events (input responses,
     info requests) are properly validated, authenticated, and routed to the
-    appropriate zCLI handlers.
+    appropriate zKernel handlers.
 
 Security Model:
     All events extract and log user context (user_id, app_name, role, auth_context)
@@ -52,7 +52,7 @@ Module Structure:
     - _extract_user_context: Extracts authentication context from WebSocket
 """
 
-from zCLI import json, Dict, Any, Optional
+from zKernel import json, Dict, Any, Optional
 from .base_event_handler import BaseEventHandler
 
 # ═══════════════════════════════════════════════════════════
@@ -113,7 +113,7 @@ class ClientEvents(BaseEventHandler):
     Attributes:
         bifrost: zBifrost instance (provides logger, zcli, connection_info)
         logger: Logger instance from bifrost
-        zcli: zCLI instance from bifrost (for zDisplay access)
+        zcli: zKernel instance from bifrost (for zDisplay access)
         auth: AuthenticationManager instance for user context extraction
     
     Security:
@@ -143,7 +143,7 @@ class ClientEvents(BaseEventHandler):
         Route input response from web client to zDisplay.zPrimitives.
         
         Extracts user context, validates input data, and routes the response
-        to the appropriate zCLI display handler. Includes comprehensive error
+        to the appropriate zKernel display handler. Includes comprehensive error
         handling and logging for debugging and security auditing.
         
         Args:
@@ -155,7 +155,7 @@ class ClientEvents(BaseEventHandler):
         Process:
             1. Extract and log user context (auth-aware)
             2. Validate requestId is present
-            3. Check zCLI and zDisplay availability
+            3. Check zKernel and zDisplay availability
             4. Route to zPrimitives.handle_input_response()
             5. Log success or errors
         
@@ -196,7 +196,7 @@ class ClientEvents(BaseEventHandler):
         
         value = data.get(_KEY_VALUE)
         
-        # Validate zCLI availability
+        # Validate zKernel availability
         if not self.zcli:
             self.logger.warning(f"{_LOG_PREFIX_INPUT} {_ERR_NO_ZCLI}")
             return

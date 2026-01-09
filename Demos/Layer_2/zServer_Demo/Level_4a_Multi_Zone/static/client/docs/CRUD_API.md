@@ -60,7 +60,7 @@ try {
 }
 ```
 
-**Note:** CRUD operations use the `dispatch` event with zCLI command keys (`^Create`, `^List`, `^Update`, `^Delete`).
+**Note:** CRUD operations use the `dispatch` event with zKernel command keys (`^Create`, `^List`, `^Update`, `^Delete`).
 
 **Response Format:**
 ```json

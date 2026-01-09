@@ -2,7 +2,7 @@
 """Shared utilities and constants for machine detection."""
 
 import logging
-from zCLI import os, Colors, Path
+from zKernel import os, Colors, Path
 from typing import Optional
 
 # Module-level logger

@@ -155,7 +155,7 @@ MODULE HISTORY
 from typing import TYPE_CHECKING, Dict, List, Any, Optional
 
 if TYPE_CHECKING:
-    from zCLI.zCLI import zCLI
+    from zKernel.zCLI import zKernel
 
 # ============================================================================
 # MODULE CONSTANTS
@@ -284,7 +284,7 @@ def _validate_zdata_subsystem(zcli: 'zCLI') -> Optional[str]:
     Validate that zData subsystem is available and initialized.
     
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         
     Returns:
         Error message if validation fails, None if successful
@@ -469,7 +469,7 @@ def _handle_migration_action(
         - history: Show migration audit trail
     
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         action: Migration action (migrate or history)
         options: Command options
         
@@ -539,7 +539,7 @@ def _handle_connection_action(
     Handle connection-specific actions (connect, disconnect, status).
     
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         action: Connection action
         options: Command options
         
@@ -613,7 +613,7 @@ def execute_data(zcli: 'zCLI', parsed: Dict[str, Any]) -> None:
         4. Handles all errors gracefully with user-friendly messages
     
     Args:
-        zcli: The zCLI instance with access to all subsystems
+        zcli: The zKernel instance with access to all subsystems
         parsed: Parsed command dictionary from zShell:
             {
                 "action": str,      # The data action (insert, select, migrate, etc.)

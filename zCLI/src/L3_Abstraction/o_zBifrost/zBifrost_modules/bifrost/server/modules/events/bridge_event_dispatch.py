@@ -81,7 +81,7 @@ Module Structure:
     - _extract_user_context: Extracts authentication context from WebSocket
 """
 
-from zCLI import asyncio, json, Dict, Any, Optional
+from zKernel import asyncio, json, Dict, Any, Optional
 from .base_event_handler import BaseEventHandler
 
 # ═══════════════════════════════════════════════════════════
@@ -171,7 +171,7 @@ class DispatchEvents(BaseEventHandler):
         bifrost: zBifrost instance (provides logger, cache, zcli, walker)
         logger: Logger instance from bifrost
         cache: CacheManager instance for caching
-        zcli: zCLI instance for command execution
+        zcli: zKernel instance for command execution
         walker: zWalker instance for data operations
         auth: AuthenticationManager instance for user context extraction
     
@@ -342,7 +342,7 @@ class DispatchEvents(BaseEventHandler):
         
         try:
             # Execute via zDispatch
-            from zCLI.L2_Core.e_zDispatch import handle_zDispatch
+            from zKernel.L2_Core.e_zDispatch import handle_zDispatch
             
             context = {
                 _CONTEXT_KEY_WEBSOCKET_DATA: data,

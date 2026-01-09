@@ -85,7 +85,7 @@ Version History
 """
 
 import re
-from zCLI import Any, Dict, List, Optional, Union
+from zKernel import Any, Dict, List, Optional, Union
 from .dialog_constants import (
     KEY_FIELDS,
     KEY_MODEL,

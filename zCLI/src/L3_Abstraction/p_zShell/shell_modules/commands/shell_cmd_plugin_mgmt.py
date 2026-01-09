@@ -1,9 +1,9 @@
 # zCLI/subsystems/zShell/shell_modules/commands/shell_cmd_plugin_mgmt.py
 
 """
-Plugin cache management for zCLI shell.
+Plugin cache management for zKernel shell.
 
-This module provides plugin cache management operations for the zCLI shell, including
+This module provides plugin cache management operations for the zKernel shell, including
 loading plugins from zPath, showing loaded plugins and cache statistics, clearing the
 plugin cache, and reloading plugins. It handles the "plugin load", "plugin show",
 "plugin clear", and "plugin reload" subcommands.
@@ -124,7 +124,7 @@ EXAMPLES
 AUTHOR & VERSION
 ═══════════════════════════════════════════════════════════════════════════════
 
-Author: zCLI Development Team
+Author: zKernel Development Team
 Version: 1.5.4
 Last Updated: 2025-11-07
 """
@@ -287,7 +287,7 @@ def _display_plugin_info(zcli: Any, plugin_info: Dict[str, Any]) -> None:
     Parameters
     ----------
     zcli : Any
-        zCLI instance for display access
+        zKernel instance for display access
     plugin_info : Dict[str, Any]
         Plugin information dictionary with keys:
             - "name": Plugin name
@@ -328,7 +328,7 @@ def load_plugin(zcli: Any, args: List[str]) -> None:
     Parameters
     ----------
     zcli : Any
-        zCLI instance providing access to loader, display, logger
+        zKernel instance providing access to loader, display, logger
     args : List[str]
         Command arguments where args[0] is the zPath
 
@@ -410,7 +410,7 @@ def show_plugins(zcli: Any, args: List[str]) -> None:
     Parameters
     ----------
     zcli : Any
-        zCLI instance providing access to loader, display, logger
+        zKernel instance providing access to loader, display, logger
     args : List[str]
         Command arguments where args[0] may be "cache" for stats mode
 
@@ -493,7 +493,7 @@ def clear_plugins(zcli: Any, args: List[str]) -> None:
     Parameters
     ----------
     zcli : Any
-        zCLI instance providing access to loader, display, logger
+        zKernel instance providing access to loader, display, logger
     args : List[str]
         Command arguments where args[0] (optional) is the pattern to match
 
@@ -541,7 +541,7 @@ def reload_plugin(zcli: Any, args: List[str]) -> None:
     Parameters
     ----------
     zcli : Any
-        zCLI instance providing access to loader, display, logger
+        zKernel instance providing access to loader, display, logger
     args : List[str]
         Command arguments where args[0] is the zPath
 

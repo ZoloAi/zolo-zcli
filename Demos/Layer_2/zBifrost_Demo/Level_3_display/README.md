@@ -37,7 +37,7 @@ python3 hello_bifrost.py
 You should see:
 
 ```
-🌉 Starting Hello zCLI Server (zBifrost mode)...
+🌉 Starting Hello zKernel Server (zBifrost mode)...
 📝 Goal: See the SAME code render in a browser
 🎉 NEW: z.display now broadcasts automatically - no manual JSON!
 
@@ -73,7 +73,7 @@ Double-click **<span style="color:#F8961F">`hello_client.html`</span>** (or drag
 
 ```python
 # These are zDisplay events - they work in Terminal AND browser!
-z.display.success("Hello from zCLI!")
+z.display.success("Hello from zKernel!")
 z.display.info(f"Mode: {z.session.get('zMode', 'Terminal')}")
 z.display.success("✨ All subsystems loaded and ready!")
 

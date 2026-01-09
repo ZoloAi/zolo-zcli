@@ -5,7 +5,7 @@ This module provides HTTP request routing based on zServer.*.yaml definitions,
 with integrated role-based access control (RBAC) using zAuth.
 
 Philosophy:
-    "Routes are data, not code" - Flask blueprint style for zCLI
+    "Routes are data, not code" - Flask blueprint style for zKernel
 
 Architecture:
     - Match incoming paths to route definitions
@@ -37,7 +37,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 # Import zVaFile extension constants for auto-discovery
-from zCLI.L2_Core.g_zParser.parser_modules.parser_path import ZVAFILE_EXTENSIONS
+from zKernel.L2_Core.g_zParser.parser_modules.parser_path import ZVAFILE_EXTENSIONS
 
 # =============================================================================
 # MODULE CONSTANTS
@@ -102,7 +102,7 @@ class HTTPRouter:
     
     Attributes:
         routes: Full routes data structure from parser
-        zcli: zCLI instance (for auth access)
+        zcli: zKernel instance (for auth access)
         logger: Logger instance
         meta: Metadata (base_path, default_route, error_pages)
         route_map: Map of path → route definition
@@ -125,7 +125,7 @@ class HTTPRouter:
         
         Args:
             routes: Parsed routes data from parse_server_file()
-            zcli: zCLI instance (required for auth access)
+            zcli: zKernel instance (required for auth access)
             logger: Logger instance
             serve_path: Base path for serving files (for resolving zVaFile paths)
         """
@@ -323,14 +323,14 @@ class HTTPRouter:
                             first_block = blocks[0]
                             
                             # Extract route name from filename, not block name
-                            # e.g., zUI.zCLI.yaml → zCLI (for URL /zProducts/zCLI)
+                            # e.g., zUI.zKernel.yaml → zKernel (for URL /zProducts/zCLI)
                             if file_base.startswith('zUI.'):
                                 route_name = file_base[len('zUI.'):]  # Strip zUI. prefix
                             else:
                                 route_name = file_base
                             
                             # Compute URL path from directory structure
-                            # e.g., UI/zProducts/zUI.zCLI.yaml → /zProducts/zCLI
+                            # e.g., UI/zProducts/zUI.zKernel.yaml → /zProducts/zCLI
                             rel_path = os.path.relpath(root, directory_path)
                             
                             if rel_path == '.':

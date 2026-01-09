@@ -4,7 +4,7 @@
 Shell Session Management Command System.
 
 This module provides comprehensive session state inspection and manipulation commands
-within the zCLI framework. Session commands allow users to view, query, and modify
+within the zKernel framework. Session commands allow users to view, query, and modify
 the session dictionary that maintains global state throughout the CLI session.
 
 Core Features:
@@ -16,7 +16,7 @@ Core Features:
     • Full type safety with comprehensive type hints
 
 Session Structure:
-    The zCLI session dictionary contains 17 standardized fields (SESSION_KEY_*):
+    The zKernel session dictionary contains 17 standardized fields (SESSION_KEY_*):
     
     Core Fields:
         - zS_id: Session identifier
@@ -98,7 +98,7 @@ UI Adapter Pattern:
 
 Type Safety:
     All functions include comprehensive type hints using types imported from
-    the zCLI namespace for consistency.
+    the zKernel namespace for consistency.
 
 Error Handling & Security:
     • Validates key existence for get operations
@@ -129,14 +129,14 @@ Related:
     • zConfig.config_session: Session constant definitions
     • zParser.parser_commands: Command parsing infrastructure
 
-Author: zCLI Framework
+Author: zKernel Framework
 Version: 1.5.4+
 """
 
 from pathlib import Path
 from difflib import get_close_matches
 
-from zCLI import Any, Dict, List
+from zKernel import Any, Dict, List
 
 # Import SESSION_KEY_* constants from zConfig
 # NOTE: All constants are used for:
@@ -144,7 +144,7 @@ from zCLI import Any, Dict, List
 # 2. Documentation purposes
 # 3. Phase 2 enhancements (session crumbs, cache, wizard, env, debug, etc.)
 # Some constants appear unused but are referenced in comments and protection sets
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (  # noqa: F401
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import (  # noqa: F401
     SESSION_KEY_ZS_ID,
     SESSION_KEY_ZSPACE,
     SESSION_KEY_ZVAFOLDER,
@@ -265,7 +265,7 @@ def execute_session(zcli: Any, parsed: Dict[str, Any]) -> None:
         set  - Update session key value
     
     Args:
-        zcli: zCLI instance with access to session, display, logger
+        zcli: zKernel instance with access to session, display, logger
         parsed: Parsed command dictionary from zParser containing:
             - action (str): Action to perform (info/get/set)
             - args (List[str]): Command arguments
@@ -323,7 +323,7 @@ def _show_session_info(zcli: Any) -> None:
     - zSpace, zVaFolder, zVaFile, zBlock
     
     Args:
-        zcli: zCLI instance with session and display
+        zcli: zKernel instance with session and display
     
     Returns:
         None: Output displayed via zDisplay.zSession()
@@ -352,7 +352,7 @@ def _get_session_key(zcli: Any, args: List[str]) -> None:
     output via zDisplay.info() or error message if key not found.
     
     Args:
-        zcli: zCLI instance with session and display
+        zcli: zKernel instance with session and display
         args: Command arguments, expected: [key]
     
     Returns:
@@ -404,7 +404,7 @@ def _resolve_path_value(zcli: Any, value: str) -> str:
     filesystem paths. Non-zPath values are returned unchanged.
     
     Args:
-        zcli: zCLI instance for session and config access
+        zcli: zKernel instance for session and config access
         value: Path value (may be zPath notation or regular path)
     
     Returns:
@@ -485,7 +485,7 @@ def _set_session_key(zcli: Any, args: List[str]) -> None:
     - This maintains semantic meaning (e.g., @.zUIs stays relative to zSpace)
     
     Args:
-        zcli: zCLI instance with session, display, logger
+        zcli: zKernel instance with session, display, logger
         args: Command arguments, expected: [key, value]
     
     Returns:
@@ -625,7 +625,7 @@ def _display_key_value(zcli: Any, key: str, value: Any) -> None:
     and uses zDisplay.info() for output.
     
     Args:
-        zcli: zCLI instance with display
+        zcli: zKernel instance with display
         key: Session key name
         value: Session key value (any type)
     

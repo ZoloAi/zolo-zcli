@@ -182,7 +182,7 @@ Week: 6.14
 Version: v1.5.4 Phase 1 (Industry-Grade, RBAC from Week 3.3)
 """
 
-from zCLI import Any, Optional
+from zKernel import Any, Optional
 
 # Import constants from centralized file
 from .wizard_constants import (
@@ -246,7 +246,7 @@ def checkzRBAC_access(
     Args:
         key: zKey name (e.g., "^Delete User")
         value: zKey value (parsed item with potential zRBAC metadata)
-        zcli: zCLI instance (if direct mode)
+        zcli: zKernel instance (if direct mode)
         walker: zWalker instance (if walker mode)
         logger: Logger instance
         display: Display instance
@@ -263,7 +263,7 @@ def checkzRBAC_access(
     if not rbac:
         return RBAC_ACCESS_GRANTED
     
-    # Get zCLI instance (from walker or direct)
+    # Get zKernel instance (from walker or direct)
     zcli_instance = walker.zcli if walker else zcli
     if not zcli_instance or not hasattr(zcli_instance, 'auth'):
         logger.warning(_LOG_MSG_NO_AUTH_SUBSYSTEM)

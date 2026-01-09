@@ -4,7 +4,7 @@
 
 # zComm
 
-**zComm** is the **second subsystem** initialized by **zCLI**.
+**zComm** is the **second subsystem** initialized by **zKernel**.
 > See [**zArchitecture**](../README.md#the-zarchitecture) for full context.
 
 It provides unified client-side communication - HTTP requests, port checking, and service management - through one simple interface.
@@ -26,10 +26,10 @@ You get:
 
 The tutorials below are organized in a bottom-up fashion. Every tutorial below has a working demo you can run and modify.
 
-**A Note on Learning zCLI:**  
+**A Note on Learning zKernel:**  
 Each tutorial (lvl1, lvl2, lvl3...) progressively introduces more complex features of **this subsystem**. The early tutorials start with familiar imperative patterns (think Django-style conventions) to meet you where you are as a developer.
 
-As you progress through zCLI's subsystems, you'll notice a gradual shift from imperative to declarative patterns. This intentional journey helps reshape your mental model from imperative to declarative thinking. Only when you reach **Layer 3 (Orchestration)** will you see subsystems used **fully declaratively** as intended in production. By then, the true magic of declarative coding will reveal itself, and you'll understand why we started this way.
+As you progress through zKernel's subsystems, you'll notice a gradual shift from imperative to declarative patterns. This intentional journey helps reshape your mental model from imperative to declarative thinking. Only when you reach **Layer 3 (Orchestration)** will you see subsystems used **fully declaratively** as intended in production. By then, the true magic of declarative coding will reveal itself, and you'll understand why we started this way.
 
 Get the demos:
 
@@ -46,12 +46,12 @@ git sparse-checkout set Demos
 
 # **zComm - Level 0** (Hello zComm)
 
-After mastering zConfig's 5-layer hierarchy, you're ready to explore zComm - zCLI's communication layer. The good news? You already know everything you need!
+After mastering zConfig's 5-layer hierarchy, you're ready to explore zComm - zKernel's communication layer. The good news? You already know everything you need!
 
 **The same zSpark pattern** from zConfig demos unlocks zComm's capabilities:
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Familiar zSpark pattern from zConfig
 zSpark = {
@@ -64,12 +64,12 @@ zSpark = {
 # Watch the initialization order in the output:
 # [zConfig Ready] → [zComm Ready]
 
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # zComm is now ready to use!
 ```
 
-**Key Discovery**: zComm auto-initializes immediately after zConfig when you call `zCLI()`. Both are Layer 0 subsystems - the foundation of the framework.
+**Key Discovery**: zComm auto-initializes immediately after zConfig when you call `zKernel()`. Both are Layer 0 subsystems - the foundation of the framework.
 
 **🎯 Try it yourself:**
 
@@ -107,7 +107,7 @@ The simplest zComm action? Checking if a network port is available.
 Let's check multiple ports at once and see which services use which numbers:
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Consistent zSpark pattern
 zSpark = {
@@ -116,7 +116,7 @@ zSpark = {
     "logger": "INFO",
     "logger_path": "./logs",
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # Check multiple ports
 ports = {80: "HTTP", 443: "HTTPS", 5432: "PostgreSQL", 6379: "Redis"}
@@ -174,7 +174,7 @@ Whether using HTTP or HTTPS, the conversation types are the same:
 Let's make a secure HTTPS GET request:
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Consistent zSpark pattern
 zSpark = {
@@ -183,7 +183,7 @@ zSpark = {
     "logger": "INFO",
     "logger_path": "./logs",
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # Notice the https:// - secure, encrypted connection
 url = "https://httpbin.org/get"
@@ -222,7 +222,7 @@ python3 Demos/Layer_0/zComm_Demo/lvl1_network/2_http_get.py
 Now that you've made a GET request, let's see the complete RESTful toolkit.
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Consistent zSpark pattern
 zSpark = {
@@ -231,7 +231,7 @@ zSpark = {
     "logger": "INFO",
     "logger_path": "./logs",
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # GET - Retrieve data
 response = z.comm.http_get("https://httpbin.org/get", params={"key": "value"})
@@ -301,21 +301,21 @@ Let's create your first WebSocket server - a persistent connection for real-time
 
 Think of it like opening a phone line - waiting for incoming calls. Clients connect, stay connected, and you can exchange messages freely until someone hangs up.
 
-> **zConfig Integration:** The `start()` method follows zCLI's configuration philosophy. If you don't specify `host` or `port`, it pulls from the 5-layer hierarchy (defaults → machine → environment → .zEnv → zSpark). This means you can configure WebSocket settings once in your environment and never repeat them!
+> **zConfig Integration:** The `start()` method follows zKernel's configuration philosophy. If you don't specify `host` or `port`, it pulls from the 5-layer hierarchy (defaults → machine → environment → .zEnv → zSpark). This means you can configure WebSocket settings once in your environment and never repeat them!
 
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-# Initialize zCLI - gets WebSocket infrastructure
-z = zCLI({
+# Initialize zKernel - gets WebSocket infrastructure
+z = zKernel({
     "deployment": "Production",
     "title": "websocket-server",
     "logger": "PROD",
     "logger_path": "./logs",
 })
 
-# Start WebSocket server - zCLI handles async internally
+# Start WebSocket server - zKernel handles async internally
 z.comm.websocket.start(host="127.0.0.1", port=8765)
 ```
 
@@ -333,12 +333,12 @@ Unlike HTTP requests (which finish immediately), this WebSocket server **stays r
 
 In traditional Python, stopping a server safely is tricky: Ctrl+C crashes immediately, leaving the port "stuck" - you'll get "port already in use" errors on restart.
 
-**zCLI handles this automatically.** Press Ctrl+C, and zCLI gracefully closes all connections, releases the port, and exits cleanly. You'll see cleanup messages confirming everything shut down properly.
+**zKernel handles this automatically.** Press Ctrl+C, and zKernel gracefully closes all connections, releases the port, and exits cleanly. You'll see cleanup messages confirming everything shut down properly.
 
 **What you'll discover:**
 - Create WebSocket server with one method call
-- zCLI handles async complexity internally
-- **Safe Ctrl+C shutdown** - zCLI gracefully closes connections and releases ports
+- zKernel handles async complexity internally
+- **Safe Ctrl+C shutdown** - zKernel gracefully closes connections and releases ports
 - Persistent connections (unlike HTTP)
 - Foundation for real-time apps
 
@@ -353,7 +353,7 @@ In the previous demo you started a server with `z.comm.websocket.start()`. Now l
 **Server Side (Python - Imperative):**
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Define what happens when client sends a message
 async def echo_handler(websocket, message):
@@ -361,7 +361,7 @@ async def echo_handler(websocket, message):
     echo_msg = f"Echo: {message}"
     await websocket.send(echo_msg)
 
-z = zCLI({
+z = zKernel({
     "deployment": "Production",
     "title": "websocket-echo",
     "logger": "INFO",
@@ -409,7 +409,7 @@ python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/2_websocket_echo.py
 - Connect from JavaScript browser client
 - Complete bidirectional communication (server ↔ client)
 
-**About Security:** Did you notice? Any client could connect to your server - no password, no token, nothing. That's because zCLI's WebSocket has `require_auth: false` by default. This makes development easy, but in production you'll want to lock it down—as you'll see in the next section.
+**About Security:** Did you notice? Any client could connect to your server - no password, no token, nothing. That's because zKernel's WebSocket has `require_auth: false` by default. This makes development easy, but in production you'll want to lock it down—as you'll see in the next section.
 
 ---
 
@@ -426,7 +426,7 @@ Remember from Level 2.ii, where the connection was open (`require_auth: false`) 
 > **Note**: Backend-to-backend connections don't send origin headers, so they rely on token authentication alone.
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 zSpark = {
     "deployment": "Production",
@@ -443,7 +443,7 @@ zSpark = {
     }
 }
 
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 async def secure_echo_handler(websocket, message):
     """Only authenticated clients reach this handler."""
@@ -455,7 +455,7 @@ z.comm.websocket.start(host="127.0.0.1", port=8765, handler=secure_echo_handler)
 
 **Storing Tokens Securely with `.zEnv`**
 
-Never hardcode authentication tokens! Instead, store them in a `.zEnv` file (automatically loaded by zCLI):
+Never hardcode authentication tokens! Instead, store them in a `.zEnv` file (automatically loaded by zKernel):
 
 ```bash
 # .zEnv file in your project directory
@@ -492,7 +492,7 @@ ws.onclose = function(event) {
 };
 ```
 
-That's it. Origin validation, token checking, connection limits - all handled by zCLI. You just pass `?token=xxx` in the URL.
+That's it. Origin validation, token checking, connection limits - all handled by zKernel. You just pass `?token=xxx` in the URL.
 
 **Testing the Secure Demo**
 
@@ -539,12 +539,12 @@ So far we've used `ws://` (unencrypted WebSocket). Just like HTTP vs HTTPS, prod
 - **Browser security** - Modern browsers require WSS for secure contexts
 - **Prevents eavesdropping** - Man-in-the-middle attacks blocked
 
-zCLI makes SSL/TLS simple - it's **opt-in** via zSpark:
+zKernel makes SSL/TLS simple - it's **opt-in** via zSpark:
 
 **Server Configuration (SSL is opt-in):**
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 zSpark = {
     "websocket": {
@@ -561,7 +561,7 @@ zSpark = {
     }
 }
 
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 z.comm.websocket.start(host="127.0.0.1", port=8766, handler=my_handler)
 ```
 
@@ -673,7 +673,7 @@ In previous demos, you secured connections with authentication (Level 2.iii) and
 Combine authentication (from Level 2.iii) with broadcasting to create secure one-to-many communication:
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 zSpark = {
     "deployment": "Production",
@@ -688,7 +688,7 @@ zSpark = {
     }
 }
 
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # Define broadcast handler
 async def broadcast_handler(websocket, message):
@@ -700,7 +700,7 @@ async def broadcast_handler(websocket, message):
     count = await z.comm.websocket.broadcast(broadcast_msg, exclude=websocket)
     print(f"Broadcasted to {count} client(s)")
 
-# Start with broadcast handler - zCLI handles async internally
+# Start with broadcast handler - zKernel handles async internally
 z.comm.websocket.start(
     host="127.0.0.1",
     port=8765,
@@ -727,7 +727,7 @@ python3 Demos/Layer_0/zComm_Demo/lvl2_websocket/5_websocket_broadcast.py
 - Use `z.comm.websocket.broadcast()` to send to authenticated clients
 - Exclude sender with `exclude=websocket` parameter
 - See message count returned (how many clients received it)
-- zCLI tracks authenticated clients automatically
+- zKernel tracks authenticated clients automatically
 
 > **Note:** This is Layer 0 WebSocket infrastructure with basic token authentication. For advanced three-tier authentication (zSession, Application, Dual), caching, and Terminal↔Web orchestration, see [zBifrost Guide](zBifrost_GUIDE.md)!
 
@@ -742,7 +742,7 @@ You've mastered real-time secure bidirectional communication using **imperative 
 - ✅ **Encrypted Connections** - SSL/TLS with WSS protocol (production-ready)
 - ✅ **Broadcast** - One-to-many messaging with authentication
 
-**This is raw infrastructure - the building blocks.** You wrote Python code to handle each message (imperative). As you progress through zCLI, you'll see how **zBifrost (Layer 2)** transforms this into declarative configuration!
+**This is raw infrastructure - the building blocks.** You wrote Python code to handle each message (imperative). As you progress through zKernel, you'll see how **zBifrost (Layer 2)** transforms this into declarative configuration!
 
 ---
 
@@ -767,9 +767,9 @@ If you have what you need → **[Jump to zDisplay Guide](zDisplay_GUIDE.md)**
 ### **i. Service Status Check**
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Check if PostgreSQL is running
 status = z.comm.service_status("postgresql")
@@ -803,7 +803,7 @@ python3 Demos/Layer_0/zComm_Demo/lvl3_services/1_service_check.py
 
 > **Installation Requirements:**
 > 
-> **zCLI PostgreSQL Support:**
+> **zKernel PostgreSQL Support:**
 > ```bash
 > pip install git+ssh://git@github.com/ZoloAi/zolo-zcli.git[postgresql]
 > ```
@@ -818,9 +818,9 @@ python3 Demos/Layer_0/zComm_Demo/lvl3_services/1_service_check.py
 ### **ii. Check Multiple Services**
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Check multiple services
 services = {
@@ -862,9 +862,9 @@ python3 Demos/Layer_0/zComm_Demo/lvl3_services/2_service_multi.py
 ### **iii. HTTP Error Handling**
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Test various error conditions
 test_cases = [
@@ -913,9 +913,9 @@ python3 Demos/Layer_0/zComm_Demo/lvl3_services/3_http_errors.py
 ### **i. Start Services Programmatically**
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Declare: Start PostgreSQL
 success = z.comm.start_service("postgresql")
@@ -958,7 +958,7 @@ python3 Demos/Layer_0/zComm_Demo/lvl4_lifecycle/1_service_start.py
 **🎯 Level 4 Complete!**
 
 You've completed the zComm tutorial journey:
-- ✅ **Level 0**: Hello zComm (Initialize zCLI)
+- ✅ **Level 0**: Hello zComm (Initialize zKernel)
 - ✅ **Level 1**: Network basics (Port checking, HTTP GET, All HTTP methods)
 - ✅ **Level 2**: WebSocket communication (Server, Echo, Broadcast)
 - ✅ **Level 3**: Service management (Service status, Multiple services, HTTP errors)
@@ -977,7 +977,7 @@ You've mastered **zComm** (client-side communication). Now you have two paths:
 Learn **zBifrost** - zComm's WebSocket **server** counterpart for real-time bidirectional Terminal ↔ Web communication:
 
 ```python
-z = zCLI({"zMode": "zBifrost"})
+z = zKernel({"zMode": "zBifrost"})
 z.walker.run()  # One-line WebSocket server
 ```
 

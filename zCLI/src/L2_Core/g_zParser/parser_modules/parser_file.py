@@ -6,7 +6,7 @@ Centralized file parsing module for YAML, JSON, and expression parsing.
 This module provides comprehensive file content parsing with automatic format detection,
 UI file RBAC transformation, and expression evaluation. It serves as the primary
 interface for loading and parsing declarative zVaFiles (zUI, zSchema, zConfig) and
-other configuration files throughout the zCLI system.
+other configuration files throughout the zKernel system.
 
 Key Features:
     - **Format Auto-Detection**: Automatically detects JSON vs YAML from content
@@ -141,7 +141,7 @@ See Also:
     - zParser: Main parsing facade
 """
 
-from zCLI import os, json, yaml, Any, Dict, List, Optional, Union
+from zKernel import os, json, yaml, Any, Dict, List, Optional, Union
 
 # ============================================================================
 # MODULE CONSTANTS
@@ -225,13 +225,13 @@ CHAR_DOUBLE_QUOTE: str = '"'
 # ============================================================================
 # 
 # The .zolo format is now handled by a standalone library (just like YAML).
-# zCLI is file-format agnostic and simply imports external parsers.
+# zKernel is file-format agnostic and simply imports external parsers.
 # 
 # For .zolo files: import zolo (standalone library)
 # For .yaml files: import yaml (PyYAML library)
 # For .json files: import json (Python stdlib)
 # 
-# No parsing logic lives in zCLI - it's delegated to the libraries.
+# No parsing logic lives in zKernel - it's delegated to the libraries.
 # ============================================================================
 
 try:
@@ -382,7 +382,7 @@ def parse_file_content(
     
     ⚠️ CRITICAL: This function has 6 external usages. Signature must remain stable.
     
-    Main entry point for file parsing throughout zCLI. Handles:
+    Main entry point for file parsing throughout zKernel. Handles:
     - Automatic format detection (JSON vs YAML)
     - UI file detection and RBAC transformation
     - Format-specific parsing with error handling

@@ -13,10 +13,10 @@ Key: Same code as Terminal, just async/await!
 
 import time
 import asyncio
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Initialize zCLI in Bifrost mode
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {
         "host": "127.0.0.1",

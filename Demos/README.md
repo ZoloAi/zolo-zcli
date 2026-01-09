@@ -1,6 +1,6 @@
-# zCLI Demo Applications
+# zKernel Demo Applications
 
-This folder contains complete, production-ready applications built with **zCLI** framework. Each demo showcases different capabilities and patterns.
+This folder contains complete, production-ready applications built with **zKernel** framework. Each demo showcases different capabilities and patterns.
 
 **Important**: These demos are included in the Git repository but **not** in pip package distributions. Clone the repository to access them.
 
@@ -10,7 +10,7 @@ This folder contains complete, production-ready applications built with **zCLI**
 
 ### **Interactive Traceback** (`Interactive_Traceback/`)
 
-**NEW in v1.5.3**: Demonstrates zCLI's declarative error handling with interactive debugging UI.
+**NEW in v1.5.3**: Demonstrates zKernel's declarative error handling with interactive debugging UI.
 
 **Features**:
 - [OK] Interactive exception viewer with formatted details
@@ -145,7 +145,7 @@ MyApp/
 
 ## 📖 Resources
 
-- **Framework Guide**: [`../Documentation/zCLI_GUIDE.md`](../Documentation/zCLI_GUIDE.md)
+- **Framework Guide**: [`../Documentation/zKernel_GUIDE.md`](../Documentation/zKernel_GUIDE.md)
 - **UI Guide**: [`../Documentation/zUI_GUIDE.md`](../Documentation/zUI_GUIDE.md)
 - **Schema Guide**: [`../Documentation/zSchema_GUIDE.md`](../Documentation/zSchema_GUIDE.md)
 - **Test Examples**: [`../zTestSuite/demos/`](../zTestSuite/demos/)

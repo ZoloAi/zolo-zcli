@@ -11,7 +11,7 @@ Provides functions for:
 
 import hashlib
 import yaml
-from zCLI import Dict, List, Any, Optional, Tuple
+from zKernel import Dict, List, Any, Optional, Tuple
 from pathlib import Path
 
 
@@ -47,7 +47,7 @@ def get_last_migration(z: Any, table_name: str) -> Optional[Dict[str, Any]]:
     Queries __zmigration_{table_name} for the most recent migration record.
     
     Args:
-        z: zCLI instance
+        z: zKernel instance
         table_name: Table name (e.g., 'users')
     
     Returns:

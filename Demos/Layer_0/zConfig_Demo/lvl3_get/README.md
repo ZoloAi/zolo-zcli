@@ -12,7 +12,7 @@
 ## Demos
 
 ### 1. Machine Configuration (`1_zmachine.py`)
-Read hardware and OS information auto-detected by zCLI.
+Read hardware and OS information auto-detected by zKernel.
 
 ```python
 machine = z.config.get_machine()

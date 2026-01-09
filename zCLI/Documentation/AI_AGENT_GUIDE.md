@@ -1,4 +1,4 @@
-# zCLI Agent Reference (v1.5.4+)
+# zKernel Agent Reference (v1.5.4+)
 
 **Target**: AI coding assistants | **Focus**: Layer 0 Production-Ready Patterns
 
@@ -27,14 +27,14 @@
 
 ## 3 Steps - Always
 
-1. Import zCLI
+1. Import zKernel
 2. Create zSpark
 3. RUN walker
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({
+z = zKernel({
     "zWorkspace": ".",
     "zVaFile": "@.zUI.users_menu",
     "zBlock": "zVaF",
@@ -44,7 +44,7 @@ z = zCLI({
 z.walker.run()
 ```
 
-**Note:** All zCLI sparks work identically for Terminal and zBifrost. Always use a Terminal spark for terminal feedback. If in zBifrost mode, create a separate Terminal test spark.
+**Note:** All zKernel sparks work identically for Terminal and zBifrost. Always use a Terminal spark for terminal feedback. If in zBifrost mode, create a separate Terminal test spark.
 
 ---
 
@@ -54,7 +54,7 @@ z.walker.run()
 - ❌ NO `input()` calls - use `z.display.read_string()` or `z.display.selection()`
 - ❌ NO verbose comments - code should be self-documenting
 - ✅ Keep code slim and focused
-- ✅ Use zCLI's built-in tools for all output (z.display works in Terminal AND Bifrost modes)
+- ✅ Use zKernel's built-in tools for all output (z.display works in Terminal AND Bifrost modes)
 
 ---
 
@@ -146,7 +146,7 @@ Before writing zUI files, check:
 2. **zDisplay/zDisplay.py** - What events are in `_event_map`?
 3. **Existing zUI files** - Use them as templates (e.g., `Demos/User Manager/zUI.users_csv.yaml`)
 
-**Remember**: zCLI is **declarative** - you can't invent syntax, only use what the dispatcher recognizes!
+**Remember**: zKernel is **declarative** - you can't invent syntax, only use what the dispatcher recognizes!
 
 ---
 
@@ -386,7 +386,7 @@ def _store_result(zcli, test_name, status, message):
 
 **Don't:**
 - ❌ Re-instantiate config classes (use `zcli.config` directly)
-- ❌ Create new zCLI instances per test (use the session's instance)
+- ❌ Create new zKernel instances per test (use the session's instance)
 - ❌ Use emojis in test output (breaks in some terminals)
 - ❌ Forget to test helper functions and facade methods
 
@@ -420,10 +420,10 @@ zConfig (66 tests across 14 modules):
 ### Quick Reference
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Full-stack setup (WebSocket + HTTP)
-z = zCLI({
+z = zKernel({
     "zWorkspace": ".",
     "zMode": "zBifrost",
     "websocket": {"port": 8765, "require_auth": False},
@@ -457,7 +457,7 @@ z.comm.check_port(8080)
 Most systems have 1-2 auth tiers. zComm has **3 independent tiers**:
 
 ```
-Layer 1: zSession Auth    → Internal Zolo/zCLI users (paid features)
+Layer 1: zSession Auth    → Internal Zolo/zKernel users (paid features)
 Layer 2: Application Auth  → Your app's customers (eCommerce, SaaS, etc.)
 Layer 3: Dual-Auth        → Both active (builder logged into their app)
 ```
@@ -522,7 +522,7 @@ z.server  # HTTP on port 8080
 
 **✅ RIGHT: Use both for full-stack apps**
 ```python
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",  # WebSocket server
     "http_server": {"enabled": True}  # HTTP server (both running)
 })
@@ -608,14 +608,14 @@ zcli.comm.http_post()  # ✅ Public method
 
 ## zDisplay: Display & Rendering Subsystem (IMPORTANT!)
 
-**zDisplay** provides zCLI's unified display interface for Terminal and GUI (Bifrost) modes. It's a **Layer 1** subsystem (initializes after Layer 0).
+**zDisplay** provides zKernel's unified display interface for Terminal and GUI (Bifrost) modes. It's a **Layer 1** subsystem (initializes after Layer 0).
 
 ### Quick Reference
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"zWorkspace": ".", "zMode": "Terminal"})
+z = zKernel({"zWorkspace": ".", "zMode": "Terminal"})
 
 # Basic output
 z.display.text("Hello World")
@@ -866,7 +866,7 @@ z.display.zTable("Users", columns, rows, limit=10, offset=20)
 
 **Module Structure**:
 ```
-zCLI/subsystems/zAuth/
+zKernel/subsystems/zAuth/
 ├── zAuth.py (facade orchestrator)
 └── zAuth_modules/
     ├── auth_password_security.py   (bcrypt hashing, 12 rounds)
@@ -878,24 +878,24 @@ zCLI/subsystems/zAuth/
 ### Three-Tier Authentication
 
 **Tier 1: zSession (Internal)**
-- For zCLI/Zolo platform users (developers, admins)
+- For zKernel/Zolo platform users (developers, admins)
 - Session structure: `session["zAuth"]["zSession"]`
 
 **Tier 2: Application (External)**
-- For end-users of apps built with zCLI (customers, employees)
+- For end-users of apps built with zKernel (customers, employees)
 - Multi-app support: `session["zAuth"]["applications"][app_name]`
 - Independent contexts per application
 
 **Tier 3: Dual-Mode (Both)**
-- Users with both zCLI and application identities
+- Users with both zKernel and application identities
 - RBAC uses OR logic (either context grants access)
 - Automatic detection and context switching
 
 ### Public API
 
 ```python
-from zCLI import zCLI
-z = zCLI({"zWorkspace": "."})
+from zKernel import zKernel
+z = zKernel({"zWorkspace": "."})
 
 # Password security (bcrypt)
 hashed = z.auth.hash_password("password")
@@ -954,11 +954,11 @@ z.auth.has_permission("data.write")
 
 ### Overview
 
-**zDispatch** is zCLI's universal command router - the "traffic controller" that takes any command and executes it correctly. Every command in zCLI flows through zDispatch.
+**zDispatch** is zKernel's universal command router - the "traffic controller" that takes any command and executes it correctly. Every command in zKernel flows through zDispatch.
 
 **Module Structure**:
 ```
-zCLI/subsystems/zDispatch/
+zKernel/subsystems/zDispatch/
 ├── zDispatch.py (facade orchestrator)
 └── dispatch_modules/
     ├── dispatch_launcher.py    (CommandLauncher - executes commands)
@@ -1028,8 +1028,8 @@ zWizard:                        # Multi-step
 ### Public API
 
 ```python
-from zCLI import zCLI
-z = zCLI({"zWorkspace": "."})
+from zKernel import zKernel
+z = zKernel({"zWorkspace": "."})
 
 # Execute command via facade
 result = z.dispatch.handle(
@@ -1044,7 +1044,7 @@ result = z.dispatch.handle(
 )
 
 # Standalone function
-from zCLI.subsystems.zDispatch import handle_zDispatch
+from zKernel.subsystems.zDispatch import handle_zDispatch
 result = handle_zDispatch(zKey="action", zHorizontal=command, zcli=z)
 ```
 
@@ -1145,11 +1145,11 @@ result = z.dispatch.handle("^action", command)
 
 ### Overview
 
-**zNavigation** is zCLI's unified navigation system - the "compass" that handles all interactive menus, breadcrumb trails, and inter-file navigation. It's a facade over 7 specialized modules providing a single, simple API.
+**zNavigation** is zKernel's unified navigation system - the "compass" that handles all interactive menus, breadcrumb trails, and inter-file navigation. It's a facade over 7 specialized modules providing a single, simple API.
 
 **Module Structure**:
 ```
-zCLI/subsystems/zNavigation/
+zKernel/subsystems/zNavigation/
 ├── zNavigation.py (facade orchestrator)
 └── navigation_modules/
     ├── navigation_menu_builder.py      (Constructs menu objects)
@@ -1164,8 +1164,8 @@ zCLI/subsystems/zNavigation/
 ### Public API
 
 ```python
-from zCLI import zCLI
-z = zCLI({"zWorkspace": "."})
+from zKernel import zKernel
+z = zKernel({"zWorkspace": "."})
 
 # Create interactive menu (full-featured)
 choice = z.navigation.create(
@@ -1429,11 +1429,11 @@ Setup_Wizard:
 
 ### Overview
 
-**zParser** is zCLI's universal parsing engine - the "translator" that resolves paths, parses commands, loads files, evaluates expressions, and executes plugins. Every path resolution and file operation in zCLI flows through zParser.
+**zParser** is zKernel's universal parsing engine - the "translator" that resolves paths, parses commands, loads files, evaluates expressions, and executes plugins. Every path resolution and file operation in zKernel flows through zParser.
 
 **Module Structure**:
 ```
-zCLI/subsystems/zParser/
+zKernel/subsystems/zParser/
 ├── zParser.py (facade orchestrator)
 └── zParser_modules/
     ├── parser_path.py          (Path resolution, zPath decoder)
@@ -1447,8 +1447,8 @@ zCLI/subsystems/zParser/
 ### Public API
 
 ```python
-from zCLI import zCLI
-z = zCLI({"zWorkspace": "."})
+from zKernel import zKernel
+z = zKernel({"zWorkspace": "."})
 
 # Path resolution
 path, file_type = z.parser.zPath_decoder("@.zUI.users")
@@ -1521,7 +1521,7 @@ result = z.parser.resolve_plugin_invocation("&plugin.add(5, 10)")
 ```
 
 **Auto-Discovery** (searches if not cached):
-1. `@.zCLI.utils/plugin.py`
+1. `@.zKernel.utils/plugin.py`
 2. `@.utils/plugin.py`
 3. `@.plugins/plugin.py`
 
@@ -1648,11 +1648,11 @@ data = z.parser.parse_file_by_path(file_path)  # ✅ Auto-detects format
 
 ### Overview
 
-**zLoader** is zCLI's file loading and multi-tier caching engine - the "smart filing system" that loads configuration files, UI definitions, and schemas with intelligent caching to minimize disk I/O and maximize performance.
+**zLoader** is zKernel's file loading and multi-tier caching engine - the "smart filing system" that loads configuration files, UI definitions, and schemas with intelligent caching to minimize disk I/O and maximize performance.
 
 **Module Structure** (6-Tier Architecture):
 ```
-zCLI/subsystems/zLoader/
+zKernel/subsystems/zLoader/
 ├── zLoader.py (facade - public API)
 └── loader_modules/
     ├── cache_orchestrator.py      (Tier 3: routes to cache tiers)
@@ -1668,8 +1668,8 @@ zCLI/subsystems/zLoader/
 ### Public API
 
 ```python
-from zCLI import zCLI
-z = zCLI({"zWorkspace": "."})
+from zKernel import zKernel
+z = zKernel({"zWorkspace": "."})
 
 # Main file loading (cached if UI/Config, fresh if Schema)
 ui_data = z.loader.handle("@.zUI.users")        # Cached
@@ -1888,11 +1888,11 @@ stats = z.loader.cache.get_stats("all")
 
 ### Overview
 
-**zFunc** is zCLI's function execution engine - the "bridge" between declarative YAML and imperative Python. It enables dynamic loading and execution of Python functions with intelligent argument parsing, automatic dependency injection, and context-aware parameter resolution.
+**zFunc** is zKernel's function execution engine - the "bridge" between declarative YAML and imperative Python. It enables dynamic loading and execution of Python functions with intelligent argument parsing, automatic dependency injection, and context-aware parameter resolution.
 
 **Module Structure** (4-Tier Architecture):
 ```
-zCLI/subsystems/zFunc/
+zKernel/subsystems/zFunc/
 ├── zFunc.py (facade - public API)
 └── zFunc_modules/
     ├── func_resolver.py    (Foundation: function loading & discovery)
@@ -1905,8 +1905,8 @@ zCLI/subsystems/zFunc/
 ### Public API
 
 ```python
-from zCLI import zCLI
-z = zCLI({"zWorkspace": "."})
+from zKernel import zKernel
+z = zKernel({"zWorkspace": "."})
 
 # Main method: handle(zHorizontal, zContext=None)
 result = z.zfunc.handle("&plugin.function(arg1, arg2)")
@@ -2169,7 +2169,7 @@ zVaF:
 def test_facade_init(zcli=None, context=None):
     """Test facade initialization."""
     if not zcli:
-        zcli = zCLI({'zWorkspace': '.', 'zMode': 'Terminal'})
+        zcli = zKernel({'zWorkspace': '.', 'zMode': 'Terminal'})
     
     try:
         assert hasattr(zcli, 'zfunc'), "zcli missing zfunc"
@@ -2220,11 +2220,11 @@ def display_test_results(zcli=None, context=None):
 
 ### Overview
 
-**zDialog** is zCLI's **Interactive Form/Dialog Subsystem** - the "data collector" that renders forms, validates user input against zSchema, and handles submission processing with mode-agnostic support for both Terminal and Bifrost (GUI) environments.
+**zDialog** is zKernel's **Interactive Form/Dialog Subsystem** - the "data collector" that renders forms, validates user input against zSchema, and handles submission processing with mode-agnostic support for both Terminal and Bifrost (GUI) environments.
 
 **Module Structure** (5-Tier Architecture):
 ```
-zCLI/subsystems/zDialog/
+zKernel/subsystems/zDialog/
 ├── zDialog.py (facade - public API)
 └── dialog_modules/
     ├── dialog_context.py    (Foundation: context creation + 5 placeholder types)
@@ -2236,8 +2236,8 @@ zCLI/subsystems/zDialog/
 ### Public API
 
 ```python
-from zCLI import zCLI
-z = zCLI({"zWorkspace": "."})
+from zKernel import zKernel
+z = zKernel({"zWorkspace": "."})
 
 # Main method: handle(zHorizontal, context=None)
 result = z.zdialog.handle({
@@ -2560,11 +2560,11 @@ create_order:
 
 ### Overview
 
-**zOpen** is zCLI's file and URL opening subsystem - the "universal opener" that handles all file and URL access with intelligent routing, graceful fallbacks, and hook execution. It's a **Layer 1** subsystem (initializes after Layer 0).
+**zOpen** is zKernel's file and URL opening subsystem - the "universal opener" that handles all file and URL access with intelligent routing, graceful fallbacks, and hook execution. It's a **Layer 1** subsystem (initializes after Layer 0).
 
 **Module Structure** (3-Tier Architecture):
 ```
-zCLI/subsystems/zOpen/
+zKernel/subsystems/zOpen/
 ├── zOpen.py (facade - public API)
 └── open_modules/
     ├── open_paths.py    (Foundation: zPath resolution)
@@ -2578,8 +2578,8 @@ zCLI/subsystems/zOpen/
 ### Public API
 
 ```python
-from zCLI import zCLI
-z = zCLI({"zWorkspace": "."})
+from zKernel import zKernel
+z = zKernel({"zWorkspace": "."})
 
 # Main method: handle(zHorizontal)
 result = z.open.handle("zOpen(/path/to/file.txt)")
@@ -2686,7 +2686,7 @@ z.open.handle({
 - `zTestRunner/zUI.zOpen_tests.yaml` (214 lines)
 - `zTestRunner/plugins/zopen_tests.py` (2,400+ lines - **NO STUB TESTS**)
 
-**Note**: All 83 tests perform real validation with assertions using mock zCLI instances. Zero stub tests.
+**Note**: All 83 tests perform real validation with assertions using mock zKernel instances. Zero stub tests.
 
 ### Common Mistakes
 
@@ -2846,11 +2846,11 @@ result = z.open.handle("zOpen(@.file)")
 
 ### Overview
 
-**zUtils** is zCLI's plugin management facade - the "extension system" that enables runtime extensibility through Python modules. Every plugin in zCLI flows through zUtils for loading, caching, security enforcement, and session injection.
+**zUtils** is zKernel's plugin management facade - the "extension system" that enables runtime extensibility through Python modules. Every plugin in zKernel flows through zUtils for loading, caching, security enforcement, and session injection.
 
 **Module Structure** (3-Phase Modernization):
 ```
-zCLI/subsystems/zUtils/
+zKernel/subsystems/zUtils/
 ├── zUtils.py (facade - public API)
 └── (Foundation → Architecture → Enhancements)
     Phase 1: Core plugin loading (file/module paths)
@@ -2863,10 +2863,10 @@ zCLI/subsystems/zUtils/
 ### Public API
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Boot-time loading (preferred)
-z = zCLI({
+z = zKernel({
     "zWorkspace": ".",
     "zPlugins": ["plugins/auth.py", "plugins/utils.py"]
 })
@@ -2935,7 +2935,7 @@ def _private_helper():
 
 **With zSpark (Boot Time):**
 ```python
-z = zCLI({
+z = zKernel({
     "zWorkspace": ".",
     "zPlugins": [
         "plugins/auth.py",
@@ -2956,7 +2956,7 @@ def slugify(text):
     return text.lower().replace(' ', '-')
 
 # Usage
-z = zCLI({"zPlugins": ["plugins/text_utils.py"]})
+z = zKernel({"zPlugins": ["plugins/text_utils.py"]})
 slug = z.utils.slugify("Hello World")  # "hello-world"
 ```
 
@@ -2992,7 +2992,7 @@ zVaF:
 - `zTestRunner/zUI.zUtils_tests.yaml` (98 test steps)
 - `zTestRunner/plugins/zutils_tests.py` (2,200+ lines - **NO STUB TESTS**)
 
-**Note**: All 98 tests perform real validation with mock zCLI instances. Zero stub tests.
+**Note**: All 98 tests perform real validation with mock zKernel instances. Zero stub tests.
 
 ### Common Mistakes
 
@@ -3055,11 +3055,11 @@ def my_function():
 
 ### Overview
 
-**zWizard** is zCLI's core loop engine for stepped execution and workflow orchestration - the "conductor" that executes multi-step workflows with automatic result passing, transaction management, and error handling. It powers Shell canvas mode, Walker UI navigation, and batch data operations.
+**zWizard** is zKernel's core loop engine for stepped execution and workflow orchestration - the "conductor" that executes multi-step workflows with automatic result passing, transaction management, and error handling. It powers Shell canvas mode, Walker UI navigation, and batch data operations.
 
 **Module Structure** (Pure Loop Engine):
 ```
-zCLI/subsystems/zWizard/
+zKernel/subsystems/zWizard/
 ├── zWizard.py (core loop engine)
 └── zWizard_modules/
     ├── wizard_hat.py           (WizardHat - triple-access results)
@@ -3075,8 +3075,8 @@ zCLI/subsystems/zWizard/
 ### Public API
 
 ```python
-from zCLI import zCLI
-z = zCLI({"zWorkspace": "."})
+from zKernel import zKernel
+z = zKernel({"zWorkspace": "."})
 
 # Execute workflow (Shell mode)
 workflow = {
@@ -3328,11 +3328,11 @@ step2:
 
 ### Overview
 
-**zData** is zCLI's unified data management subsystem - the "universal database interface" that provides a consistent API for database operations across multiple backends (SQLite, PostgreSQL, CSV). It's **schema-driven**, **declarative**, and **mode-agnostic**.
+**zData** is zKernel's unified data management subsystem - the "universal database interface" that provides a consistent API for database operations across multiple backends (SQLite, PostgreSQL, CSV). It's **schema-driven**, **declarative**, and **mode-agnostic**.
 
 **Module Structure** (6-Tier Architecture):
 ```
-zCLI/subsystems/zData/
+zKernel/subsystems/zData/
 ├── zData.py (facade - public API)
 └── zData_modules/
     ├── classical_data/             (Relational paradigm)
@@ -3352,8 +3352,8 @@ zCLI/subsystems/zData/
 ### Public API
 
 ```python
-from zCLI import zCLI
-z = zCLI({"zWorkspace": "."})
+from zKernel import zKernel
+z = zKernel({"zWorkspace": "."})
 
 # Load schema
 schema = z.loader.handle("@.zSchema.users")
@@ -3796,13 +3796,13 @@ zWizard:
 
 ## zShell: Interactive Shell & REPL (v1.5.4+)
 
-**Interactive command center** for zCLI with 18+ commands and wizard canvas mode.
+**Interactive command center** for zKernel with 18+ commands and wizard canvas mode.
 
 ### Key Features
 - **18+ Commands** - Terminal (where, cd, ls), zLoader (load, data, plugin), Integration (auth, config, func, etc.)
 - **Wizard Canvas Mode** - Multi-step workflow orchestration with transactions
 - **Command Routing** - Automatic dispatch to correct subsystem
-- **Cross-Subsystem** - Direct access to all zCLI features
+- **Cross-Subsystem** - Direct access to all zKernel features
 - **REPL Loop** - Read-Eval-Print-Loop with history
 
 ### Quick Example
@@ -3913,9 +3913,9 @@ zVaF:
 
 ```python
 # Run the app
-from zCLI import zCLI
+from zKernel import zKernel
 
-zcli = zCLI()
+zcli = zKernel()
 zcli.zspark_obj['zVaFile'] = '@.zUI.my_app'
 zcli.zspark_obj['zBlock'] = 'zVaF'
 result = zcli.walker.run()
@@ -4088,15 +4088,15 @@ Main:
 - **Background Threading** - Non-blocking, daemon thread
 - **CORS Enabled** - Automatic headers for local dev
 - **Security Built-in** - Directory listing disabled
-- **Logger Integration** - All requests via zCLI logger
+- **Logger Integration** - All requests via zKernel logger
 - **Works with zBifrost** - HTTP + WebSocket = full-stack
 
 ### Quick Example
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"zWorkspace": "."})
+z = zKernel({"zWorkspace": "."})
 
 # Create and start HTTP server
 http_server = z.comm.create_http_server(
@@ -4116,9 +4116,9 @@ http_server.stop()
 ### Full-Stack Example (HTTP + WebSocket)
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {"port": 8765, "require_auth": False},
     "http_server": {"port": 8080, "serve_path": ".", "enabled": True}
@@ -4184,7 +4184,7 @@ Integration:
 
 **Via zSpark:**
 ```python
-z = zCLI({
+z = zKernel({
     "http_server": {
         "host": "127.0.0.1",
         "port": 8080,
@@ -4375,7 +4375,7 @@ zRBAC:
 
 ## Data Validation (Week 5.1 - zData)
 
-**zCLI provides comprehensive validation through `DataValidator` class (191 lines)**
+**zKernel provides comprehensive validation through `DataValidator` class (191 lines)**
 
 ### ✅ Validation Rules (Already Implemented!)
 
@@ -4943,7 +4943,7 @@ Auto-validation is tested with **12 comprehensive tests** in `zTestSuite/zDialog
 
 ## Plugin Validators (Week 5.4 - zData Extension Point)
 
-**🎯 Extend built-in validation with custom business logic using zCLI's native plugin pattern!**
+**🎯 Extend built-in validation with custom business logic using zKernel's native plugin pattern!**
 
 ### Core Design Philosophy
 
@@ -5231,12 +5231,12 @@ Plugin validators are tested with **14 comprehensive tests** in `zTestSuite/zDat
 
 ## Actionable Error Messages (Week 4.3)
 
-**All zCLI exceptions include context-aware hints for resolution**
+**All zKernel exceptions include context-aware hints for resolution**
 
-### Exception Types (from `zCLI.utils.zExceptions`)
+### Exception Types (from `zKernel.utils.zExceptions`)
 
 ```python
-from zCLI.utils.zExceptions import (
+from zKernel.utils.zExceptions import (
     SchemaNotFoundError,      # Schema file not found or not loaded
     FormModelNotFoundError,   # Form model not in schema
     TableNotFoundError,       # Table not in loaded schema
@@ -5263,7 +5263,7 @@ from zCLI.utils.zExceptions import (
 # User tries to load missing schema
 z.data.handle({"action": "read", "model": "@.zSchema.users"})
 
-# zCLI raises:
+# zKernel raises:
 # SchemaNotFoundError: Schema 'users' not found
 # 💡 Load it first: z.loader.handle('@.zSchema.users')
 #    Expected file: zSchema.users.yaml in workspace
@@ -5418,8 +5418,8 @@ zDialog:
 **Actionable errors work seamlessly with `zTraceback` and `ExceptionContext`:**
 
 ```python
-from zCLI.utils.zTraceback import ExceptionContext
-from zCLI.utils.zExceptions import SchemaNotFoundError
+from zKernel.utils.zTraceback import ExceptionContext
+from zKernel.utils.zExceptions import SchemaNotFoundError
 
 with ExceptionContext(
     zcli.zTraceback,
@@ -5445,12 +5445,12 @@ with ExceptionContext(
 
 **Minimal** (Terminal Mode):
 ```python
-z = zCLI({"zWorkspace": "."})
+z = zKernel({"zWorkspace": "."})
 ```
 
 **Full** (All Options):
 ```python
-z = zCLI({
+z = zKernel({
     # Required
     "zWorkspace": ".",  # ALWAYS required, validates early
     
@@ -5485,9 +5485,9 @@ z = zCLI({
 
 **Backend**:
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {"host": "127.0.0.1", "port": 8765, "require_auth": False}
 })
@@ -5540,7 +5540,7 @@ await client.connect();
 
 **Usage via CDN**:
 ```html
-<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.4/zCLI/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modular.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.4/zKernel/subsystems/zComm/zComm_modules/zBifrost/bifrost_client_modular.js"></script>
 <script>
 const client = new BifrostClient('ws://localhost:8765', {
     autoTheme: false,  // true loads zTheme CSS automatically
@@ -5565,7 +5565,7 @@ const result = await client.send({event: 'dispatch', zKey: '^Ping'});
 - Works via CDN (no import resolution issues)
 - Lazy loads: connection, message_handler, renderer, theme_loader
 - Full CRUD API: `create()`, `read()`, `update()`, `delete()`
-- zCLI operations: `zFunc()`, `zLink()`, `zOpen()`
+- zKernel operations: `zFunc()`, `zLink()`, `zOpen()`
 - Auto-rendering: `renderTable()`, `renderMenu()`, `renderForm()`
 
 ## zServer (Optional HTTP Static Files)
@@ -5580,9 +5580,9 @@ const result = await client.send({event: 'dispatch', zKey: '^Ping'});
 
 **Method 1: Auto-Start** (Industry Pattern):
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({
+z = zKernel({
     "http_server": {"port": 8080, "serve_path": ".", "enabled": True}
 })
 
@@ -5592,9 +5592,9 @@ print(z.server.get_url())  # http://127.0.0.1:8080
 
 **Method 2: Manual Start**:
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"zWorkspace": "."})
+z = zKernel({"zWorkspace": "."})
 
 # Create and start manually
 http_server = z.comm.create_http_server(port=8080)
@@ -5603,7 +5603,7 @@ http_server.start()
 
 **With zBifrost (Full-Stack)**:
 ```python
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {"port": 8765, "require_auth": False},
     "http_server": {"port": 8080, "enabled": True}
@@ -5653,7 +5653,7 @@ status = z.comm.health_check_all()
 **Handle Ctrl+C Cleanly**:
 ```python
 # Signal handlers automatically registered (SIGINT, SIGTERM)
-z = zCLI({...})
+z = zKernel({...})
 
 # Manual shutdown (closes all connections, saves state)
 z.shutdown()
@@ -5711,7 +5711,7 @@ def test_message_handler_cache_miss(self):
 @requires_network  # Skips in CI/sandbox
 async def test_real_websocket_connection(self):
     """Should handle real WebSocket client"""
-    z = zCLI({"zWorkspace": temp_dir, "zMode": "Terminal"})
+    z = zKernel({"zWorkspace": temp_dir, "zMode": "Terminal"})
     bifrost = zBifrost(z.logger, walker=z.walker, zcli=z, port=56901)
     
     # Start REAL server
@@ -5750,24 +5750,24 @@ z.logger.info("Processing users...")  # ✅ Goes to logs, not display
 
 ### ❌ Wrong: Invalid zSpark
 ```python
-z = zCLI({"zMode": "Terminal"})  # Missing zWorkspace!
+z = zKernel({"zMode": "Terminal"})  # Missing zWorkspace!
 # Raises ConfigValidationError immediately
 ```
 
 ### ✅ Right: Valid zSpark
 ```python
-z = zCLI({"zWorkspace": ".", "zMode": "Terminal"})
+z = zKernel({"zWorkspace": ".", "zMode": "Terminal"})
 ```
 
 ### ❌ Wrong: Forgetting to enable HTTP server
 ```python
-z = zCLI({"http_server": {"port": 8080}})
+z = zKernel({"http_server": {"port": 8080}})
 # Server NOT created (enabled defaults to False)
 ```
 
 ### ✅ Right: Enable HTTP server
 ```python
-z = zCLI({"http_server": {"enabled": True, "port": 8080}})
+z = zKernel({"http_server": {"enabled": True, "port": 8080}})
 ```
 
 ### ❌ Wrong: zData INSERT before CREATE TABLE
@@ -5885,11 +5885,11 @@ Loading a schema doesn't auto-create tables - you must explicitly call `create_t
 - **zOpen**: `zTestRunner/zUI.zOpen_tests.yaml` (83 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zopen_tests.py` (test logic - **NO STUB TESTS**)
   - Integration: Type detection workflows, zPath resolution, URL opening, file opening by extension, hook execution, graceful fallbacks
-  - Notes: All 83 tests perform real validation with mock zCLI instances, zero stub tests
+  - Notes: All 83 tests perform real validation with mock zKernel instances, zero stub tests
 - **zUtils**: `zTestRunner/zUI.zUtils_tests.yaml` (99 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zutils_tests.py` (test logic - **NO STUB TESTS**)
   - Integration: Plugin loading workflows, unified cache operations, security enforcement, collision detection, mtime auto-reload, stats tracking
-  - Notes: All 98 tests perform real validation with mock zCLI instances, zero stub tests, covers 3-phase modernization
+  - Notes: All 98 tests perform real validation with mock zKernel instances, zero stub tests, covers 3-phase modernization
 - **zWizard**: `zTestRunner/zUI.zWizard_tests.yaml` (45 tests, 100% coverage)
   - Plugin: `zTestRunner/plugins/zwizard_tests.py` (test logic - **NO STUB TESTS**)
   - Integration: WizardHat triple-access workflows, sequential execution, transaction management, result interpolation, Shell/Walker integration
@@ -5935,9 +5935,9 @@ is_valid = z.auth.verify_password("user_input", stored_hash)
 
 **Example Usage**:
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"zWorkspace": "."})
+z = zKernel({"zWorkspace": "."})
 
 # Register user
 password_hash = z.auth.hash_password("secure_password")
@@ -5959,12 +5959,12 @@ else:
 
 **Goal**: Login once, stay authenticated for 7 days (survives app restarts).
 
-**The zCLI Way**: Declarative schema + `z.data.Create/Read/Update/Delete` (no raw SQL!)
+**The zKernel Way**: Declarative schema + `z.data.Create/Read/Update/Delete` (no raw SQL!)
 
 ### Setup (Automatic)
 
 When `zAuth` initializes, it:
-1. Loads `zSchema.sessions.yaml` from `zCLI/subsystems/zAuth/`
+1. Loads `zSchema.sessions.yaml` from `zKernel/subsystems/zAuth/`
 2. Creates `sessions.db` at `z.config.sys_paths.user_data_dir / "sessions.db"`
 3. Restores any valid (non-expired) session
 
@@ -5989,13 +5989,13 @@ sessions:
 ### Login with Persistence (Default)
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 import os
 
 # Enable remote API
 os.environ["ZOLO_USE_REMOTE_API"] = "true"
 
-z = zCLI({"zWorkspace": "."})
+z = zKernel({"zWorkspace": "."})
 
 # Login with persistence (default: persist=True)
 result = z.auth.login(
@@ -6250,7 +6250,7 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 - **Run Tests:** `zolo ztests` → select "zOpen"
 - **Key Features:** Automatic type detection (URL vs zPath vs file), extension-based routing (.html→browser, .py→IDE), zPath resolution (@ workspace, ~ absolute), hook execution (onSuccess/onFail), graceful fallbacks (content display when tools fail), interactive prompts (file creation via zDialog)
 - **Innovations:** Unified opener for all file/URL types, intelligent routing with zero configuration, graceful degradation when browser/IDE unavailable
-- **Notes:** All 83 tests perform real validation with mock zCLI instances, zero stub tests
+- **Notes:** All 83 tests perform real validation with mock zKernel instances, zero stub tests
 
 **zUtils (Week 6.15 - Complete):**
 - **Guide:** `Documentation/zUtils_GUIDE.md` - CEO & developer-friendly (✅ New)
@@ -6260,7 +6260,7 @@ sessions_db.parent.mkdir(parents=True, exist_ok=True)
 - **Run Tests:** `zolo ztests` → select "zUtils"
 - **Key Features:** Unified cache architecture (delegates to zLoader.plugin_cache), security enforcement (`__all__` whitelist, collision detection), mtime-based auto-reload, session injection (every plugin gets zcli), best-effort loading, comprehensive stats
 - **Innovations:** 3-phase modernization (Foundation → Architecture → Enhancements), unified cache for cross-subsystem access (zFunc, zParser, zShell share plugins), graceful degradation (one bad plugin doesn't crash system)
-- **Notes:** All 98 tests perform real validation with mock zCLI instances, zero stub tests
+- **Notes:** All 98 tests perform real validation with mock zKernel instances, zero stub tests
 
 **zWizard (Week 6.14 - Complete):**
 - **Guide:** `Documentation/zWizard_GUIDE.md` - CEO & developer-friendly (✅ Updated)

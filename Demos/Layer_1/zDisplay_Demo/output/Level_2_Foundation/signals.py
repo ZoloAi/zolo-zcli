@@ -13,12 +13,12 @@ Run:
     python Demos/Layer_1/zDisplay_Demo/output/Level_2_Foundation/signals.py
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
     """Demonstrate all five signal types."""
-    z = zCLI({"logger": "PROD"})
+    z = zKernel({"logger": "PROD"})
 
     z.display.line("")
     z.display.header("Level 2C: Signals - Color-Coded Feedback", color="MAGENTA", style="wave")

@@ -13,7 +13,7 @@ sys.path.insert(0, str(workspace_root))
 print(f"🔧 Using local zCLI from: {workspace_root}")
 
 try:
-    from zCLI import zCLI
+    from zKernel import zKernel
 except ImportError:
     print("❌ zCLI not found. Please install: pip install zolo-zcli")
     sys.exit(1)
@@ -67,7 +67,7 @@ def main():
     print(f"📁 Workspace: {current_dir}")
     
     # Initialize zCLI with cache demo configuration
-    z = zCLI({
+    z = zKernel({
         "zWorkspace": str(current_dir),
         "zVaFile": "@.zUI.cache_demo",
         "zBlock": "zVaF",

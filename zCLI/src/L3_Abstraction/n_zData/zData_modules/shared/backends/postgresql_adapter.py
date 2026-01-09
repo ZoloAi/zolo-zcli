@@ -109,7 +109,7 @@ cursor.execute("SELECT * FROM users WHERE age > %s", (18,))
 Usage Examples
 -------------
 Basic connection and CRUD:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends.postgresql_adapter import PostgreSQLAdapter
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends.postgresql_adapter import PostgreSQLAdapter
     >>> config = {
     ...     "path": "/data/myapp",
     ...     "label": "mydb",
@@ -181,7 +181,7 @@ See Also
 - sqlite_adapter.py: SQLite implementation (file-based)
 """
 
-from zCLI import datetime, yaml, Dict, Optional, Any
+from zKernel import datetime, yaml, Dict, Optional, Any
 import getpass
 from .sql_adapter import SQLAdapter
 

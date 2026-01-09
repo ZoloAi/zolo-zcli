@@ -64,7 +64,7 @@ This workaround is automatically applied when needed.
 Usage Examples
 -------------
 Execute migration with preview:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.operations.ddl_migrate import handle_migrate
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.operations.ddl_migrate import handle_migrate
     >>> request = {
     ...     "old_schema": old_schema_dict,
     ...     "new_schema": new_schema_dict,
@@ -97,7 +97,7 @@ See Also
 - ddl_drop.py: DROP TABLE handler
 """
 
-from zCLI import Dict, List, Any
+from zKernel import Dict, List, Any
 
 # Import diff engine
 from ..schema_diff import diff_schemas, format_diff_report, KEY_CHANGE_COUNT
@@ -263,7 +263,7 @@ def _record_sql_migration_history(ops: Any, request: Dict[str, Any], diff: Dict[
     """
     Record migration history in global _zdata_migrations table (SQL approach).
     """
-    from zCLI.L3_Abstraction.n_zData.zData_modules.shared.migration_history import record_migration, ensure_migrations_table
+    from zKernel.L3_Abstraction.n_zData.zData_modules.shared.migration_history import record_migration, ensure_migrations_table
     
     ensure_migrations_table(ops.adapter)
     

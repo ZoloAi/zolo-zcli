@@ -1,7 +1,7 @@
 # zCLI/L1_Foundation/a_zConfig/zConfig_modules/helpers/detectors/media_apps.py
-"""Image viewer, video player, and audio player detection for zCLI."""
+"""Image viewer, video player, and audio player detection for zKernel."""
 
-from zCLI import os, platform, subprocess, shutil
+from zKernel import os, platform, subprocess, shutil
 from typing import Optional
 from .shared import SUBPROCESS_TIMEOUT_SEC, _log_info, _log_warning
 

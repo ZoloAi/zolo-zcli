@@ -1,6 +1,6 @@
 # zTheme
 
-A modern, lightweight CSS framework with handwritten typography (Kalam font) and SVG icon system. Built for zCLI applications but works with any web project.
+A modern, lightweight CSS framework with handwritten typography (Kalam font) and SVG icon system. Built for zKernel applications but works with any web project.
 
 ## Features
 
@@ -167,7 +167,7 @@ MIT License - See LICENSE file for details
 
 ## Credits
 
-- Built for [zCLI](https://github.com/YOUR_USERNAME/zolo-zcli)
+- Built for [zKernel](https://github.com/YOUR_USERNAME/zolo-zcli)
 - Icons adapted from Bootstrap Icons (MIT)
 - Kalam font by Indian Type Foundry (OFL)
 

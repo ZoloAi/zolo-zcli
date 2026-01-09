@@ -87,7 +87,7 @@ zConv Pattern
 ------------
 "zConv" (zCLI Convention) is the standard key used to pass data dictionaries
 in hook contexts. It represents the current conversation/transaction data and
-is used consistently across zCLI subsystems (zDialog, zData, zWizard, zFunc).
+is used consistently across zKernel subsystems (zDialog, zData, zWizard, zFunc).
 
 Validation Integration
 ---------------------
@@ -144,7 +144,7 @@ This module is used by:
 - data_operations.py: CRUD operation router
 """
 
-from zCLI import Any, Dict
+from zKernel import Any, Dict
 
 # ============================================================
 # Module Constants - Operation Name

@@ -144,9 +144,9 @@ PATH_* : str
     Path parsing constants
 """
 
-from zCLI import Any, Dict, List, Optional, Tuple
-from zCLI.L2_Core.g_zParser.parser_modules.parser_utils import zExpr_eval
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
+from zKernel import Any, Dict, List, Optional, Tuple
+from zKernel.L2_Core.g_zParser.parser_modules.parser_utils import zExpr_eval
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZAUTH,
     SESSION_KEY_ZVAFOLDER,
     SESSION_KEY_ZVAFILE,
@@ -217,7 +217,7 @@ class Linking:
     navigation : Any
         Reference to parent navigation system
     zcli : Any
-        Reference to zCLI core instance
+        Reference to zKernel core instance
     logger : Any
         Logger instance for linking operations
     zSession : Dict[str, Any]
@@ -268,7 +268,7 @@ class Linking:
 
     # Class-level type declarations
     navigation: Any  # Navigation system reference
-    zcli: Any  # zCLI core instance
+    zcli: Any  # zKernel core instance
     logger: Any  # Logger instance
     zSession: Dict[str, Any]  # Direct reference to session
 
@@ -332,7 +332,7 @@ class Linking:
         self.logger.info(f"[zLink] HTTP route detected: {zLink_path}")
         
         # Get display mode from session
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZMODE
+        from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZMODE
         mode = walker.session.get(SESSION_KEY_ZMODE, "Terminal")
         
         if mode == "Web":
@@ -369,7 +369,7 @@ class Linking:
             walker: zWalker instance with session and navigation
             is_navbar_navigation: Whether this is a navbar navigation (skip recording)
         """
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
+        from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
         
         # Get crumbs dict (handle enhanced format)
         crumbs_dict = walker.session.get(SESSION_KEY_ZCRUMBS, {})
@@ -502,7 +502,7 @@ class Linking:
         
         # Save deep copy of current breadcrumb state
         import copy
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
+        from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
         breadcrumb_snapshot = copy.deepcopy(walker.zcli.session.get(SESSION_KEY_ZCRUMBS, {}))
         
         # Store source location for bounce-back (needed when there's no history)
@@ -554,7 +554,7 @@ class Linking:
             self.logger.debug("[zNavigation] Cleared _navbar_navigation flag from snapshot")
         
         # Restore breadcrumb state
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
+        from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZCRUMBS
         walker.zcli.session[SESSION_KEY_ZCRUMBS] = breadcrumb_snapshot
         self.logger.debug(f"[zNavigation] ✅ Restored breadcrumbs: {breadcrumb_snapshot}")
         
@@ -589,7 +589,7 @@ class Linking:
                 zPath = f"@.{source_file}"
             
             # Update session to source location
-            from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
+            from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
                 SESSION_KEY_ZVAFOLDER,
                 SESSION_KEY_ZVAFILE,
                 SESSION_KEY_ZBLOCK
@@ -776,7 +776,7 @@ class Linking:
         self.logger.debug(_LOG_ZFILE_PARSED, zFile_parsed)
 
         # BREADCRUMB FIX: Capture SOURCE context before navigation
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
+        from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
             SESSION_KEY_ZCRUMBS,
             SESSION_KEY_ZBLOCK,
             SESSION_KEY_ZVAFILE,

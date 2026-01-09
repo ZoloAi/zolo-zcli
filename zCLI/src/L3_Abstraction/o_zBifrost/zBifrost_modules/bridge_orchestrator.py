@@ -2,7 +2,7 @@
 """
 zBifrost WebSocket Bridge Orchestrator (Layer 2)
 
-Orchestrates Terminal↔Web communication by coordinating zCLI subsystems
+Orchestrates Terminal↔Web communication by coordinating zKernel subsystems
 over WebSocket infrastructure. Manages server lifecycle, client connections,
 and message routing between display/auth/data subsystems.
 
@@ -13,8 +13,8 @@ Architecture:
     - Manages z.data for CRUD operations from web UI
 """
 
-from zCLI import Any, Optional, Callable
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
+from zKernel import Any, Optional, Callable
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import (
     SESSION_KEY_ZMODE,
     ZMODE_TERMINAL,
     ZMODE_ZBIFROST
@@ -43,7 +43,7 @@ _LOG_INSTANCE_CREATED_ZBIFROST = "WebSocket bridge instance created for zBifrost
 _LOG_DETECTED_TERMINAL_MODE = "Terminal mode detected - WebSocket bridge will be created when needed"
 
 # Log Messages - Create
-_LOG_CREATING_FROM_CONFIG = "Creating WebSocket bridge from zCLI config: %s:%d"
+_LOG_CREATING_FROM_CONFIG = "Creating WebSocket bridge from zKernel config: %s:%d"
 _LOG_CREATING_WITH_DEFAULTS = "Creating WebSocket bridge with defaults: %s:%d"
 _LOG_CONFIG_DEBUG = "Bridge config - walker=%s, port=%d, host=%s"
 _LOG_INSTANCE_CREATED_SUCCESS = "WebSocket bridge instance created successfully"
@@ -74,11 +74,11 @@ class BridgeOrchestrator:
     """
     Layer 2 orchestrator for Terminal↔Web WebSocket bridge.
     
-    Manages WebSocket server lifecycle and coordinates zCLI subsystems
+    Manages WebSocket server lifecycle and coordinates zKernel subsystems
     (display, auth, data) for real-time web communication.
     
     Attributes:
-        zcli: zCLI instance
+        zcli: zKernel instance
         logger: Logger instance
         session: Session dict from zCLI
         websocket: WebSocket bridge instance (None until created)
@@ -89,9 +89,9 @@ class BridgeOrchestrator:
         Initialize Bridge Orchestrator.
         
         Args:
-            zcli: zCLI instance (required)
+            zcli: zKernel instance (required)
             logger: Logger instance (required)
-            session: Session dict from zCLI (required)
+            session: Session dict from zKernel (required)
             
         Raises:
             ValueError: If zcli, logger, or session is None
@@ -152,7 +152,7 @@ class BridgeOrchestrator:
         host: Optional[str] = None
     ) -> Any:
         """
-        Create WebSocket bridge instance using zCLI configuration.
+        Create WebSocket bridge instance using zKernel configuration.
         
         Args:
             walker: Optional walker instance
@@ -170,7 +170,7 @@ class BridgeOrchestrator:
             if not isinstance(port, int) or port < _PORT_MIN or port > _PORT_MAX:
                 raise ValueError(_ERROR_INVALID_PORT.format(min=_PORT_MIN, max=_PORT_MAX, port=port))
 
-        # Use zCLI config if available, otherwise use provided parameters or defaults
+        # Use zKernel config if available, otherwise use provided parameters or defaults
         try:
             config_host = host or self.zcli.config.websocket.host
             config_port = port or self.zcli.config.websocket.port

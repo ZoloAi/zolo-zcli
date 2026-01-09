@@ -165,7 +165,7 @@ This module is used by:
 - data_operations.py: CRUD operation router
 """
 
-from zCLI import Any, Dict, List, Union
+from zKernel import Any, Dict, List, Union
 
 # ============================================================
 # Module Constants - Operation Name

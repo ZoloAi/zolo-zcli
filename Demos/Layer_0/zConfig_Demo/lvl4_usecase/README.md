@@ -8,7 +8,7 @@ The **5-layer configuration hierarchy** where higher layers override lower ones:
 
 | Priority | Source | What | Where | Example |
 |----------|--------|------|-------|---------|
-| **5 (highest)** | **zSpark** | Runtime overrides | Your code | `zCLI({"deployment": "Production"})` |
+| **5 (highest)** | **zSpark** | Runtime overrides | Your code | `zKernel({"deployment": "Production"})` |
 | **4** | **.zEnv** | Workspace secrets | Project folder | `MIN_CPU_CORES=4` |
 | **3** | **zEnvironment** | Global settings | Config file | `deployment: Development` |
 | **2** | **zMachine** | Hardware specs | Config file | `cpu_cores: 8` (auto-detected) |
@@ -108,7 +108,7 @@ This demo shows all 5 layers working together:
 ```python
 # Layer 5: zSpark (highest priority)
 zSpark = {"deployment": "Production"}  # Overrides everything
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # Layer 4: .zEnv (workspace)
 min_cores = z.config.environment.get_env_var("MIN_CPU_CORES")

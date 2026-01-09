@@ -81,7 +81,7 @@ MIGRATION_TABLE_SCHEMA = {
 
 class ZMigrate:
     """
-    Schema migration manager for zCLI.
+    Schema migration manager for zKernel.
     
     Minimal v1.0: Detects and adds missing columns only.
     """
@@ -91,7 +91,7 @@ class ZMigrate:
         Initialize migration manager.
         
         Args:
-            walker: Optional zCLI instance for context
+            walker: Optional zKernel instance for context
             logger: Logger instance to use
         """
         self.walker = walker
@@ -100,7 +100,7 @@ class ZMigrate:
     def _ensure_migrations_table(self, zData):
         """Create zMigrations table using zCLI's zTables function."""
         if zData["type"] == "sqlite":
-            from zCLI.L3_Abstraction.n_zData.zData_modules.infrastructure import zTables
+            from zKernel.L3_Abstraction.n_zData.zData_modules.infrastructure import zTables
             
             # Check if table exists first
             cur = zData["cursor"]
@@ -108,7 +108,7 @@ class ZMigrate:
             if not cur.fetchone():
                 # Create using zCLI's table creation system
                 zTables("zMigrations", MIGRATION_TABLE_SCHEMA, zData["cursor"], zData["conn"])
-                self.logger.info("[OK] Created zMigrations table using zCLI schema")
+                self.logger.info("[OK] Created zMigrations table using zKernel schema")
     
     def _update_rgb_on_access(self, table, row_id, zData):
         """Update RGB values when row is accessed."""
@@ -151,7 +151,7 @@ class ZMigrate:
         """Apply time-based decay to R and G components."""
         cur = zData["cursor"]
         
-        # Get all user tables (exclude zCLI internal tables)
+        # Get all user tables (exclude zKernel internal tables)
         cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'z%'")
         user_tables = [row[0] for row in cur.fetchall()]
         
@@ -182,7 +182,7 @@ class ZMigrate:
         """Generate RGB health report using migration history."""
         cur = zData["cursor"]
         
-        # Get all user tables (exclude zCLI internal tables)
+        # Get all user tables (exclude zKernel internal tables)
         cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'z%'")
         user_tables = [row[0] for row in cur.fetchall()]
         
@@ -622,7 +622,7 @@ class ZMigrate:
                     col_name = col_info["name"]
                     col_def = col_info["definition"]
                     
-                    # Build SQL type from zCLI YAML definition
+                    # Build SQL type from zKernel YAML definition
                     sql_type = self._get_sql_type(col_def)
                     
                     # Build ALTER TABLE statement
@@ -654,7 +654,7 @@ class ZMigrate:
                 self.logger.info("[Migration] Creating new indexes...")
                 for table_name, new_indexes in changes["new_indexes"].items():
                     # Import here to avoid circular dependency
-                    from zCLI.L3_Abstraction.n_zData.zData_modules.infrastructure import _create_indexes
+                    from zKernel.L3_Abstraction.n_zData.zData_modules.infrastructure import _create_indexes
                     _create_indexes(table_name, new_indexes, cur, conn)
                 self.logger.info("[Migration] All index migrations applied successfully")
             
@@ -680,7 +680,7 @@ class ZMigrate:
     
     def _get_sql_type(self, field_def):
         """
-        Convert zCLI YAML field definition to SQL type with constraints.
+        Convert zKernel YAML field definition to SQL type with constraints.
         
         Args:
             field_def: Field definition from YAML
@@ -688,7 +688,7 @@ class ZMigrate:
         Returns:
             str: SQL type definition (e.g., "TEXT NOT NULL")
         """
-        # Map zCLI types to SQL types
+        # Map zKernel types to SQL types
         raw_type = str(field_def.get("type", "str")).strip().lower()
         
         if raw_type.startswith("str") or raw_type == "enum":
@@ -726,7 +726,7 @@ def auto_migrate_schema(zForm, zData, walker=None):
     Args:
         zForm: Parsed YAML schema
         zData: Database connection object
-        walker: Optional zCLI instance
+        walker: Optional zKernel instance
     
     Returns:
         bool: True if migrations applied or no changes, False on error
@@ -750,7 +750,7 @@ def detect_schema_changes(zForm, zData, walker=None):
     Args:
         zForm: Parsed YAML schema
         zData: Database connection object
-        walker: Optional zCLI instance
+        walker: Optional zKernel instance
     
     Returns:
         dict: Detected changes

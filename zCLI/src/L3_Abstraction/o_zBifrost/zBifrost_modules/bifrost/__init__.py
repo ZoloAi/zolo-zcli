@@ -13,7 +13,7 @@ Architecture:
     - client/: JavaScript client (bifrost_client.js + modules)
     - docs/: Shared documentation
     
-    Access broadcasting and server start through zCLI.comm.bifrost instance
+    Access broadcasting and server start through zKernel.comm.bifrost instance
     or create a zBifrost instance directly for full control.
 """
 

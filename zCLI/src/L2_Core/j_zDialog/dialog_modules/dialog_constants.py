@@ -26,7 +26,7 @@ Layer Position:
     Layer 2, Position 10 (zDialog - Constants Module)
 """
 
-from zCLI import Any
+from zKernel import Any
 
 # ============================================================================
 # COLORS
@@ -184,8 +184,8 @@ _LOG_WEBSOCKET_BROADCAST_FAILED: str = "Failed to broadcast validation errors vi
 # ERROR MESSAGES - INITIALIZATION
 # ============================================================================
 
-_ERROR_NO_ZCLI: str = "zDialog requires a zCLI instance"
-_ERROR_INVALID_ZCLI: str = "Invalid zCLI instance: missing 'session' attribute"
+_ERROR_NO_ZCLI: str = "zDialog requires a zKernel instance"
+_ERROR_INVALID_ZCLI: str = "Invalid zKernel instance: missing 'session' attribute"
 
 
 # ============================================================================

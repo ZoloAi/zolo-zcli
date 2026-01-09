@@ -2,15 +2,15 @@
 Password Security Module - bcrypt hashing and verification (v1.5.4+)
 
 This module provides cryptographically secure password hashing and verification
-using the bcrypt algorithm. It is intentionally isolated from zCLI dependencies
+using the bcrypt algorithm. It is intentionally isolated from zKernel dependencies
 to ensure maximum testability, reusability, and security auditing.
 
 ARCHITECTURE - Pure Security Module
 
 Isolation Strategy:
-    - No zCLI dependencies (only bcrypt and standard library)
+    - No zKernel dependencies (only bcrypt and standard library)
     - Pure functions with explicit dependencies (logger is optional)
-    - Testable in complete isolation from the zCLI framework
+    - Testable in complete isolation from the zKernel framework
     - Reusable in other Python projects without modification
 
 Design Pattern:
@@ -99,7 +99,7 @@ Concurrency Considerations:
 USAGE EXAMPLES
 
 Basic Usage:
-    >>> from zCLI.L2_Core.d_zAuth.zAuth_modules.auth_password_security import PasswordSecurity
+    >>> from zKernel.L2_Core.d_zAuth.zAuth_modules.auth_password_security import PasswordSecurity
     >>> pwd_security = PasswordSecurity()
     >>> 
     >>> # Hash a password
@@ -123,7 +123,7 @@ With Logger (Production):
 
 Integration with zAuth:
     >>> # Used by auth_authentication.py for user login
-    >>> from zCLI.L2_Core.d_zAuth.zAuth_modules import PasswordSecurity
+    >>> from zKernel.L2_Core.d_zAuth.zAuth_modules import PasswordSecurity
     >>> pwd_security = PasswordSecurity(logger=zcli.logger)
     >>> 
     >>> # Store hashed password in database
@@ -147,7 +147,7 @@ Performance Testing:
 
 import bcrypt
 
-from zCLI import Optional, Any
+from zKernel import Optional, Any
 
 # Import centralized constants
 from .auth_constants import (
@@ -181,7 +181,7 @@ class PasswordSecurity:
     
     Architecture:
         - Stateless operations (no instance state beyond logger)
-        - Pure security module (no zCLI dependencies)
+        - Pure security module (no zKernel dependencies)
         - Dependency injection pattern (optional logger)
         - Industry-standard bcrypt implementation
     

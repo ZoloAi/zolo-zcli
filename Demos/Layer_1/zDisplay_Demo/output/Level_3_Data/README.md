@@ -18,7 +18,7 @@ python table.py
 ## Micro-Steps
 
 > <span style="color:#8FBE6D">**Step 3A: Lists, Outlines, and JSON**</span>
-- Create `z = zCLI({"logger": "PROD"})`
+- Create `z = zKernel({"logger": "PROD"})`
 - Call `z.display.list(items, style="bullet")` - bullet list (-)
 - Call `z.display.list(items, style="number")` - numbered list (1, 2, 3)
 - Call `z.display.list(items, style="letter")` - letter list (a, b, c)

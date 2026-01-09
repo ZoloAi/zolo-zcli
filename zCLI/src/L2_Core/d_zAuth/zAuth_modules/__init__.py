@@ -176,7 +176,7 @@ INTEGRATION WITH ZCLI SUBSYSTEMS
 
 USAGE EXAMPLE
 
-    from zCLI.L2_Core.d_zAuth.zAuth_modules import (
+    from zKernel.L2_Core.d_zAuth.zAuth_modules import (
         PasswordSecurity,
         SessionPersistence,
         Authentication,
@@ -216,18 +216,18 @@ USAGE EXAMPLE
 
 THREAD SAFETY
 
-All modules operate on the zCLI session object, which is NOT thread-safe by design.
-Each zCLI instance maintains a single session dictionary.
+All modules operate on the zKernel session object, which is NOT thread-safe by design.
+Each zKernel instance maintains a single session dictionary.
 
 For multi-threaded applications:
-- Each thread should use its own zCLI instance
+- Each thread should use its own zKernel instance
 - Multi-app authentication within a SINGLE session is fully supported and isolated
 """
 
 # Package Metadata
 __version__ = "1.5.4"
 __author__ = "Zolo"
-__description__ = "Modular three-tier authentication system for zCLI framework"
+__description__ = "Modular three-tier authentication system for zKernel framework"
 
 # Module Imports (Dependency Order)
 

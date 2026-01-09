@@ -1,8 +1,8 @@
-# Zolo Integration Guide for zCLI
+# Zolo Integration Guide for zKernel
 
 ## Overview
 
-The `zolo` library is now a **standalone package** that can be used independently of zCLI. This document explains how zCLI integrates with the standalone `zolo` library.
+The `zolo` library is now a **standalone package** that can be used independently of zKernel. This document explains how zKernel integrates with the standalone `zolo` library.
 
 ## Architecture
 
@@ -14,7 +14,7 @@ The `zolo` library is now a **standalone package** that can be used independentl
   ├── constants.py             # Constants
   └── exceptions.py            # Exceptions
 
-/zCLI/                          # zCLI framework
+/zKernel/                          # zKernel framework
   └── L2_Core/g_zParser/
       └── parser_modules/
           └── parser_file.py   # Imports: import zolo (or from zolo import ...)
@@ -24,10 +24,10 @@ The `zolo` library is now a **standalone package** that can be used independentl
 
 ### Option 1: Use Standalone Zolo (Recommended)
 
-**zCLI imports from standalone `zolo` library:**
+**zKernel imports from standalone `zolo` library:**
 
 ```python
-# zCLI/L2_Core/g_zParser/parser_modules/parser_file.py
+# zKernel/L2_Core/g_zParser/parser_modules/parser_file.py
 
 import zolo
 from zolo.exceptions import ZoloParseError
@@ -58,17 +58,17 @@ def parse_yaml(raw_content, logger, file_extension=None):
 
 ### Option 2: Vendored Copy (If Needed)
 
-If zCLI needs a specific version or modifications:
+If zKernel needs a specific version or modifications:
 
 ```
-/zCLI/
+/zKernel/
   └── vendor/
       └── zolo/          # Vendored copy of zolo
 ```
 
-## For zCLI Developers
+## For zKernel Developers
 
-### Using Zolo in zCLI
+### Using Zolo in zKernel
 
 ```python
 # Simple usage
@@ -124,7 +124,7 @@ pip install -e /path/to/zolo-zcli/zolo
 pip install zolo
 ```
 
-### For zCLI
+### For zKernel
 
 Add to `pyproject.toml` or `requirements.txt`:
 
@@ -144,14 +144,14 @@ dependencies = [
 - Create clean API in `zolo/parser.py`
 - Add tests and examples
 
-### Phase 2: Update zCLI (Current)
-- Update `zCLI/L2_Core/g_zParser/parser_modules/parser_file.py`
+### Phase 2: Update zKernel (Current)
+- Update `zKernel/L2_Core/g_zParser/parser_modules/parser_file.py`
 - Replace internal logic with `import zolo`
-- Test zCLI still works with standalone zolo
+- Test zKernel still works with standalone zolo
 
 ### Phase 3: Publish (Future)
 - Publish `zolo` to PyPI
-- Update zCLI dependencies to use `pip install zolo`
+- Update zKernel dependencies to use `pip install zolo`
 - Update documentation
 
 ### Phase 4: IDE Support (Future)
@@ -168,7 +168,7 @@ cd /path/to/zolo-zcli/zolo
 python -m pytest tests/ -v
 ```
 
-### Test Integration with zCLI
+### Test Integration with zKernel
 
 ```bash
 cd /path/to/zolo-zcli
@@ -197,12 +197,12 @@ python -m twine upload dist/*
 3. **IDE Integration**: VSCode/PyCharm can validate .zolo files
 4. **OS-Level Recognition**: .zolo becomes a recognized format
 5. **Cross-Language**: Easier to port to JS, Go, Rust, etc.
-6. **Cleaner zCLI**: zCLI focuses on framework, zolo on parsing
+6. **Cleaner zKernel**: zKernel focuses on framework, zolo on parsing
 
 ## Next Steps
 
 1. ✅ Create standalone `/zolo/` package
-2. ⏳ Update zCLI to use `import zolo`
+2. ⏳ Update zKernel to use `import zolo`
 3. ⏳ Test integration
 4. ⏳ Publish to PyPI (optional)
 5. ⏳ Update VSCode extension to use zolo spec

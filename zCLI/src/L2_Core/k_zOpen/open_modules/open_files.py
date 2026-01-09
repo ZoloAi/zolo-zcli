@@ -44,7 +44,7 @@ Dependencies:
     - zConfig constants: SESSION_KEY_ZMACHINE for session dict keys
 
 Usage Example:
-    from zCLI.L2_Core.k_zOpen.open_modules.open_files import open_file
+    from zKernel.L2_Core.k_zOpen.open_modules.open_files import open_file
 
     session = {"zMachine": {"ide": "cursor"}}
     display = zcli.display
@@ -60,19 +60,19 @@ Version History:
     - v1.5.4: Enhanced extension routing and defensive zDialog integration
     - v1.5.4: Documented future extension points for additional file types
 
-Author: zCLI Development Team
+Author: zKernel Development Team
 """
 
-from zCLI import os, webbrowser, subprocess, Any
+from zKernel import os, webbrowser, subprocess, Any
 
 # Import centralized session constants
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZMACHINE,
     SESSION_KEY_IDE,
 )
 
 # Import platform-specific IDE launch command helper from zConfig
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_ide_launch_command
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_ide_launch_command
 from .open_constants import (
     COLOR_ERROR,
     COLOR_INFO,
@@ -189,7 +189,7 @@ def open_file(
 
     Args:
         path: Absolute filesystem path to the file
-        session: zCLI session dictionary containing machine configuration
+        session: zKernel session dictionary containing machine configuration
         display: zDisplay instance for output and status messages
         dialog: zDialog instance for interactive prompts (optional, can be None)
         logger: Logger instance for debug/error output
@@ -444,7 +444,7 @@ def _open_text(
 
     Args:
         path: Absolute path to text file
-        session: zCLI session dictionary containing IDE preference
+        session: zKernel session dictionary containing IDE preference
         display: zDisplay instance for output and status messages
         dialog: zDialog instance for IDE selection prompt (can be None)
         logger: Logger instance for debug/error output

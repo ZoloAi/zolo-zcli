@@ -38,7 +38,7 @@ This module exposes 3 functions from Tier 1:
 
 **Argument Parsing** (from func_args.py):
 - `parse_arguments()`: Parse function arguments with context injection support
-  - Handles 5 special zCLI argument types: zContext, zHat, zConv, zConv.field, this.key
+  - Handles 5 special zKernel argument types: zContext, zHat, zConv, zConv.field, this.key
   - Delegates to zParser for safe JSON evaluation
   
 - `split_arguments()`: Split argument string while respecting nested brackets
@@ -52,7 +52,7 @@ This module exposes 3 functions from Tier 1:
 Usage Patterns
 --------------
 **Standard Import Pattern**:
-    >>> from zCLI.L2_Core.i_zFunc.zFunc_modules import parse_arguments, resolve_callable
+    >>> from zKernel.L2_Core.i_zFunc.zFunc_modules import parse_arguments, resolve_callable
     >>> # Use functions directly
 
 **Aggregator vs. Direct Imports**:
@@ -64,7 +64,7 @@ Usage Patterns
     >>> # Clean imports within subsystem
 
 **External Usage** (from other subsystems):
-    >>> from zCLI.L2_Core.i_zFunc.zFunc_modules.func_args import parse_arguments
+    >>> from zKernel.L2_Core.i_zFunc.zFunc_modules.func_args import parse_arguments
     >>> # Direct import for external usage (less common)
 
 Integration Points
@@ -81,7 +81,7 @@ Integration Points
 Usage Examples
 --------------
 Example 1: Standard import and usage
-    >>> from zCLI.L2_Core.i_zFunc.zFunc_modules import parse_arguments, split_arguments
+    >>> from zKernel.L2_Core.i_zFunc.zFunc_modules import parse_arguments, split_arguments
     >>> import logging
     >>> 
     >>> logger = logging.getLogger(__name__)
@@ -91,7 +91,7 @@ Example 1: Standard import and usage
     >>> # Returns: [{"user_id": 123, "zHat": {...}}, {"step1": "data"}]
 
 Example 2: Using resolve_callable standalone
-    >>> from zCLI.L2_Core.i_zFunc.zFunc_modules import resolve_callable
+    >>> from zKernel.L2_Core.i_zFunc.zFunc_modules import resolve_callable
     >>> import logging
     >>> 
     >>> logger = logging.getLogger(__name__)
@@ -99,7 +99,7 @@ Example 2: Using resolve_callable standalone
     >>> result = func(arg1, arg2)
 
 Example 3: Complete workflow (parse + resolve)
-    >>> from zCLI.L2_Core.i_zFunc.zFunc_modules import (
+    >>> from zKernel.L2_Core.i_zFunc.zFunc_modules import (
     ...     parse_arguments, split_arguments, resolve_callable
     ... )
     >>> 

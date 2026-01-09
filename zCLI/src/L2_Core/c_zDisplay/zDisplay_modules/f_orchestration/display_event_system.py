@@ -1,6 +1,6 @@
 # zCLI/subsystems/zDisplay/zDisplay_modules/events/display_event_system.py
 """
-zSystem - zCLI System Introspection & Navigation UI Events (v1.5.4+)
+zSystem - zKernel System Introspection & Navigation UI Events (v1.5.4+)
 
 This module provides system-level user interface events for the zDisplay subsystem,
 enabling comprehensive introspection and display of zCLI's internal state across both
@@ -14,7 +14,7 @@ directly interacting with zCLI's core state management structures. Unlike other 
 packages that handle user data, zSystem displays zCLI's own internal state.
 
 Integration Flow:
-    zCLI core → zSystem → zDisplay → zPrimitives → Terminal/Bifrost
+    zKernel core → zSystem → zDisplay → zPrimitives → Terminal/Bifrost
 
 Example:
     # Display complete session state
@@ -32,7 +32,7 @@ Example:
 
 ZSESSION INTEGRATION (19 Core Session Keys)
 
-zSession is the central state dictionary that persists throughout a zCLI session.
+zSession is the central state dictionary that persists throughout a zKernel session.
 zSystem uses **standardized SESSION_KEY_* constants** from zConfig to ensure safe,
 refactor-proof access to session data.
 
@@ -73,7 +73,7 @@ zAuth v1.5.4+ supports a **three-tier authentication architecture** that zSystem
 correctly display. zSystem uses **standardized ZAUTH_KEY_* constants** from zConfig.
 
 Layer 1 - zSession Auth (Internal zCLI/Zolo Users):
-    Purpose:     Premium zCLI features, plugins, Zolo cloud services
+    Purpose:     Premium zKernel features, plugins, Zolo cloud services
     Triggered:   zcli.auth.login()
     Session Key: session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION]
     Contains:    authenticated, id, username, role, api_key
@@ -121,7 +121,7 @@ Display Integration:
 
 ZMACHINE INTEGRATION (Machine Configuration)
 
-zMachine contains the machine and environment configuration where zCLI is running.
+zMachine contains the machine and environment configuration where zKernel is running.
 zSystem displays this structured information in organized sections.
 
 zMachine Fields (10+ keys):
@@ -142,8 +142,8 @@ zMachine Fields (10+ keys):
         _ZMACHINE_KEY_CPU_CORES        - "cpu_cores" - Number of CPU cores
         _ZMACHINE_KEY_MEMORY_GB        - "memory_gb" - RAM in GB
     
-    zCLI Version:
-        _ZMACHINE_KEY_ZCLI_VERSION     - "zcli_version" - zCLI version number
+    zKernel Version:
+        _ZMACHINE_KEY_ZCLI_VERSION     - "zcli_version" - zKernel version number
 
 
 SYSTEM METHODS PROVIDED
@@ -302,7 +302,7 @@ USAGE EXAMPLES
 THREAD SAFETY
 
 Instance is thread-safe (read-only access to parent display and session).
-All state is stored in zCLI session dict, not in zSystem.
+All state is stored in zKernel session dict, not in zSystem.
 
 
 MODULE CONSTANTS
@@ -316,7 +316,7 @@ from pathlib import Path
 
 # Import SESSION_KEY_* constants from zConfig (17 constants)
 # Note: Some constants imported for documentation (module docstring) but not yet used in code
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZS_ID,              # "zS_id"
     SESSION_KEY_ZMODE,              # "zMode"
     SESSION_KEY_ZMACHINE,           # "zMachine"
@@ -344,7 +344,7 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
 
 # Import ZAUTH_KEY_* constants from zConfig (13 constants)
 # Note: Some constants imported for documentation (module docstring) but not yet used in code
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import (
     ZAUTH_KEY_ZSESSION,             # "zSession"
     ZAUTH_KEY_APPLICATIONS,         # "applications"
     ZAUTH_KEY_ACTIVE_APP,           # "active_app"
@@ -516,14 +516,14 @@ SESSION_WORKSPACE_FIELDS = [
 
 class zSystem:
     """
-    zCLI System Introspection & Navigation UI Events (Dual-Mode Terminal + Bifrost).
+    zKernel System Introspection & Navigation UI Events (Dual-Mode Terminal + Bifrost).
     
-    Provides user interface presentation for zCLI's core system structures across
+    Provides user interface presentation for zKernel's core system structures across
     both Terminal and Bifrost (GUI) modes. This is the ONLY event package that
     operates at the system level, directly displaying zCLI's internal state.
     
     System Integration:
-        zCLI core → zSystem → zDisplay → Terminal/Bifrost
+        zKernel core → zSystem → zDisplay → Terminal/Bifrost
     
     Session Integration (17 SESSION_KEY_* constants):
         Uses standardized constants from zConfig for safe, refactor-proof access
@@ -531,7 +531,7 @@ class zSystem:
     
     zAuth Integration (13 ZAUTH_KEY_* constants + three-tier model):
         Displays authentication state with full awareness of:
-        - Layer 1: zSession auth (internal zCLI users)
+        - Layer 1: zSession auth (internal zKernel users)
         - Layer 2: Application auth (external app users, multi-app)
         - Layer 3: Dual-auth (simultaneous contexts)
     
@@ -540,7 +540,7 @@ class zSystem:
         - Identity & Deployment (os, hostname, deployment, role)
         - Tool Preferences (browser, ide, shell)
         - System Capabilities (cpu_cores, memory_gb)
-        - zCLI Version
+        - zKernel Version
     
     Composition:
         Depends on: BasicOutputs (text/header), Signals (status messages), BasicInputs (selection)
@@ -829,7 +829,7 @@ class zSystem:
         break_message: Optional[str] = None
     ) -> None:
         """
-        Display complete zCLI session state (Terminal or Bifrost mode).
+        Display complete zKernel session state (Terminal or Bifrost mode).
         
         Displays all core session fields using SESSION_KEY_* constants for
         safe, refactor-proof access:
@@ -841,7 +841,7 @@ class zSystem:
         - zVars & zShortcuts (unified aliasing system)
         
         Args:
-            session_data: zCLI session dictionary (zcli.session)
+            session_data: zKernel session dictionary (zcli.session)
             break_after: Add "Press Enter" prompt at end (default: True)
             break_message: Custom break message (default: "Press Enter to continue...")
         
@@ -1073,7 +1073,7 @@ class zSystem:
         Uses SESSION_KEY_ZCRUMBS for safe session access.
         
         Args:
-            session_data: zCLI session dictionary containing zCrumbs
+            session_data: zKernel session dictionary containing zCrumbs
         
         Returns:
             None
@@ -1249,7 +1249,7 @@ class zSystem:
             folder: Base folder for panel discovery (e.g., "@.UI.zAccount")
             sidebar: List of panel names (e.g., ["Overview", "Apps", "Billing"])
             default: Default panel to navigate to (defaults to first in sidebar)
-            _zcli: zCLI instance for zLoader access
+            _zcli: zKernel instance for zLoader access
         
         Returns:
             Optional[str]: Last panel viewed (Terminal), None (Bifrost)
@@ -1284,20 +1284,20 @@ class zSystem:
                 self.display.logger.warning("[zDash] No sidebar items provided")
             return None
         
-        # Get zCLI instance (from display parent)
+        # Get zKernel instance (from display parent)
         if not _zcli:
             _zcli = getattr(self.display, 'zcli', None)
         
         if not _zcli:
             if hasattr(self.display, 'logger'):
-                self.display.logger.error("[zDash] Cannot navigate without zCLI instance")
+                self.display.logger.error("[zDash] Cannot navigate without zKernel instance")
             return None
         
         logger = self.display.logger if hasattr(self.display, 'logger') else None
         
         # RBAC-FILTERED SIDEBAR: Filter panels based on user's role
         # Load each panel and check RBAC access before including in sidebar
-        from zCLI.L3_Abstraction.m_zWizard.zWizard_modules.wizardzRBAC import checkzRBAC_access, RBAC_ACCESS_GRANTED
+        from zKernel.L3_Abstraction.m_zWizard.zWizard_modules.wizardzRBAC import checkzRBAC_access, RBAC_ACCESS_GRANTED
         
         accessible_panels = []
         panel_metadata = {}
@@ -1385,7 +1385,7 @@ class zSystem:
                 # BUG FIX: Update session context for delta links to work correctly
                 # When inside a panel file, delta links ($zBlock_2) should resolve relative to the panel file
                 # Save old context to restore later
-                from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZVAFILE, SESSION_KEY_ZVAFOLDER
+                from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZVAFILE, SESSION_KEY_ZVAFOLDER
                 old_vafile = _zcli.session.get(SESSION_KEY_ZVAFILE, "")
                 old_vafolder = _zcli.session.get(SESSION_KEY_ZVAFOLDER, "")
                 
@@ -1429,7 +1429,7 @@ class zSystem:
                     panel_key = breadcrumbs._create_panel_key(current_panel, _zcli.session)
                     
                     # Update session to point to panel context (for panel content tracking)
-                    from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZBLOCK
+                    from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZBLOCK
                     old_block = _zcli.session.get(SESSION_KEY_ZBLOCK, "")
                     _zcli.session[SESSION_KEY_ZBLOCK] = f"{old_block}.{current_panel}"
                     
@@ -1513,7 +1513,7 @@ class zSystem:
             finally:
                 # Restore session context to dashboard level after panel execution
                 # This ensures next panel gets correct context
-                from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZBLOCK, SESSION_KEY_ZVAFILE, SESSION_KEY_ZVAFOLDER
+                from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZBLOCK, SESSION_KEY_ZVAFILE, SESSION_KEY_ZVAFOLDER
                 
                 # Restore zBlock
                 if hasattr(_zcli, 'navigation') and hasattr(_zcli.navigation, 'breadcrumbs'):
@@ -1611,7 +1611,7 @@ class zSystem:
             context: Form context dict containing:
                     - _KEY_FIELDS: List of field names to collect
                     - Additional schema/validation data (future)
-            _zcli: zCLI instance for logging integration
+            _zcli: zKernel instance for logging integration
             _walker: zWalker instance for navigation (reserved for future use)
         
         Returns:
@@ -1754,7 +1754,7 @@ class zSystem:
             logger.debug(f"[zDialog] Loading schema from: {model}")
         
         # Load schema for validation
-        from zCLI.L3_Abstraction.n_zData.zData_modules.shared.validator import DataValidator
+        from zKernel.L3_Abstraction.n_zData.zData_modules.shared.validator import DataValidator
         schema_dict = _zcli.loader.handle(model) if hasattr(_zcli, 'loader') else None
         
         if logger:
@@ -2026,7 +2026,7 @@ class zSystem:
         1. Identity & Deployment (os, hostname, architecture, python_version, deployment, role)
         2. Tool Preferences (browser, ide, shell)
         3. System Capabilities (cpu_cores, memory_gb)
-        4. zCLI Version
+        4. zKernel Version
         
         Args:
             zMachine: zMachine dictionary from session[SESSION_KEY_ZMACHINE]
@@ -2108,7 +2108,7 @@ class zSystem:
         Display complete zAuth section with three-tier model awareness (Terminal).
         
         Displays authentication state with full awareness of zAuth's three-tier model:
-        - Layer 1: zSession auth (internal zCLI users)
+        - Layer 1: zSession auth (internal zKernel users)
         - Layer 2: Application auth (external app users, multi-app)
         - Layer 3: Dual-auth (simultaneous contexts)
         

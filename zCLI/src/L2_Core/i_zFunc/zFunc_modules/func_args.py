@@ -21,7 +21,7 @@ Key Functionality
 1. **Argument String Splitting**: Parse comma-separated arguments while respecting
    nested brackets (parentheses, square brackets, curly braces)
    
-2. **Context Injection**: Support 5 special argument types for zCLI integration:
+2. **Context Injection**: Support 5 special argument types for zKernel integration:
    - `zContext`: Full context dictionary injection
    - `zHat`: Wizard step context (from zWizard)
    - `zConv`: Dialog conversation data (from zDialog)
@@ -109,7 +109,7 @@ Version History
 - v1.5.x: Initial implementation (basic argument parsing with context injection)
 """
 
-from zCLI import Any, Callable, List, Optional
+from zKernel import Any, Callable, List, Optional
 
 
 # ============================================================================
@@ -163,7 +163,7 @@ def parse_arguments(
     Parse function arguments from string with context injection support.
     
     This function processes a comma-separated argument string and returns a list
-    of parsed values. It supports 5 special zCLI argument types for context
+    of parsed values. It supports 5 special zKernel argument types for context
     injection, plus safe evaluation via zParser for regular arguments.
     
     Special Argument Types:

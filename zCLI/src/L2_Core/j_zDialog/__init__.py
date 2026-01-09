@@ -13,7 +13,7 @@ Architecture Position
 **Tier 5: Package Root** - Top-level package interface
 
 This module is the highest tier in the zDialog subsystem's 5-tier architecture,
-serving as the entry point for zCLI.py and other subsystems that need dialog
+serving as the entry point for zKernel.py and other subsystems that need dialog
 functionality.
 
 5-Tier Architecture
@@ -41,9 +41,9 @@ Public API Exports
 Usage Patterns
 --------------
 **Modern Approach** (Preferred):
-    >>> from zCLI.L2_Core.j_zDialog import zDialog
+    >>> from zKernel.L2_Core.j_zDialog import zDialog
     >>> 
-    >>> # Initialize once (typically in zCLI.py)
+    >>> # Initialize once (typically in zKernel.py)
     >>> dialog = zDialog(zcli_instance, walker=walker_instance)
     >>> 
     >>> # Reuse for multiple operations
@@ -51,19 +51,19 @@ Usage Patterns
     >>> result2 = dialog.handle(form_spec2)
 
 **Legacy Approach** (Backward Compatible):
-    >>> from zCLI.L2_Core.j_zDialog import handle_zDialog
+    >>> from zKernel.L2_Core.j_zDialog import handle_zDialog
     >>> 
     >>> # Single-call function interface
     >>> result = handle_zDialog(form_spec, zcli=zcli_instance)
 
-Integration with zCLI.py
+Integration with zKernel.py
 -------------------------
-The zDialog subsystem is initialized in zCLI.py during subsystem setup:
+The zDialog subsystem is initialized in zKernel.py during subsystem setup:
 
-    # zCLI.py (approximate line 200)
+    # zKernel.py (approximate line 200)
     self.zdialog = zDialog(self, walker=self.walker)
 
-This makes zDialog available throughout the zCLI framework:
+This makes zDialog available throughout the zKernel framework:
 - Direct access: zcli.zdialog.handle(form_spec)
 - Via zDispatch: {"zDialog": {"model": ..., "fields": ...}}
 
@@ -73,7 +73,7 @@ Version History
   * Enhanced: Comprehensive documentation (50+ lines)
   * Added: Architecture tier documentation
   * Added: 2 usage examples
-  * Added: Integration with zCLI.py documentation
+  * Added: Integration with zKernel.py documentation
   * Added: Inline comments for __all__ items
 - v1.5.0: WebSocket support for Bifrost mode
 - v1.4.0: Initial implementation

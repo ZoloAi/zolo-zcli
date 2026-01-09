@@ -3,7 +3,7 @@
 """
 zWalker Package - Orchestration & Navigation Engine for YAML-driven UI/Menu systems.
 
-This package provides the top-level orchestration layer for zCLI's interactive UI mode,
+This package provides the top-level orchestration layer for zKernel's interactive UI mode,
 coordinating navigation, menu rendering, breadcrumb tracking, and dual-mode execution
 (Terminal and zBifrost WebSocket).
 
@@ -83,7 +83,7 @@ USAGE
 
 **Terminal Mode:**
     ```python
-    from zCLI.L4_Orchestration.q_zWalker import zWalker
+    from zKernel.L4_Orchestration.q_zWalker import zWalker
     
     # Initialize walker
     walker = zWalker(zcli)
@@ -95,7 +95,7 @@ USAGE
 
 **zBifrost Mode (WebSocket):**
     ```python
-    from zCLI.L4_Orchestration.q_zWalker import zWalker
+    from zKernel.L4_Orchestration.q_zWalker import zWalker
     
     # Set mode before walker initialization
     zcli.session["zMode"] = "zBifrost"

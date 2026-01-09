@@ -20,7 +20,7 @@ Pattern:
 Grade: A+ (Type hints, constants, comprehensive docs)
 """
 
-from zCLI import Any, List, Dict, Optional
+from zKernel import Any, List, Dict, Optional
 from ..display_constants import (
     _KEY_EVENT,
     _EVENT_LIST,

@@ -3,7 +3,7 @@
 """
 Utility functions for parsing operations within zParser subsystem.
 
-This module provides essential parsing utilities used throughout the zCLI system:
+This module provides essential parsing utilities used throughout the zKernel system:
 
 1. **zExpr_eval**: JSON expression evaluator for converting string expressions
    to Python objects (dicts, lists, strings). Critical function used externally
@@ -80,8 +80,8 @@ Internal:
     - None (Tier 0 - Foundation)
 
 External:
-    - zCLI core imports (os, json, yaml)
-    - zCLI typing imports (Any, Dict, List, Optional, Union)
+    - zKernel core imports (os, json, yaml)
+    - zKernel typing imports (Any, Dict, List, Optional, Union)
 
 See Also
 --------
@@ -90,7 +90,7 @@ See Also
 - parser_file.py: File parsing utilities
 """
 
-from zCLI import os, json, yaml, Any, Dict, List, Optional, Union
+from zKernel import os, json, yaml, Any, Dict, List, Optional, Union
 
 # ============================================================================
 # MODULE CONSTANTS
@@ -484,7 +484,7 @@ def handle_zParser(zFile_raw: str, display: Optional[Any] = None) -> bool:  # py
         >>> handle_zParser("zUI.example.yaml")
         True
         
-        >>> from zCLI import get_display
+        >>> from zKernel import get_display
         >>> display = get_display()
         >>> handle_zParser("config.yaml", display=display)
         True

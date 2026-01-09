@@ -10,7 +10,7 @@ routing requests to specialized modules and executing optional hooks.
 Architecture Position:
     - Tier 2 (Facade) of zOpen's 3-tier architecture
     - Delegates to Tier 1 foundation modules (open_paths, open_urls, open_files)
-    - Exposed to zCLI via Tier 3 (package root)
+    - Exposed to zKernel via Tier 3 (package root)
 
 3-Tier Architecture:
     Tier 1: Foundation Modules (open_modules/)
@@ -73,7 +73,7 @@ Hook Execution (onSuccess/onFail):
     - Hook results replace original result
 
 Integration Points:
-    - zCLI.py: Initializes zOpen (line ~210)
+    - zKernel.py: Initializes zOpen (line ~210)
     - zDispatch: Routes "zOpen(...)" commands via dispatch_launcher
     - zConfig: Session access for workspace, IDE, browser preferences
     - zDisplay: Output, breadcrumbs, status messages
@@ -113,11 +113,11 @@ Version History:
     - v1.5.4: Modernized session key access (SESSION_KEY_* constants)
     - v1.5.4: Verified zDispatch integration - handle() signature compatible
 
-Author: zCLI Development Team
+Author: zKernel Development Team
 """
 
-from zCLI import os, urlparse, Any, subprocess
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZMACHINE
+from zKernel import os, urlparse, Any, subprocess
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZMACHINE
 
 # Import from foundation modules (Tier 1)
 from .open_modules import resolve_zpath, open_url, open_file
@@ -190,8 +190,8 @@ class zOpen:
     and optional hook execution.
 
     Attributes:
-        zcli: Reference to main zCLI instance
-        session: zCLI session dictionary (from zcli.session)
+        zcli: Reference to main zKernel instance
+        session: zKernel session dictionary (from zcli.session)
         logger: Logger instance (from zcli.logger)
         display: zDisplay instance (from zcli.display)
         zfunc: zFunc instance (from zcli.zfunc) for hook execution
@@ -215,7 +215,7 @@ class zOpen:
         - Hook execution (onSuccess/onFail)
 
     Integration with zCLI:
-        Initialized in zCLI.__init__() (line ~210):
+        Initialized in zKernel.__init__() (line ~210):
             self.open = zOpen(self)
 
         Called from zDispatch (dispatch_launcher.py):
@@ -226,10 +226,10 @@ class zOpen:
 
     def __init__(self, zcli: Any) -> None:
         """
-        Initialize zOpen with zCLI instance.
+        Initialize zOpen with zKernel instance.
 
         Args:
-            zcli: Main zCLI instance
+            zcli: Main zKernel instance
 
         Raises:
             ValueError: If zcli is None or missing required attributes
@@ -239,7 +239,7 @@ class zOpen:
             2. Store references to required subsystems
             3. Display initialization message via zDisplay
 
-        Required zCLI Attributes:
+        Required zKernel Attributes:
             - session: Session dictionary
             - logger: Logging instance
             - display: zDisplay instance
@@ -247,19 +247,19 @@ class zOpen:
             - dialog: zDialog instance (for prompts)
 
         Example:
-            >>> zcli = zCLI()
+            >>> zcli = zKernel()
             >>> zopen = zOpen(zcli)
             # Displays: "zOpen Ready"
 
         Version: v1.5.4
         """
         if zcli is None:
-            raise ValueError("zOpen requires a zCLI instance")
+            raise ValueError("zOpen requires a zKernel instance")
 
         if not hasattr(zcli, 'session'):
-            raise ValueError("Invalid zCLI instance: missing 'session' attribute")
+            raise ValueError("Invalid zKernel instance: missing 'session' attribute")
 
-        # Store references to zCLI subsystems
+        # Store references to zKernel subsystems
         self.zcli = zcli
         self.session = zcli.session
         self.logger = zcli.logger
@@ -585,7 +585,7 @@ class zOpen:
         # Detect if it's an absolute filesystem path that should be served by zServer
         # Use zParser to convert absolute path to web-relative path
         if image_path.startswith('/'):
-            # Get server config from zCLI instance (zServer subsystem)
+            # Get server config from zKernel instance (zServer subsystem)
             http_config = getattr(self.zcli.config, 'http_server', None)
             
             if http_config and http_config.enabled:
@@ -615,7 +615,7 @@ class zOpen:
                 # Fall through to local file handling (will fail if not a real local path)
         
         # Local file handling (consolidated via helper)
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_image_viewer_launch_command
+        from zKernel.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_image_viewer_launch_command
         return self._launch_media_player(
             image_path,
             "image_viewer",
@@ -652,7 +652,7 @@ class zOpen:
             
         Version: v1.5.8 (Video Support)
         """
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_video_player_launch_command
+        from zKernel.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_video_player_launch_command
         return self._launch_media_player(
             video_path,
             "video_player",
@@ -689,7 +689,7 @@ class zOpen:
             
         Version: v1.5.8 (Audio Support)
         """
-        from zCLI.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_audio_player_launch_command
+        from zKernel.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_audio_player_launch_command
         return self._launch_media_player(
             audio_path,
             "audio_player",

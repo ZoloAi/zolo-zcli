@@ -179,7 +179,7 @@ This module is used by:
 - data_operations.py: CRUD operation router
 """
 
-from zCLI import Any, Dict
+from zKernel import Any, Dict
 
 # ============================================================
 # Module Constants - Operation Name

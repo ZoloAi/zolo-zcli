@@ -6,10 +6,10 @@ Key: read_string() and read_password() return Futures in Bifrost mode.
 Send all requests first, await after → all forms render simultaneously.
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Initialize zCLI in Bifrost mode (same as Level 5)
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {
         "host": "127.0.0.1",

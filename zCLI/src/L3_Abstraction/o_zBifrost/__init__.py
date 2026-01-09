@@ -3,7 +3,7 @@
 zBifrost - Terminal↔Web Bridge Orchestrator (Layer 2)
 
 Coordinates real-time communication between Terminal and Web environments by
-orchestrating zCLI subsystems over WebSocket infrastructure.
+orchestrating zKernel subsystems over WebSocket infrastructure.
 
 Architecture:
     - Uses z.comm for low-level WebSocket server infrastructure
@@ -16,9 +16,9 @@ Exports:
 
 Usage:
     ```python
-    from zCLI import zCLI
+    from zKernel import zKernel
     
-    z = zCLI()
+    z = zKernel()
     
     # Start WebSocket bridge
     z.bifrost.start()

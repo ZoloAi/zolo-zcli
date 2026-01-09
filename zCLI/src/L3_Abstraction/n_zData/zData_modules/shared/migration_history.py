@@ -45,11 +45,11 @@ _zdata_migrations:
 Usage Examples
 -------------
 Ensure migrations table exists:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.migration_history import ensure_migrations_table
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.migration_history import ensure_migrations_table
     >>> ensure_migrations_table(adapter)
 
 Record successful migration:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.migration_history import record_migration
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.migration_history import record_migration
     >>> metrics = {
     ...     'schema_version': 'v1.2.3',
     ...     'schema_hash': 'abc123...',
@@ -63,13 +63,13 @@ Record successful migration:
     >>> record_migration(adapter, metrics)
 
 Check if migration already applied:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.migration_history import is_migration_applied
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.migration_history import is_migration_applied
     >>> schema_hash = get_current_schema_hash(schema_dict)
     >>> if is_migration_applied(adapter, schema_hash):
     ...     print("Migration already applied - skipping")
 
 Get migration history:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.migration_history import get_migration_history
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.migration_history import get_migration_history
     >>> history = get_migration_history(adapter)
     >>> for record in history:
     ...     print(f"{record['applied_at']}: {record['schema_version']} - {record['status']}")
@@ -90,7 +90,7 @@ See Also
 import hashlib
 import time
 from datetime import datetime
-from zCLI import Dict, List, Any
+from zKernel import Dict, List, Any
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # MODULE CONSTANTS

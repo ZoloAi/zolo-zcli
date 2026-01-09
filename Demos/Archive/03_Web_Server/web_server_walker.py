@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Web Server Layer Demo - Declarative Routing + RBAC (v1.5.4 Phase 2)"""
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Step 1: Import zCLI
 # Step 2: Create spark
-z = zCLI({
+z = zKernel({
     "zWorkspace": ".",
     "zSpace": "/Users/galnachshon/Projects/zolo-zcli/Demos/03_Web_Server",
     "zMode": "Terminal"

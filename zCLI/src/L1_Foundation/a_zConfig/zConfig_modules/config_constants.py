@@ -2,7 +2,7 @@
 """
 Centralized constants for zConfig subsystem.
 
-This module contains all public constants used throughout the zCLI framework
+This module contains all public constants used throughout the zKernel framework
 for session management, authentication, caching, and configuration.
 """
 

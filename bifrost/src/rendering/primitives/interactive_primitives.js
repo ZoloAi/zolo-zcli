@@ -221,9 +221,9 @@ export function createLink(href, attributes = {}) {
  * // Collapsible FAQ item (closed by default)
  * const faq = createDetails({ id: 'faq-1' });
  * const question = createSummary();
- * question.textContent = 'What is zCLI?';
+ * question.textContent = 'What is zKernel?';
  * const answer = document.createElement('p');
- * answer.textContent = 'zCLI is a command-line interface framework.';
+ * answer.textContent = 'zKernel is a command-line interface framework.';
  * faq.appendChild(question);
  * faq.appendChild(answer);
  *

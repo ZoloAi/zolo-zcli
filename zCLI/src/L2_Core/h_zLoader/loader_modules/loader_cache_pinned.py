@@ -150,7 +150,7 @@ Internal:
     - None (standalone cache implementation)
 
 External:
-    - zCLI imports: time, Any, Dict, List, Optional
+    - zKernel imports: time, Any, Dict, List, Optional
     - zConfig constants: SESSION_KEY_ZCACHE, ZCACHE_KEY_PINNED
 
 Performance Considerations
@@ -182,8 +182,8 @@ Version History
 - v1.5.3: Original implementation (156 lines, basic pinned cache)
 """
 
-from zCLI import time, Any, Dict, List, Optional
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZCACHE, ZCACHE_KEY_PINNED
+from zKernel import time, Any, Dict, List, Optional
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZCACHE, ZCACHE_KEY_PINNED
 
 # ============================================================================
 # MODULE CONSTANTS
@@ -250,7 +250,7 @@ class PinnedCache:
 
         Args:
             session (Dict[str, Any]): Session dictionary to store cache data.
-                Must be a mutable dict that persists across zCLI operations.
+                Must be a mutable dict that persists across zKernel operations.
             logger (Any): Logger instance for info/debug/error messages. Typically
                 from zConfig.logger.
 

@@ -11,7 +11,7 @@
 
 ## What is zNavigation?
 
-**zNavigation** is zCLI's unified navigation system that provides:
+**zNavigation** is zKernel's unified navigation system that provides:
 - **Interactive Menus** - Static, dynamic, and function-based menu creation
 - **Breadcrumb Trails** - zCrumbs and zBack for navigation history
 - **Inter-File Linking** - Navigate between zVaFiles with zLink
@@ -26,9 +26,9 @@
 ### Quick Start (3 Lines)
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"zWorkspace": ".", "zMode": "Terminal"})
+z = zKernel({"zWorkspace": ".", "zMode": "Terminal"})
 z.navigation.create(["Option A", "Option B", "Option C"])
 ```
 
@@ -373,7 +373,7 @@ z.navigation.handle_zLink("@.admin.users#role:admin")
 - **H. Linking** (8 tests) - Parse, permissions, handle_zLink
 - **I. Facade** (8 tests) - All public API methods
 - **J. Integration** (9 tests) - Multi-component workflows
-- **K. Real Integration** (10 tests) - Actual zCLI operations
+- **K. Real Integration** (10 tests) - Actual zKernel operations
 - **L. Real zLink Navigation** (10 tests) - Intra-file & inter-file navigation, zPath formats, RBAC, error handling
 
 **All 90 tests are real validations - zero stub tests.**

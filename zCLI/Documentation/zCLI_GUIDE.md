@@ -1,16 +1,16 @@
-# Building Applications with zCLI
+# Building Applications with zKernel
 
-**A Comprehensive Guide to zCLI Architecture, Patterns, and Application Development**
+**A Comprehensive Guide to zKernel Architecture, Patterns, and Application Development**
 
 **Version**: 1.5.0  
-**Audience**: Developers, Architects, LLMs building zCLI-based applications  
+**Audience**: Developers, Architects, LLMs building zKernel-based applications  
 **Purpose**: Conceptual understanding and application design patterns
 
 ---
 
 ## Table of Contents
 
-1. [What is zCLI?](#what-is-zcli)
+1. [What is zKernel?](#what-is-zcli)
 2. [Core Philosophy](#core-philosophy)
 3. [Architecture Overview](#architecture-overview)
 4. [Building Your First Application](#building-your-first-application)
@@ -23,13 +23,13 @@
 
 ---
 
-## What is zCLI?
+## What is zKernel?
 
-**zCLI** (Zolo Command Line Interface) is a **declarative application framework** that enables developers to build sophisticated command-line applications using YAML configuration files instead of imperative code.
+**zKernel** (Zolo Command Line Interface) is a **declarative application framework** that enables developers to build sophisticated command-line applications using YAML configuration files instead of imperative code.
 
 ### Key Differentiators
 
-| Traditional CLI | zCLI |
+| Traditional CLI | zKernel |
 |----------------|------|
 | Write Python/JS code | Write YAML configs |
 | Hard-coded menus | Dynamic UI from files |
@@ -67,7 +67,7 @@ elif choice == "2":
 
 You declare:
 ```yaml
-# zCLI approach (zUI file)
+# zKernel approach (zUI file)
 Main Menu:
   label: "Main Menu"
   options:
@@ -380,16 +380,16 @@ Settings Menu:
 
 ```python
 #!/usr/bin/env python3
-"""Student Grade Tracker - Built with zCLI"""
+"""Student Grade Tracker - Built with zKernel"""
 
-from zCLI import zCLI
+from zKernel import zKernel
 from pathlib import Path
 
 def main():
     # Get the directory where this script lives
     app_dir = Path(__file__).parent.absolute()
     
-    # Configure zCLI
+    # Configure zKernel
     zspark_config = {
         "zSpark": "Grade Tracker v1.0",
         "zWorkspace": str(app_dir),
@@ -404,8 +404,8 @@ def main():
         ]
     }
     
-    # Initialize zCLI
-    zcli = zCLI(zspark_config)
+    # Initialize zKernel
+    zcli = zKernel(zspark_config)
     
     # Load the schema
     zcli.loader.handle("@.zSchema.grades", {"cache_as": "grades"})
@@ -652,7 +652,7 @@ Dashboard:
 
 def calculate_discount(zcli, customer_id, order_total):
     """Calculate customer-specific discount"""
-    # Access zCLI subsystems
+    # Access zKernel subsystems
     result = zcli.data.handle({
         "action": "read",
         "table": "customers",
@@ -700,39 +700,39 @@ Process Order:
 
 ## Integration Strategies
 
-### Strategy 1: Embed zCLI in Existing Python Applications
+### Strategy 1: Embed zKernel in Existing Python Applications
 
 ```python
 # your_app.py
-from zCLI import zCLI
+from zKernel import zKernel
 
 class YourApplication:
     def __init__(self):
-        self.zcli = zCLI({
+        self.zcli = zKernel({
             "zWorkspace": "/path/to/configs",
             "logger": "info"
         })
         
     def run_admin_panel(self):
-        """Launch zCLI-based admin interface"""
+        """Launch zKernel-based admin interface"""
         self.zcli.loader.handle("@.zUI.admin", {})
         self.zcli.walker.run()
         
     def run_data_import(self, csv_file):
-        """Use zCLI for data operations"""
+        """Use zKernel for data operations"""
         self.zcli.loader.handle("@.zSchema.mydb", {"cache_as": "db"})
         # Import logic using zcli.data
 ```
 
-### Strategy 2: Use zCLI as a Microservice
+### Strategy 2: Use zKernel as a Microservice
 
 ```python
 # api_server.py
 from flask import Flask, request
-from zCLI import zCLI
+from zKernel import zKernel
 
 app = Flask(__name__)
-zcli = zCLI({"zWorkspace": "/app/configs"})
+zcli = zKernel({"zWorkspace": "/app/configs"})
 
 @app.route("/execute", methods=["POST"])
 def execute_command():
@@ -750,7 +750,7 @@ def get_data(table):
     return {"data": result}
 ```
 
-### Strategy 3: Extend zCLI with Custom Subsystems
+### Strategy 3: Extend zKernel with Custom Subsystems
 
 ```python
 # custom_subsystem.py
@@ -766,11 +766,11 @@ class MyCustomSubsystem:
         return {"status": "success"}
 
 # In your app initialization
-from zCLI import zCLI
-zcli = zCLI()
+from zKernel import zKernel
+zcli = zKernel()
 zcli.custom = MyCustomSubsystem(zcli)
 
-# Now available throughout zCLI
+# Now available throughout zKernel
 # zcli.custom.handle(...)
 ```
 
@@ -778,16 +778,16 @@ zcli.custom = MyCustomSubsystem(zcli)
 
 ```python
 # multi_tenant.py
-from zCLI import zCLI
+from zKernel import zKernel
 
 class TenantManager:
     def __init__(self):
         self.tenants = {}
         
     def get_tenant_cli(self, tenant_id):
-        """Get or create zCLI instance for tenant"""
+        """Get or create zKernel instance for tenant"""
         if tenant_id not in self.tenants:
-            self.tenants[tenant_id] = zCLI({
+            self.tenants[tenant_id] = zKernel({
                 "zWorkspace": f"/data/tenants/{tenant_id}",
                 "logger": "info"
             })
@@ -929,7 +929,7 @@ events.emit("user_created", {"id": 123, "name": "Alice"})
 
 ### Concept 5: Caching Strategies
 
-zCLI provides 4-tier caching:
+zKernel provides 4-tier caching:
 
 ```python
 # Tier 1: Pinned Cache (persistent across sessions)
@@ -1320,10 +1320,10 @@ class TestBusinessLogic(unittest.TestCase):
 **Integration Tests**:
 ```python
 # tests/test_workflows.py
-from zCLI import zCLI
+from zKernel import zKernel
 
 def test_order_workflow():
-    zcli = zCLI({"zWorkspace": "test_data"})
+    zcli = zKernel({"zWorkspace": "test_data"})
     zcli.loader.handle("@.zSchema.test", {"cache_as": "test"})
     
     # Execute workflow
@@ -1397,7 +1397,7 @@ def calculate_discount(zcli, customer_id, total):
     Calculate customer-specific discount.
     
     Args:
-        zcli: zCLI instance
+        zcli: zKernel instance
         customer_id (int): Customer ID
         total (float): Order total
         
@@ -1509,7 +1509,7 @@ zspark_config = {
     # ...
 }
 
-zcli = zCLI(zspark_config)
+zcli = zKernel(zspark_config)
 ```
 
 #### Inspect Session State
@@ -1562,7 +1562,7 @@ zolo-zcli shell
 
 ## Conclusion
 
-zCLI provides a powerful, declarative framework for building command-line applications. By separating concerns (UI, data, logic) and providing a rich set of subsystems, it enables rapid development of sophisticated tools.
+zKernel provides a powerful, declarative framework for building command-line applications. By separating concerns (UI, data, logic) and providing a rich set of subsystems, it enables rapid development of sophisticated tools.
 
 ### Key Takeaways
 
@@ -1583,7 +1583,7 @@ zCLI provides a powerful, declarative framework for building command-line applic
 
 - **Documentation**: `Documentation/` folder
 - **Test Suite**: `zTestSuite/` for examples
-- **Source Code**: `zCLI/subsystems/` for reference
+- **Source Code**: `zKernel/subsystems/` for reference
 - **AGENT.md**: LLM-optimized technical reference
 
 ---

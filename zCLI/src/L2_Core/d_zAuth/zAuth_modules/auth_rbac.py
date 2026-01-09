@@ -1,7 +1,7 @@
 """
 RBAC Module - Context-Aware Role-Based Access Control (v1.5.4+)
 
-This module provides context-aware role and permission management for the zCLI
+This module provides context-aware role and permission management for the zKernel
 three-tier authentication system, enabling different RBAC rules for zSession,
 application contexts, and dual-mode authentication.
 
@@ -19,7 +19,7 @@ Three-Tier Authentication Integration:
         - Internal zCLI/Zolo users
         - Authenticated via zcli.auth.login()
         - Role stored in: session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION][ZAUTH_KEY_ROLE]
-        - Use case: Premium plugins, Zolo cloud access, zCLI features
+        - Use case: Premium plugins, Zolo cloud access, zKernel features
 
     Layer 2 (Application - Multi-App):
         - External application users
@@ -31,7 +31,7 @@ Three-Tier Authentication Integration:
     Layer 3 (Dual):
         - Both zSession AND application authenticated
         - Role check uses OR logic: Either context can grant access
-        - Use case: Store owner using zCLI analytics on their own store
+        - Use case: Store owner using zKernel analytics on their own store
         - Example: "admin" in eCommerce app but "user" in zSession → has_role("admin") = True
 
 Active Context Determination
@@ -132,8 +132,8 @@ This module is deeply integrated with:
 
 Thread Safety
 =============
-This module reads from the zCLI session dictionary, which is NOT thread-safe.
-If using zCLI in a multi-threaded environment, ensure proper session locking.
+This module reads from the zKernel session dictionary, which is NOT thread-safe.
+If using zKernel in a multi-threaded environment, ensure proper session locking.
 
 Module Constants
 ================
@@ -146,8 +146,8 @@ See MODULE CONSTANTS section below for all 38 defined constants:
     - Defaults: DEFAULT_GRANTED_BY
 """
 
-from zCLI import datetime, Path, Optional, Any, Dict, Union, Tuple, List
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
+from zKernel import datetime, Path, Optional, Any, Dict, Union, Tuple, List
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     # Session structure
     SESSION_KEY_ZAUTH,
     
@@ -295,7 +295,7 @@ class RBAC:
         Initialize RBAC module with context-aware support.
         
         Args:
-            zcli: zCLI instance (provides access to session, data, loader, logger)
+            zcli: zKernel instance (provides access to session, data, loader, logger)
         
         Notes:
             - Stores references to zcli.session and zcli.logger for convenience
@@ -303,8 +303,8 @@ class RBAC:
             - No authentication checks in __init__ (happens per-method)
         
         Example:
-            >>> from zCLI import zCLI
-            >>> zcli = zCLI()
+            >>> from zKernel import zKernel
+            >>> zcli = zKernel()
             >>> rbac = RBAC(zcli)
         """
         self.zcli = zcli
@@ -1184,7 +1184,7 @@ class RBAC:
             # If not loaded yet, load the unified auth schema
             # Get absolute path to zSchema.auth.yaml (centralized location)
             # Schema Location (v1.5.4+): Centralized in zCLI/Schemas/
-            zcli_root = Path(__file__).parent.parent.parent.parent  # Navigate to zCLI root
+            zcli_root = Path(__file__).parent.parent.parent.parent  # Navigate to zKernel root
             schema_path = zcli_root / SCHEMAS_DIR / SCHEMA_FILE_NAME
             
             if not schema_path.exists():

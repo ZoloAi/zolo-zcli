@@ -223,7 +223,7 @@ z.display.zEvents.TimeBased.swiper(
 
 ## 🎓 Learning Path
 
-1. ✅ **Level 0** - Hello zCLI (basics)
+1. ✅ **Level 0** - Hello zKernel (basics)
 2. ✅ **Level 1** - Display events (output)
 3. ✅ **Level 2** - Config & Session (settings)
 4. ✅ **Level 3** - User Input (primitives)
@@ -276,7 +276,7 @@ Processing files [████████████████████] 
 Navigate through content slides:
 
 ╔═══════════════════════════════════════════════════╗
-║              zCLI Features - Slide 1/4            ║
+║              zKernel Features - Slide 1/4            ║
 ╠═══════════════════════════════════════════════════╣
 ║                                                   ║
 ║    📊 Progress Bars                               ║

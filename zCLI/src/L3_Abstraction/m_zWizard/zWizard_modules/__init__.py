@@ -35,7 +35,7 @@ Exported Components:
 Usage:
 ------
 ```python
-from zCLI.L3_Abstraction.m_zWizard.zWizard_modules import (
+from zKernel.L3_Abstraction.m_zWizard.zWizard_modules import (
     WizardHat,
     interpolate_zhat,
     check_transaction_start,
@@ -43,8 +43,8 @@ from zCLI.L3_Abstraction.m_zWizard.zWizard_modules import (
 )
 
 # Or import specific modules
-from zCLI.L3_Abstraction.m_zWizard.zWizard_modules import wizard_hat
-from zCLI.L3_Abstraction.m_zWizard.zWizard_modules import wizard_examples
+from zKernel.L3_Abstraction.m_zWizard.zWizard_modules import wizard_hat
+from zKernel.L3_Abstraction.m_zWizard.zWizard_modules import wizard_examples
 ```
 
 Architecture:

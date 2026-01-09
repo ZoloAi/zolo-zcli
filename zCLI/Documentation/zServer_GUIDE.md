@@ -7,13 +7,13 @@
 
 ## What It Does
 
-**zServer** is an optional subsystem that adds HTTP static file serving to zCLI applications:
+**zServer** is an optional subsystem that adds HTTP static file serving to zKernel applications:
 
 - ✅ **Static file serving** - HTML, CSS, JavaScript, images
 - ✅ **Background threading** - Non-blocking, runs alongside your app
 - ✅ **CORS enabled** - Automatic headers for local development
 - ✅ **Security built-in** - Directory listing disabled
-- ✅ **Logger integration** - All requests logged via zCLI
+- ✅ **Logger integration** - All requests logged via zKernel
 - ✅ **Works with zBifrost** - HTTP + WebSocket = full-stack
 
 **Status:** ✅ Production-ready (100% test coverage, 35/35 tests passing)
@@ -74,9 +74,9 @@ Integration Points:
 ### 1. Create HTTP Server
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"zWorkspace": "."})
+z = zKernel({"zWorkspace": "."})
 
 # Create server via zComm
 http_server = z.comm.create_http_server(
@@ -185,10 +185,10 @@ status = http_server.health_check()
 
 ## Configuration
 
-### Via zSpark (zCLI init)
+### Via zSpark (zKernel init)
 
 ```python
-z = zCLI({
+z = zKernel({
     "http_server": {
         "host": "127.0.0.1",
         "port": 8080,
@@ -217,9 +217,9 @@ http_server = z.comm.create_http_server(
 
 ```python
 #!/usr/bin/env python3
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"zWorkspace": "."})
+z = zKernel({"zWorkspace": "."})
 
 # Start HTTP server
 server = z.comm.create_http_server(port=8080, serve_path="./public")
@@ -235,9 +235,9 @@ server.stop()
 
 ```python
 #!/usr/bin/env python3
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {"port": 8765, "require_auth": False},
     "http_server": {"port": 8080, "serve_path": ".", "enabled": True}
@@ -309,7 +309,7 @@ while True:
 
 | Category | Tests | Coverage |
 |----------|-------|----------|
-| A. Initialization & Configuration | 5 | Defaults, custom config, zCLI integration |
+| A. Initialization & Configuration | 5 | Defaults, custom config, zKernel integration |
 | B. Lifecycle Management | 6 | Start/stop, status, warnings, threads |
 | C. Static File Serving | 5 | HTML, CSS, JS, path config, security |
 | D. CORS Support | 4 | Headers, OPTIONS, local dev |
@@ -321,7 +321,7 @@ while True:
 ### Run Tests
 
 ```bash
-# From zCLI test menu
+# From zKernel test menu
 python main.py
 # Select: zServer
 
@@ -506,7 +506,7 @@ Example applications showing:
 
 ## Summary
 
-**zServer** is a lightweight HTTP static file server built into zCLI:
+**zServer** is a lightweight HTTP static file server built into zKernel:
 
 - **Simple** - 5 methods, zero dependencies
 - **Secure** - Directory listing disabled, localhost default

@@ -25,8 +25,8 @@ Help:
           where toggle          # Toggle current state
         
         Prompt Formats:
-          Default (off):  zCLI> 
-          Enabled (on):   zCLI [~.Projects.zolo-zcli]>
+          Default (off):  zKernel> 
+          Enabled (on):   zKernel [~.Projects.zolo-zcli]>
     
   "^Shortcut":
     zDisplay:
@@ -57,7 +57,7 @@ Help:
           shortcut debug="true"              # Boolean flag
           
           # File Shortcuts (Interactive)
-          load @.zCLI.UI.zUI.zcli_sys        # Load a file first
+          load @.zKernel.UI.zUI.zcli_sys        # Load a file first
           shortcut cache                     # Launch interactive menu
                                             # Select file, name it "myui"
           
@@ -120,7 +120,7 @@ Help:
         
         Display:
           1. OS Path     - Standard filesystem path
-          2. zPath       - zCLI declarative path format
+          2. zPath       - zKernel declarative path format
         
         Examples:
           cwd                   # Show current directory (both formats)
@@ -240,7 +240,7 @@ Help:
         
         Examples:
           # Set up and run system help
-          session set zVaFolder @.zCLI.UI
+          session set zVaFolder @.zKernel.UI
           session set zVaFile zUI.zcli_sys
           session set zBlock help
           walker run
@@ -364,7 +364,7 @@ Help:
         
         Examples:
           func @.utils.helpers.generate_id zU
-          func @.zCLI.utils.cache_utils.get_cached_files
+          func @.zKernel.utils.cache_utils.get_cached_files
           func @.plugins.custom.process_data input.json
         
         Features:

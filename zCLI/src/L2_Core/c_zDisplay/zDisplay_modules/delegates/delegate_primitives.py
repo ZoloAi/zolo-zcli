@@ -29,7 +29,7 @@ Pattern:
 Grade: A+ (Type hints, constants, comprehensive docs)
 """
 
-from zCLI import Any, Dict
+from zKernel import Any, Dict
 from ..display_constants import (
     _KEY_EVENT,
     _EVENT_WRITE_RAW,

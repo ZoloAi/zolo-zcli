@@ -9,7 +9,7 @@
 
 ## What is zParser?
 
-**zParser** is zCLI's universal parsing and path resolution engine that provides:
+**zParser** is zKernel's universal parsing and path resolution engine that provides:
 - **Path Resolution** - Workspace (@.), absolute (~.), zMachine paths
 - **Plugin Invocation** - &plugin.function() syntax with auto-discovery
 - **Command Parsing** - 20+ command types (zFunc, zLink, zOpen, etc.)
@@ -26,9 +26,9 @@
 ### Quick Start (3 Lines)
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"zWorkspace": ".", "zMode": "Terminal"})
+z = zKernel({"zWorkspace": ".", "zMode": "Terminal"})
 resolved_path = z.parser.zPath_decoder("@.zUI.users")
 ```
 
@@ -235,7 +235,7 @@ Parse: plugin=plugin, func=function, args=[arg1, arg2]
     ↓
 Auto-discovery (if not cached)
     ↓ Search paths:
-    ↓ 1. @.zCLI.utils/plugin.py
+    ↓ 1. @.zKernel.utils/plugin.py
     ↓ 2. @.utils/plugin.py
     ↓ 3. @.plugins/plugin.py
     ↓
@@ -366,7 +366,7 @@ path = z.parser.resolve_zmachine_path("~.zMachine.config.app")
 result = z.parser.resolve_plugin_invocation("&my_plugin.func()")
 
 # Search order:
-# 1. {workspace}/zCLI/utils/my_plugin.py
+# 1. {workspace}/zKernel/utils/my_plugin.py
 # 2. {workspace}/utils/my_plugin.py
 # 3. {workspace}/plugins/my_plugin.py
 
@@ -591,7 +591,7 @@ schema = z.parser.parse_file_by_path("schema.unknown")  # Auto-detects
 
 **Issue**: Plugin invocation fails  
 **Cause**: Plugin not in standard paths  
-**Fix**: Place plugin in `utils/`, `plugins/`, or `zCLI/utils/`
+**Fix**: Place plugin in `utils/`, `plugins/`, or `zKernel/utils/`
 
 ### File Parse Error
 

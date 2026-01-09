@@ -81,7 +81,7 @@ This parser is used throughout zData for consistent type handling:
 - Query result formatting
 """
 
-from zCLI import Union
+from zKernel import Union
 
 # ============================================================
 # Module Constants - Boolean Values

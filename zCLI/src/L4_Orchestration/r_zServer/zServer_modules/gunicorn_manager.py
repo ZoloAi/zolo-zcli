@@ -22,15 +22,15 @@ class GunicornManager:
     Manages Gunicorn WSGI server as a subprocess.
     
     Handles the full lifecycle of a Gunicorn process for Production mode,
-    allowing zCLI to provide a seamless declarative interface where users
-    just change deployment mode and zCLI handles the rest.
+    allowing zKernel to provide a seamless declarative interface where users
+    just change deployment mode and zKernel handles the rest.
     
     Attributes:
         app_module: Module path for WSGI app (e.g., "app:application")
         host: Bind host address
         port: Bind port number
         workers: Number of worker processes
-        logger: zCLI logger instance
+        logger: zKernel logger instance
         process: Subprocess instance (when running)
     """
     

@@ -10,7 +10,7 @@ Architecture:
     Layer 2 (zBifrost): Orchestration (display/auth/data coordination)
 """
 
-from zCLI import (
+from zKernel import (
     asyncio, Any, Optional, Dict, Callable,
     ws_serve, WebSocketServerProtocol, logging
 )
@@ -45,7 +45,7 @@ class WebSocketHandshakeFilter(logging.Filter):
         - Filters out "line without CRLF" errors (connection closed before sending data)
         - Filters out "did not receive a valid HTTP request" (invalid HTTP)
         - Keeps real WebSocket connection issues visible
-        - Applied only to the 'websockets' logger (doesn't affect zCLI logging)
+        - Applied only to the 'websockets' logger (doesn't affect zKernel logging)
     
     Philosophy:
         We handle what we can (process_request for proper HTTP),
@@ -277,7 +277,7 @@ class WebSocketServer:
         Start WebSocket server (blocks until Ctrl+C).
         
         Uses zConfig defaults if not specified (respects 5-layer hierarchy).
-        zCLI handles asyncio and graceful shutdown internally.
+        zKernel handles asyncio and graceful shutdown internally.
         Press Ctrl+C to stop cleanly.
         
         Args:

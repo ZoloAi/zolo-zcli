@@ -14,7 +14,7 @@ from pathlib import Path
 from functools import partial
 
 from .zServer_modules.handler import LoggingHTTPRequestHandler
-from zCLI.L1_Foundation.b_zComm.zComm_modules.comm_ssl import create_ssl_context
+from zKernel.L1_Foundation.b_zComm.zComm_modules.comm_ssl import create_ssl_context
 
 
 class zServer:
@@ -24,7 +24,7 @@ class zServer:
     Features:
     - Serves static files (HTML, CSS, JS)
     - Runs in background thread
-    - Integrates with zCLI logger
+    - Integrates with zKernel logger
     - CORS enabled for local development
     - Directory listing disabled for security
     """
@@ -35,8 +35,8 @@ class zServer:
         Initialize zServer subsystem (v1.5.8: Independent subsystem with config object support).
         
         Args:
-            logger: zCLI logger instance
-            zcli: zCLI instance (required for routing, auth, data integration)
+            logger: zKernel logger instance
+            zcli: zKernel instance (required for routing, auth, data integration)
             config: HttpServerConfig instance from zConfig (preferred, enables full integration)
             port: HTTP port (deprecated: use config object)
             host: Host address (deprecated: use config object)
@@ -46,7 +46,7 @@ class zServer:
             routes_file: Optional zServer.*.yaml file (deprecated: use config object)
         
         Note:
-            Prefer using config object for full zCLI integration.
+            Prefer using config object for full zKernel integration.
             Individual parameters supported for backward compatibility and testing.
         """
         self.logger = logger
@@ -237,8 +237,8 @@ class zServer:
             return
         
         try:
-            from zCLI.L2_Core.g_zParser.parser_modules import parse_file_content
-            from zCLI.L2_Core.h_zLoader.loader_modules import load_file_raw
+            from zKernel.L2_Core.g_zParser.parser_modules import parse_file_content
+            from zKernel.L2_Core.h_zLoader.loader_modules import load_file_raw
             
             # Merged routes structure (blueprint pattern)
             merged_data = {
@@ -339,8 +339,8 @@ class zServer:
                 self.logger.info(f"[zServer] Loading schema: {filename}")
                 
                 # Use zParser directly to avoid zPath dot interpretation
-                from zCLI.L2_Core.g_zParser.parser_modules import parse_file_content
-                from zCLI.L2_Core.h_zLoader.loader_modules import load_file_raw
+                from zKernel.L2_Core.g_zParser.parser_modules import parse_file_content
+                from zKernel.L2_Core.h_zLoader.loader_modules import load_file_raw
                 
                 # Read raw file content
                 raw_content = load_file_raw(schema_file, self.logger)
@@ -394,7 +394,7 @@ class zServer:
     
     def _get_deployment(self) -> str:
         """
-        Get deployment mode from zCLI config.
+        Get deployment mode from zKernel config.
         
         Returns:
             str: Deployment mode ("Development", "Testing", or "Production")
@@ -408,7 +408,7 @@ class zServer:
         Create SSL context from config if SSL is enabled (v1.5.10: HTTPS support).
         
         Delegates to zComm Layer 0 SSL primitive for consistent SSL handling
-        across all zCLI servers (HTTP, WebSocket, etc.).
+        across all zKernel servers (HTTP, WebSocket, etc.).
         
         Returns:
             ssl.SSLContext if SSL enabled and configured, None otherwise
@@ -451,12 +451,12 @@ class zServer:
         Example:
             ```python
             # Development mode
-            z = zCLI({"deployment": "Development", "http_server": {"port": 8000}})
+            z = zKernel({"deployment": "Development", "http_server": {"port": 8000}})
             server = z.comm.create_http_server()
             server.start()  # Starts http.server
             
             # Production mode
-            z = zCLI({"deployment": "Production", "http_server": {"port": 8000}})
+            z = zKernel({"deployment": "Production", "http_server": {"port": 8000}})
             server = z.comm.create_http_server()
             server.start()  # Starts Gunicorn automatically
             ```
@@ -615,7 +615,7 @@ if os.path.exists(serve_path):
     os.chdir(serve_path)
 
 # Create WSGI app using zServer's WSGI adapter
-from zCLI.L4_Orchestration.r_zServer.zServer_modules.wsgi_app import zServerWSGIApp
+from zKernel.L4_Orchestration.r_zServer.zServer_modules.wsgi_app import zServerWSGIApp
 
 # Create a minimal zServer-like object with the configuration
 class WSGIServerConfig:
@@ -640,8 +640,8 @@ class WSGIServerConfig:
         """Load and merge routes from ALL YAML files (v1.5.9: Blueprint pattern)."""
         try:
             import yaml
-            from zCLI.L4_Orchestration.r_zServer.zServer_modules.router import HTTPRouter
-            from zCLI.utils.logger import ConsoleLogger
+            from zKernel.L4_Orchestration.r_zServer.zServer_modules.router import HTTPRouter
+            from zKernel.utils.logger import ConsoleLogger
             
             # Create minimal logger for WSGI
             self.logger = ConsoleLogger()
@@ -701,14 +701,14 @@ app = zServerWSGIApp(server_config)
         Block until server is interrupted (v1.5.8: Built-in lifecycle management).
         
         Keeps the process alive while the server runs. Signal handlers (SIGINT/SIGTERM)
-        registered by zCLI will automatically call shutdown, which stops the server.
+        registered by zKernel will automatically call shutdown, which stops the server.
         
         This eliminates boilerplate try/except/KeyboardInterrupt blocks in applications.
         
         Example:
             ```python
             # OLD (manual lifecycle)
-            z = zCLI(zSpark)
+            z = zKernel(zSpark)
             server = z.comm.create_http_server()
             server.start()
             try:
@@ -718,13 +718,13 @@ app = zServerWSGIApp(server_config)
                 server.stop()
             
             # NEW (built-in lifecycle)
-            z = zCLI({"zServer": {"enabled": True, "port": 8080}})
+            z = zKernel({"zServer": {"enabled": True, "port": 8080}})
             z.server.wait()  # That's it! Signal handlers handle cleanup
             ```
         
         Note:
             - Signal handlers (Ctrl+C, SIGTERM) already registered by zCLI
-            - zCLI.shutdown() automatically calls server.stop()
+            - zKernel.shutdown() automatically calls server.stop()
             - This method just keeps the process alive
         """
         import time

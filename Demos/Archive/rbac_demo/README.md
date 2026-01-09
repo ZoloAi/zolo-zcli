@@ -72,10 +72,10 @@ python test_admin.py
 
 ## Manual Testing
 
-1. Run zCLI:
+1. Run zKernel:
 ```bash
 cd Demos/rbac_demo
-python -m zCLI
+python -m zKernel
 ```
 
 2. Change authentication in Python console:
@@ -112,7 +112,7 @@ z.auth.grant_permission("admin001", "system.shutdown")
 - `test_user.py` - Test as regular user
 - `test_admin.py` - Test as admin (no permissions)
 
-## Proper zCLI Syntax
+## Proper zKernel Syntax
 
 The demo uses **actual zDisplay events**, not invented strings:
 

@@ -4,7 +4,7 @@
 Shell Command Shortcut Management System - Unified Aliasing.
 
 This module provides functionality for creating, managing, and persisting two types
-of shortcuts within the zCLI framework:
+of shortcuts within the zKernel framework:
 
 TWO TYPES OF SHORTCUTS:
     1. **zVars** (User Variables): Store user-defined values
@@ -62,7 +62,7 @@ Architecture:
 
 Type Safety:
     All functions include comprehensive type hints using types imported from
-    the zCLI namespace for consistency.
+    the zKernel namespace for consistency.
 
 Error Handling:
     Uses specific exceptions (IOError, PermissionError, json.JSONDecodeError)
@@ -78,17 +78,17 @@ Related:
     • zParser: Command parsing infrastructure
     • zAuth: (Future) Per-user shortcut persistence
 
-Author: zCLI Framework
+Author: zKernel Framework
 Version: 1.5.4
 """
 
 import json
 from pathlib import Path
 
-from zCLI import Any, Dict, List, Optional
+from zKernel import Any, Dict, List, Optional
 
 # Import session constants from zConfig
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZVARS,
     SESSION_KEY_ZSHORTCUTS
 )
@@ -217,7 +217,7 @@ def execute_shortcut(zcli: Any, parsed: Dict[str, Any]) -> Dict[str, Any]:
     action handlers based on provided arguments and options.
     
     Args:
-        zcli: zCLI instance with session, config, display access
+        zcli: zKernel instance with session, config, display access
         parsed: Parsed command dictionary with 'args' and 'options'
     
     Returns:
@@ -264,7 +264,7 @@ def execute_shortcut(zcli: Any, parsed: Dict[str, Any]) -> Dict[str, Any]:
     # Check for 'cache' subcommand (interactive shortcut creation from cache)
     if args and args[0] == "cache":
         zcli.logger.info("Launching interactive shortcut creation from cache...")
-        from zCLI.L2_Core.h_zLoader.loader_modules.cache_utils import create_shortcut_from_cache
+        from zKernel.L2_Core.h_zLoader.loader_modules.cache_utils import create_shortcut_from_cache
         result = create_shortcut_from_cache(zcli)
         return result
     
@@ -311,7 +311,7 @@ def _list_shortcuts(zcli: Any, shortcuts: Dict[str, str], zvars: Dict[str, str])
         longname  => value3
     
     Args:
-        zcli: zCLI instance for display access
+        zcli: zKernel instance for display access
         shortcuts: Dictionary of file shortcut name -> path mappings
         zvars: Dictionary of zVar name -> value mappings
     
@@ -435,7 +435,7 @@ def _create_shortcut(
     Automatically detects if creating a zVar (simple value) or file shortcut (command).
     
     Args:
-        zcli: zCLI instance for display and session access
+        zcli: zKernel instance for display and session access
         shortcuts: Dictionary of existing file shortcuts (modified in place)
         zvars: Dictionary of existing zVars (modified in place)
         args: List of command arguments (e.g., ['name="value"'])
@@ -459,7 +459,7 @@ def _create_shortcut(
         {"status": "created", "name": "myvar", "value": "hello", "type": "zvar"}
         
         >>> _create_shortcut(zcli, {}, {}, ['data="test"'])
-        {"error": "reserved_word"}  # 'data' is a zCLI command
+        {"error": "reserved_word"}  # 'data' is a zKernel command
         
         >>> _create_shortcut(zcli, {}, {"env": "old"}, ['env="new"'])
         # Displays warning: "Overwriting existing zVar: env"
@@ -558,7 +558,7 @@ def _validate_shortcut_name(
         5. Name cannot recursively reference itself in command
     
     Args:
-        zcli: zCLI instance for display access
+        zcli: zKernel instance for display access
         name: Proposed shortcut name
         command: Shortcut command (checked for recursion)
     
@@ -627,7 +627,7 @@ def _remove_shortcut(
     Checks both zVars and file shortcuts dicts to find and remove the item.
     
     Args:
-        zcli: zCLI instance for display access
+        zcli: zKernel instance for display access
         shortcuts: Dictionary of existing file shortcuts (modified in place)
         zvars: Dictionary of existing zVars (modified in place)
         name: Shortcut/zVar name to remove
@@ -689,7 +689,7 @@ def _clear_shortcuts(zcli: Any) -> Dict[str, Any]:
     Clear all shortcuts from session.
     
     Args:
-        zcli: zCLI instance for session and display access
+        zcli: zKernel instance for session and display access
     
     Returns:
         Dict[str, Any]: Result with status and count of cleared shortcuts
@@ -725,7 +725,7 @@ def _save_shortcuts(
     Creates parent directories if needed. Uses UTF-8 encoding.
     
     Args:
-        zcli: zCLI instance for session, config, display access
+        zcli: zKernel instance for session, config, display access
         shortcuts: Dictionary of shortcuts to save
         args: Optional filename argument [filename]
     
@@ -794,7 +794,7 @@ def _load_shortcuts(zcli: Any, args: List[str]) -> Dict[str, Any]:
     shortcuts in session (new shortcuts overwrite existing with same name).
     
     Args:
-        zcli: zCLI instance for session, config, display access
+        zcli: zKernel instance for session, config, display access
         args: Optional filename argument [filename]
     
     Returns:
@@ -883,7 +883,7 @@ def _get_default_shortcut_file(zcli: Any) -> Path:
     Creates parent directory if it doesn't exist.
     
     Args:
-        zcli: zCLI instance for session and config access
+        zcli: zKernel instance for session and config access
     
     Returns:
         Path: Resolved path to default shortcuts JSON file

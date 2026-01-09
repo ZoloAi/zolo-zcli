@@ -254,7 +254,7 @@ _LOG_MSG_CANNOT_RESOLVE = "Cannot resolve ^key without walker context"
 # ERROR MESSAGES
 # ==============================================================================
 
-ERR_NO_ZCLI = "zDispatch requires a zCLI instance"
+ERR_NO_ZCLI = "zDispatch requires a zKernel instance"
 ERR_NO_ZCLI_OR_WALKER = "handle_zDispatch requires either zcli or walker parameter"
 
 # ==============================================================================

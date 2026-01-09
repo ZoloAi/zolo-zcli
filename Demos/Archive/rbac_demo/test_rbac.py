@@ -2,10 +2,10 @@
 """RBAC Test - Anonymous user (v1.5.4 Week 3.3)"""
 
 from pathlib import Path
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Test as anonymous user (not logged in)
-z = zCLI({
+z = zKernel({
     "zWorkspace": str(Path(__file__).parent),
     "zVaFile": "@.zUI.rbac_test",
     "zBlock": "zVaF",

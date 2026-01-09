@@ -4,13 +4,13 @@ zSys/errors/exceptions.py
 zCLI custom exceptions with actionable error messages (Week 4.3 - Layer 1).
 
 Auto-registration with zTraceback (Week 6.1.1 - Industry-Grade):
-All zCLIException instances automatically register with zTraceback for interactive error handling.
+All zKernelException instances automatically register with zTraceback for interactive error handling.
 Uses thread-local context pattern (Django/Flask/FastAPI style) for zero-boilerplate integration.
 """
 
 
-class zCLIException(Exception):
-    """Base exception for all zCLI errors with actionable messages.
+class zKernelException(Exception):
+    """Base exception for all zKernel errors with actionable messages.
     
     Auto-registers with zTraceback when raised (Week 6.1.1).
     """
@@ -33,20 +33,20 @@ class zCLIException(Exception):
     def _register_with_traceback(self, message: str):
         """Auto-register this exception with zTraceback for interactive handling.
         
-        Uses thread-local context to get current zCLI instance (if available).
+        Uses thread-local context to get current zKernel instance (if available).
         Fails silently if no context - don't break exception raising!
         
         Args:
             message: Exception message for logging
         """
         try:
-            # Import here to avoid circular dependency (zCLI.zCLI imports zExceptions)
-            from zCLI.zCLI import get_current_zcli
+            # Import here to avoid circular dependency (zKernel.zCLI imports zExceptions)
+            from zKernel.zCLI import get_current_zcli
 
-            # Get current zCLI instance (thread-safe)
+            # Get current zKernel instance (thread-safe)
             zcli = get_current_zcli()
 
-            # Register if zCLI context available and zTraceback initialized
+            # Register if zKernel context available and zTraceback initialized
             if zcli and hasattr(zcli, 'zTraceback') and zcli.zTraceback:
                 zcli.zTraceback.log_exception(
                     self,
@@ -55,11 +55,11 @@ class zCLIException(Exception):
                 )
         except Exception:
             # Fail silently - don't let registration break exception raising
-            # This ensures exceptions work even without zCLI context
+            # This ensures exceptions work even without zKernel context
             pass
 
 
-class SchemaNotFoundError(zCLIException):
+class SchemaNotFoundError(zKernelException):
     """Raised when a schema file or loaded schema cannot be found."""
 
     def __init__(self, schema_name: str, context_type: str = "python", zpath: str = None):
@@ -100,7 +100,7 @@ class SchemaNotFoundError(zCLIException):
         )
 
 
-class FormModelNotFoundError(zCLIException):
+class FormModelNotFoundError(zKernelException):
     """Raised when a form model is not defined in the loaded schema."""
 
     def __init__(self, model_name: str, schema_name: str = None, available_models: list = None):
@@ -124,7 +124,7 @@ class FormModelNotFoundError(zCLIException):
         )
 
 
-class InvalidzPathError(zCLIException):
+class InvalidzPathError(zKernelException):
     """Raised when a zPath is malformed or cannot be resolved."""
 
     def __init__(self, zpath: str, reason: str = None):
@@ -150,7 +150,7 @@ class InvalidzPathError(zCLIException):
         )
 
 
-class DatabaseNotInitializedError(zCLIException):
+class DatabaseNotInitializedError(zKernelException):
     """Raised when attempting database operations without initialization."""
 
     def __init__(self, operation: str = None, table: str = None):
@@ -180,7 +180,7 @@ class DatabaseNotInitializedError(zCLIException):
         )
 
 
-class TableNotFoundError(zCLIException):
+class TableNotFoundError(zKernelException):
     """Raised when a table doesn't exist in the database."""
 
     def __init__(self, table_name: str, schema_name: str = None):
@@ -201,7 +201,7 @@ class TableNotFoundError(zCLIException):
         )
 
 
-class zUIParseError(zCLIException):
+class zUIParseError(zKernelException):
     """Raised when a zUI file has syntax or structural errors."""
 
     def __init__(self, file_path: str, issue: str, suggestion: str = None):
@@ -229,7 +229,7 @@ class zUIParseError(zCLIException):
         )
 
 
-class AuthenticationRequiredError(zCLIException):
+class AuthenticationRequiredError(zKernelException):
     """Raised when attempting to access protected resources without authentication."""
 
     def __init__(self, resource: str = None, required_role: str = None, required_permission: str = None):
@@ -260,7 +260,7 @@ class AuthenticationRequiredError(zCLIException):
         )
 
 
-class PermissionDeniedError(zCLIException):
+class PermissionDeniedError(zKernelException):
     """Raised when an authenticated user lacks required permissions."""
 
     def __init__(self, resource: str = None, user: str = None, required_role: str = None):
@@ -282,13 +282,13 @@ class PermissionDeniedError(zCLIException):
         )
 
 
-class ConfigurationError(zCLIException):
-    """Raised when zCLI or subsystem configuration is invalid."""
+class ConfigurationError(zKernelException):
+    """Raised when zKernel or subsystem configuration is invalid."""
 
     def __init__(self, setting: str, issue: str, example: str = None):
         hint_msg = f"Correct configuration:\n{example}" if example else (
             "Check your zSpark initialization:\n"
-            "   z = zCLI({\n"
+            "   z = zKernel({\n"
             "       'zSpace': '/path/to/project',\n"
             "       'zMode': 'Terminal',  # or 'zBifrost'\n"
             "       'zVerbose': True\n"
@@ -302,7 +302,7 @@ class ConfigurationError(zCLIException):
         )
 
 
-class PluginNotFoundError(zCLIException):
+class PluginNotFoundError(zKernelException):
     """Raised when a plugin cannot be loaded or found."""
 
     def __init__(self, plugin_name: str, search_paths: list = None):
@@ -327,7 +327,7 @@ class PluginNotFoundError(zCLIException):
         )
 
 
-class ValidationError(zCLIException):
+class ValidationError(zKernelException):
     """Raised when data validation fails."""
 
     def __init__(self, field: str, value: any, constraint: str, schema_name: str = None):
@@ -345,7 +345,7 @@ class ValidationError(zCLIException):
         )
 
 
-class zMachinePathError(zCLIException):
+class zMachinePathError(zKernelException):
     """Raised when zMachine path resolution fails or file not found."""
 
     def __init__(self, zpath: str, resolved_path: str, context_type: str = "file"):
@@ -394,8 +394,8 @@ class zMachinePathError(zCLIException):
         )
 
 
-class UnsupportedOSError(zCLIException):
-    """Raised when zCLI is run on an unsupported operating system."""
+class UnsupportedOSError(zKernelException):
+    """Raised when zKernel is run on an unsupported operating system."""
 
     def __init__(self, os_type: str, valid_types: tuple):
         hint = (

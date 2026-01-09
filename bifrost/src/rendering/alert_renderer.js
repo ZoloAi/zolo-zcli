@@ -3,7 +3,7 @@
  * Alert Renderer - Signal/Feedback Messages
  * ═══════════════════════════════════════════════════════════════
  *
- * Renders alert/signal events from zCLI backend (zSignals subsystem).
+ * Renders alert/signal events from zKernel backend (zSignals subsystem).
  * Provides visual feedback for success, info, warning, and error states.
  *
  * @module rendering/alert_renderer
@@ -48,7 +48,7 @@ import { withErrorBoundary } from '../utils/error_boundary.js';
 /**
  * AlertRenderer - Renders signal/alert events
  *
- * Handles zCLI signal events (error, warning, success, info) which
+ * Handles zKernel signal events (error, warning, success, info) which
  * provide visual feedback to users. Maps to zTheme's zSignal components.
  *
  * Event Mapping:

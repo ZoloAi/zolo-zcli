@@ -10,7 +10,7 @@ zVaF:
       zDisplay:
         event: header
         indent: 2
-        content: "A tiny demo blog built with zCLI, zServer, zBifrost, and zTheme."
+        content: "A tiny demo blog built with zKernel, zServer, zBifrost, and zTheme."
     Description:
       zDisplay:
         event: text

@@ -19,7 +19,7 @@ Architecture:
 
 Naming Convention:
     All event handler files use the bridge_event_ prefix to distinguish them from
-    other event handlers (e.g., display_event_) in the zCLI ecosystem.
+    other event handlers (e.g., display_event_) in the zKernel ecosystem.
 """
 
 from .bridge_event_client import ClientEvents

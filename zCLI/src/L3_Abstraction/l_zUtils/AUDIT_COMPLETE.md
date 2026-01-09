@@ -81,7 +81,7 @@ from pathlib import Path
 
 **After**:
 ```python
-from zCLI import importlib, os, time, Any, Dict, List, Optional, Union, Path
+from zKernel import importlib, os, time, Any, Dict, List, Optional, Union, Path
 ```
 
 **Results**:
@@ -362,7 +362,7 @@ The zUtils subsystem audit has been **successfully completed** with excellent re
 6. ✅ **Comprehensive documentation** - All helpers well-documented
 
 ### Files Modified
-- `zCLI/L3_Abstraction/l_zUtils/zUtils.py`
+- `zKernel/L3_Abstraction/l_zUtils/zUtils.py`
 
 ### Final Assessment
 **Grade**: A+ (Excellent)  

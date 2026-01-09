@@ -1,10 +1,10 @@
 # zCLI/subsystems/zUtils/zUtils.py
 
 """
-Plugin management facade for zCLI with unified cache architecture.
+Plugin management facade for zKernel with unified cache architecture.
 
 This module provides the zUtils subsystem, which manages plugin loading and exposure
-for the zCLI framework. It serves as the primary interface for loading plugins from
+for the zKernel framework. It serves as the primary interface for loading plugins from
 zSpark configuration during boot time, with session injection and method exposure.
 
 **Phase 2 Architecture**: zUtils now delegates to zLoader.plugin_cache for storage,
@@ -12,7 +12,7 @@ eliminating redundancy and enabling unified plugin access across all subsystems.
 
 Purpose
 -------
-The zUtils subsystem serves as Layer 2, Position 1 in the zCLI architecture, providing
+The zUtils subsystem serves as Layer 2, Position 1 in the zKernel architecture, providing
 plugin management capabilities that are available to all higher-layer subsystems. It
 handles boot-time plugin loading from zSpark configuration and delegates storage to
 zLoader.plugin_cache for a unified, framework-wide plugin system.
@@ -22,7 +22,7 @@ Architecture
 **Layer 2, Position 1 - Core Abstraction (Plugin Management)**
     - Position: First subsystem in Layer 2, before zShell, zWizard, zData
     - Dependencies: zConfig (logger, display), zLoader (plugin_cache)
-    - Used By: zCLI.py (boot-time plugin loading), zShell (utils command)
+    - Used By: zKernel.py (boot-time plugin loading), zShell (utils command)
     - Purpose: Plugin loading facade + delegation to zLoader.plugin_cache
 
 **Unified Plugin Architecture (Phase 2)**:
@@ -77,7 +77,7 @@ Design Decisions
 Plugin Loading Strategy
 -----------------------
 **When to Load**:
-    - During zCLI.__init__() via _load_plugins() call
+    - During zKernel.__init__() via _load_plugins() call
     - Plugins specified in zSpark["plugins"] configuration
     - Supports both file paths and module import paths
 
@@ -92,7 +92,7 @@ Plugin Loading Strategy
 
 **Session Injection**:
     - module.zcli = self.zcli (injected by zLoader.plugin_cache)
-    - Enables plugins to access all zCLI subsystems
+    - Enables plugins to access all zKernel subsystems
 
 **Method Exposure (Phase 2 - Secure)**:
     - Checks for __all__ attribute in plugin module
@@ -105,7 +105,7 @@ Plugin Loading Strategy
 External Usage
 --------------
 **Used By**:
-    - zCLI/zCLI.py (Line 119-120)
+    - zCLI/zKernel.py (Line 119-120)
       Usage: self.utils = zUtils(self); self._load_plugins()
       Purpose: Boot-time plugin loading
 
@@ -122,18 +122,18 @@ Usage Examples
 --------------
 **Boot-Time Loading**:
     >>> zSpark = {"plugins": ["/path/to/my_plugin.py"]}
-    >>> zcli = zCLI(zSpark)
+    >>> zcli = zKernel(zSpark)
     >>> # Plugins now in zLoader.plugin_cache
     >>> zcli.utils.my_plugin_function()
 
 **Direct Loading**:
-    >>> zcli = zCLI()
+    >>> zcli = zKernel()
     >>> zcli.utils.load_plugins(["/path/to/helper.py"])
     >>> zcli.utils.helper_function()
 
 **Cross-Access (Phase 2)**:
     >>> # Load via zSpark
-    >>> zcli = zCLI({"plugins": ["my_plugin.py"]})
+    >>> zcli = zKernel({"plugins": ["my_plugin.py"]})
     >>> # Access via &PluginName syntax
     >>> result = zcli.zparser.resolve_plugin_invocation("&my_plugin.function()")
     >>> # Works! Both use same cache
@@ -175,7 +175,7 @@ Internal:
     - zLoader.plugin_cache (for unified plugin storage)
 
 External:
-    - zCLI imports: importlib, importlib.util, os
+    - zKernel imports: importlib, importlib.util, os
     - zConfig: logger, display (via zcli instance)
 
 Integration Notes
@@ -204,7 +204,7 @@ Performance Considerations
 Thread Safety
 -------------
 This class is NOT thread-safe. Plugin loading delegates to zLoader.plugin_cache,
-which is also not thread-safe. If using zCLI in a multi-threaded environment,
+which is also not thread-safe. If using zKernel in a multi-threaded environment,
 ensure plugins are loaded during initialization (single-threaded) or add proper locking.
 
 Security Notes (Phase 2)
@@ -263,7 +263,7 @@ Version History
 - v1.5.3: Original implementation (89 lines, basic plugin loading)
 """
 
-from zCLI import importlib, os, time, Any, Dict, List, Optional, Union, Path
+from zKernel import importlib, os, time, Any, Dict, List, Optional, Union, Path
 
 # ============================================================================
 # MODULE CONSTANTS
@@ -326,16 +326,16 @@ class zUtils:
     Plugin management facade with unified cache architecture.
 
     This class provides the zUtils subsystem, which loads plugins from zSpark
-    configuration during zCLI initialization. Phase 2: It delegates all storage
+    configuration during zKernel initialization. Phase 2: It delegates all storage
     to zLoader.plugin_cache, eliminating redundancy and enabling unified plugin
     access across zUtils (boot-time) and zParser (runtime &PluginName).
 
     Attributes
     ----------
     zcli : Any
-        Reference to main zCLI instance (provides access to all subsystems)
+        Reference to main zKernel instance (provides access to all subsystems)
     logger : Any
-        Reference to zCLI logger for debug/info logging
+        Reference to zKernel logger for debug/info logging
     display : Any
         Reference to zDisplay for visual feedback and progress display
     mycolor : str
@@ -352,18 +352,18 @@ class zUtils:
         and zData. This ensures plugins are available to all higher-layer subsystems.
 
     **Plugin Loading**:
-        Plugins are loaded via load_plugins() method, typically called from zCLI._load_plugins()
+        Plugins are loaded via load_plugins() method, typically called from zKernel._load_plugins()
         immediately after zUtils initialization. Storage is delegated to zLoader.plugin_cache.
     """
 
     def __init__(self, zcli: Any) -> None:
         """
-        Initialize zUtils subsystem with zCLI instance.
+        Initialize zUtils subsystem with zKernel instance.
 
         Parameters
         ----------
         zcli : Any
-            zCLI instance providing access to logger, display, and all subsystems
+            zKernel instance providing access to logger, display, and all subsystems
 
         Notes
         -----
@@ -459,7 +459,7 @@ class zUtils:
                 - zcli.session: Session data (zSpace, zMachine, etc.)
                 - zcli.data: Data subsystem access
                 - zcli.display: Display subsystem access
-                - All other zCLI subsystems
+                - All other zKernel subsystems
 
         **Error Handling**:
             Best-effort loading: plugin failures don't crash boot.

@@ -6,7 +6,7 @@ These examples showcase zComm's core communication features.
 
 **`lvl0_hello/1_hello_comm.py`**
 - The simplest possible introduction to zComm
-- Shows zComm auto-initializes with zCLI
+- Shows zComm auto-initializes with zKernel
 - Checks if a port is available
 - Zero configuration required
 

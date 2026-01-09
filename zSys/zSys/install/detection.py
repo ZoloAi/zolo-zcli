@@ -2,7 +2,7 @@
 """
 Installation detection utilities (Layer 0 - System Foundation).
 
-Provides portable installation type detection for zCLI without any
+Provides portable installation type detection for zKernel without any
 framework dependencies. Used by main.py bootstrap logger and info banner.
 """
 
@@ -12,17 +12,17 @@ import os
 
 def detect_installation_type(zcli_package, detailed: bool = False) -> str:
     """
-    Detect zCLI installation type in a portable way.
+    Detect zKernel installation type in a portable way.
     
     Args:
-        zcli_package: The imported zCLI package (for __file__ access)
+        zcli_package: The imported zKernel package (for __file__ access)
         detailed: If True, return detailed path info; if False, return simple type string
     
     Returns:
         str: Installation type ("editable", "standard", "uv", etc.)
     
     Examples:
-        >>> import zCLI as zcli_package
+        >>> import zKernel as zcli_package
         >>> detect_installation_type(zcli_package, detailed=False)
         'editable'
         >>> detect_installation_type(zcli_package, detailed=True)

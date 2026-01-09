@@ -13,12 +13,12 @@ Architecture:
 
 Dependencies:
 - typing (Python standard library)
-- zCLI.L1_Foundation.a_zConfig (session keys)
+- zKernel.L1_Foundation.a_zConfig (session keys)
 
 Created: Phase 3.4.8 - Extract DRY Helpers
 """
 
-from zCLI import Any, Dict
+from zKernel import Any, Dict
 
 
 def reload_current_file(walker: Any) -> Dict[str, Any]:

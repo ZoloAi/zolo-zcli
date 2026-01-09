@@ -12,8 +12,8 @@ This is Layer 0 infrastructure - basic auth primitives.
 For three-tier authentication (zSession, Application, Dual), see zBifrost (Layer 2).
 """
 
-from zCLI import Any, Optional, Dict
-from zCLI import WebSocketServerProtocol
+from zKernel import Any, Optional, Dict
+from zKernel import WebSocketServerProtocol
 from urllib.parse import urlparse, parse_qs
 from .comm_constants import (
     WS_CLOSE_CODE_POLICY_VIOLATION,

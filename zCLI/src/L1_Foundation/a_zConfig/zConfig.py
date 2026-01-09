@@ -1,8 +1,8 @@
 # zCLI/subsystems/zConfig/zConfig.py
 """Cross-platform configuration management with hierarchical loading and secret support."""
 
-from zCLI import sys, Any, Dict, Optional, Union
-from zCLI.utils import print_ready_message, validate_zcli_instance
+from zKernel import sys, Any, Dict, Optional, Union
+from zKernel.utils import print_ready_message, validate_zkernel_instance
 from .zConfig_modules import (
     ConfigValidator,
     ConfigValidationError,
@@ -33,7 +33,7 @@ class zConfig:
     """Configuration management with hierarchical loading and cross-platform support."""
 
     # Type hints for instance attributes
-    zcli: Any  # zCLI instance
+    zcli: Any  # zKernel instance
     zSpark: Optional[Dict[str, Any]]
     sys_paths: zConfigPaths
     app_root: Optional[Any]  # App-specific storage root (Path or None)
@@ -57,12 +57,12 @@ class zConfig:
             6. Initialize WebSocket and HTTP server configs
         
         Args:
-            zcli: zCLI instance
+            zcli: zKernel instance
             zSpark_obj: Optional configuration dictionary from zSpark
         """
 
-        # Validate zCLI instance, pre zSession creation
-        validate_zcli_instance(zcli, SUBSYSTEM_NAME, require_session=False)
+        # Validate zKernel instance, pre zSession creation
+        validate_zkernel_instance(zcli, SUBSYSTEM_NAME, require_session=False)
         self.zcli = zcli
         self.zSpark = zSpark_obj
 

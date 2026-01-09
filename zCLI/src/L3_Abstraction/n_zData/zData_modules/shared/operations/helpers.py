@@ -128,7 +128,7 @@ Example 4: Display validation errors
 
 """
 
-from zCLI import Any, Dict, Optional, Tuple
+from zKernel import Any, Dict, Optional, Tuple
 from zSys.errors import DatabaseNotInitializedError
 from ..parsers import parse_where_clause, parse_value
 

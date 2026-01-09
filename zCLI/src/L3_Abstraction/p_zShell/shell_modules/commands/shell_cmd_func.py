@@ -18,8 +18,8 @@ COMMAND SYNTAX:
     func <function_path> [args...]
     
     Examples:
-        func @.zCLI.version.get_version
-        func @.zCLI.version.get_package_info
+        func @.zKernel.version.get_version
+        func @.zKernel.version.get_package_info
         func @.utils.helpers.process_data mydata
         func ~./Users/name/scripts/helper.py.custom_function arg1 arg2
 
@@ -27,7 +27,7 @@ PATH RESOLUTION:
     The func command supports full zPath notation for function resolution:
     
     • Workspace-relative (@.):
-        func @.zCLI.version.get_version
+        func @.zKernel.version.get_version
         Resolves to: {workspace}/zCLI/version.py::get_version()
         
     • Absolute file path (~.):
@@ -186,7 +186,7 @@ UI ADAPTER PATTERN:
 
 TYPE SAFETY:
     All functions include comprehensive type hints using types imported from
-    the zCLI namespace for consistency across the framework. Helper functions
+    the zKernel namespace for consistency across the framework. Helper functions
     return Optional[Dict[str, str]] for error cases, None for success.
 
 ERROR HANDLING:
@@ -226,12 +226,12 @@ FUTURE ENHANCEMENTS:
     • func list: Show available functions in workspace/package
     • zDisplay integration: User-friendly error messages (currently via logger)
 
-Author: zCLI Framework
+Author: zKernel Framework
 Version: 1.5.4+
-Module: zShell (Command Executors - Group C: zCLI Subsystem Integration)
+Module: zShell (Command Executors - Group C: zKernel Subsystem Integration)
 """
 
-from zCLI import Any, Dict, Optional, List
+from zKernel import Any, Dict, Optional, List
 
 
 # ============================================================================
@@ -280,7 +280,7 @@ def _validate_zfunc_subsystem(zcli: Any) -> Optional[Dict[str, str]]:
     was not initialized properly.
     
     Args:
-        zcli: zCLI instance to validate
+        zcli: zKernel instance to validate
         
     Returns:
         Optional[Dict[str, str]]: Error dict if validation fails, None if valid
@@ -317,7 +317,7 @@ def _validate_parsed_command(zcli: Any, parsed: Dict[str, Any]) -> Optional[Dict
     to extract function name and arguments.
     
     Args:
-        zcli: zCLI instance for logging
+        zcli: zKernel instance for logging
         parsed: Parsed command dict to validate
         
     Returns:
@@ -381,7 +381,7 @@ def _validate_function_name(zcli: Any, func_name: str) -> Optional[str]:
     delegating to zFunc. Does not validate path syntax (delegated to zParser).
     
     Args:
-        zcli: zCLI instance for logging
+        zcli: zKernel instance for logging
         func_name: Function name or zPath to validate
         
     Returns:
@@ -422,7 +422,7 @@ def _validate_args_count(zcli: Any, args: List[str]) -> Optional[str]:
     cause performance problems or buffer overflows.
     
     Args:
-        zcli: zCLI instance for logging
+        zcli: zKernel instance for logging
         args: Argument list to validate
         
     Returns:
@@ -450,7 +450,7 @@ def _format_args(zcli: Any, args: List[str]) -> str:
     None values, and whitespace.
     
     Args:
-        zcli: zCLI instance for logging
+        zcli: zKernel instance for logging
         args: List of argument strings from parsed command
         
     Returns:
@@ -489,7 +489,7 @@ def _build_func_expression(zcli: Any, func_name: str, args: List[str]) -> str:
     zcli.zfunc.handle(). Uses template for consistent formatting.
     
     Args:
-        zcli: zCLI instance for logging
+        zcli: zKernel instance for logging
         func_name: Function name or zPath
         args: List of argument strings
         
@@ -525,7 +525,7 @@ def _handle_execution_error(
     error dict for shell_executor to display.
     
     Args:
-        zcli: zCLI instance for logging
+        zcli: zKernel instance for logging
         error: Exception raised during execution
         func_name: Original function name/path
         func_expr: Complete zFunc expression that failed
@@ -584,7 +584,7 @@ def execute_func(zcli: Any, parsed: Dict[str, Any]) -> Any:
     delegates all actual work (path resolution, loading, execution) to zFunc.
     
     Args:
-        zcli: zCLI instance with zfunc subsystem, logger, and session
+        zcli: zKernel instance with zfunc subsystem, logger, and session
         parsed: Parsed command dict from shell parser with keys:
             - action: Function name or zPath (str)
             - args: List of argument strings (List[str])
@@ -612,7 +612,7 @@ def execute_func(zcli: Any, parsed: Dict[str, Any]) -> Any:
     Examples:
         Basic function call:
             >>> parsed = {
-            ...     "action": "@.zCLI.version.get_version",
+            ...     "action": "@.zKernel.version.get_version",
             ...     "args": [],
             ...     "options": {}
             ... }

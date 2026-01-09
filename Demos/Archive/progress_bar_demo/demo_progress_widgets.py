@@ -8,10 +8,10 @@ Week 4.3 - Declarative _progress metadata pattern
 Week 6.4.11b - Swiper implementation + rename to TimeBased
 """
 from pathlib import Path
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Initialize zCLI with declarative zUI
-z = zCLI({
+z = zKernel({
     "zWorkspace": str(Path(__file__).parent),
     "zVaFile": "@.zUI.progress_demos",
     "zBlock": "ProgressDemoMenu"

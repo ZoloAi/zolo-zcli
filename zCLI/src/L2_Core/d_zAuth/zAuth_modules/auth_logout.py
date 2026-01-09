@@ -38,8 +38,8 @@ Usage:
 ═══════════════════════════════════════════════════════════════════════════════
 """
 
-from zCLI import Any, Dict
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
+from zKernel import Any, Dict
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import (
     SESSION_KEY_ZAUTH,
     SESSION_KEY_ZMODE,
     ZMODE_ZBIFROST,
@@ -53,7 +53,7 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
     CONTEXT_ZSESSION,
     CONTEXT_DUAL
 )
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SessionConfig
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SessionConfig
 
 # Constants
 LOG_PREFIX = "[zLogout]"
@@ -76,7 +76,7 @@ def handle_zLogout(
         app_name: Application name to logout from (e.g., "zCloud")
         zConv: Form data (not used for logout, but required for consistency)
         zContext: Dialog context (not used for logout, but required for consistency)
-        zcli: zCLI instance (provides session, logger access)
+        zcli: zKernel instance (provides session, logger access)
     
     Returns:
         Dict[str, Any]: Response dict for gate completion
@@ -195,7 +195,7 @@ def _is_bifrost_mode(zcli: Any) -> bool:
     Check if current mode is Bifrost (GUI).
     
     Args:
-        zcli: zCLI instance
+        zcli: zKernel instance
     
     Returns:
         bool: True if Bifrost mode, False if Terminal mode

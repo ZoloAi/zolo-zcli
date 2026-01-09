@@ -161,7 +161,7 @@ Internal:
     - None (standalone cache implementation)
 
 External:
-    - zCLI imports: time, Any, Dict, List, Optional
+    - zKernel imports: time, Any, Dict, List, Optional
     - zConfig constants: SESSION_KEY_ZCACHE, ZCACHE_KEY_SCHEMA
 
 Performance Considerations
@@ -176,7 +176,7 @@ Performance Considerations
 Thread Safety
 -------------
 This class is NOT thread-safe. Both in-memory connections and session dict access
-are not synchronized. If using zCLI in a multi-threaded environment, ensure proper
+are not synchronized. If using zKernel in a multi-threaded environment, ensure proper
 locking around connection access and transaction operations.
 
 See Also
@@ -193,8 +193,8 @@ Version History
 - v1.5.3: Original implementation (126 lines, basic connection + transaction)
 """
 
-from zCLI import time, Any, Dict, List, Optional
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZCACHE, ZCACHE_KEY_SCHEMA
+from zKernel import time, Any, Dict, List, Optional
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZCACHE, ZCACHE_KEY_SCHEMA
 
 # ============================================================================
 # MODULE CONSTANTS

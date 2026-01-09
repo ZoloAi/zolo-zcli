@@ -53,12 +53,12 @@ Integration Points:
 
 Usage Example:
     # Import from aggregator (recommended)
-    from zCLI.L2_Core.k_zOpen.open_modules import resolve_zpath, open_url, open_file
+    from zKernel.L2_Core.k_zOpen.open_modules import resolve_zpath, open_url, open_file
 
     # Or import from specific modules (also valid)
-    from zCLI.L2_Core.k_zOpen.open_modules.open_paths import resolve_zpath
-    from zCLI.L2_Core.k_zOpen.open_modules.open_urls import open_url
-    from zCLI.L2_Core.k_zOpen.open_modules.open_files import open_file
+    from zKernel.L2_Core.k_zOpen.open_modules.open_paths import resolve_zpath
+    from zKernel.L2_Core.k_zOpen.open_modules.open_urls import open_url
+    from zKernel.L2_Core.k_zOpen.open_modules.open_files import open_file
 
     # Usage (typically called from zOpen facade)
     path = resolve_zpath("@.README.md", session, logger)
@@ -66,9 +66,9 @@ Usage Example:
 
 Design Pattern:
     This aggregator follows the same pattern as:
-    - zCLI.subsystems.zLoader.loader_modules
-    - zCLI.subsystems.zFunc.zFunc_modules
-    - zCLI.subsystems.zDialog.dialog_modules
+    - zKernel.subsystems.zLoader.loader_modules
+    - zKernel.subsystems.zFunc.zFunc_modules
+    - zKernel.subsystems.zDialog.dialog_modules
 
     The pattern provides:
     - Centralized import point
@@ -80,7 +80,7 @@ Version History:
     - v1.5.4: Created as part of zOpen modular refactoring
     - v1.5.4: Industry-grade documentation and public API definition
 
-Author: zCLI Development Team
+Author: zKernel Development Team
 """
 
 # Import from foundation modules

@@ -1,13 +1,13 @@
 # zCLI/subsystems/zComm/__init__.py
 """
-Communication & Service Management Subsystem for zCLI.
+Communication & Service Management Subsystem for zKernel.
 
 This package provides low-level communication infrastructure including HTTP client,
-service management, and network utilities for zCLI applications.
+service management, and network utilities for zKernel applications.
 
 Architecture:
     zComm is a Layer 0 subsystem (initialized before zDisplay) that provides the
-    communication backbone for zCLI. It manages:
+    communication backbone for zKernel. It manages:
     
     - HTTP Communication: Synchronous HTTP requests via HTTPClient
     - Service Management: Local service lifecycle (PostgreSQL, Redis, MongoDB)
@@ -21,7 +21,7 @@ Main Components:
 
 Usage:
     ```python
-    from zCLI.L1_Foundation.b_zComm import zComm
+    from zKernel.L1_Foundation.b_zComm import zComm
     
     # Initialize zComm (done automatically by zCLI)
     comm = zComm(zcli_instance)

@@ -59,7 +59,7 @@ In terminal mode, images display as:
 This ensures terminal users get full metadata even if they can't view the image inline.
 """
 
-from zCLI import Any, Dict, Optional
+from zKernel import Any, Dict, Optional
 
 # Import constants from centralized module
 from ..display_constants import (
@@ -130,15 +130,15 @@ class MediaEvents:
 
         # NEW: Resolve %variable references in src, alt_text, and caption (v1.5.12)
         if "%" in src:
-            from zCLI.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
+            from zKernel.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
             src = resolve_variables(src, self.display.zcli, _context)
         
         if "%" in alt_text:
-            from zCLI.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
+            from zKernel.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
             alt_text = resolve_variables(alt_text, self.display.zcli, _context)
         
         if "%" in caption:
-            from zCLI.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
+            from zKernel.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
             caption = resolve_variables(caption, self.display.zcli, _context)
 
         # NEW: Resolve zPath references in src (v1.5.15: @ and ~ workspace/home paths)

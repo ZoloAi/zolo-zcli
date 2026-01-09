@@ -8,7 +8,7 @@
  * - Terminal displays colored prompts matching semantic meaning
  * - Bifrost renders buttons using zTheme button variants (.zBtn-primary, etc.)
  *
- * Renders button input events from zCLI backend. Creates interactive
+ * Renders button input events from zKernel backend. Creates interactive
  * button elements with zTheme button component classes and WebSocket
  * response handling.
  *
@@ -50,7 +50,7 @@ import { createButton } from './primitives/interactive_primitives.js';
 /**
  * Renders button input events for zDisplay
  *
- * Handles the 'button' event type from zCLI backend, creating
+ * Handles the 'button' event type from zKernel backend, creating
  * interactive button elements with zTheme styling and WebSocket
  * response handling.
  *
@@ -168,9 +168,9 @@ export default class ButtonRenderer {
     button.textContent = label;
 
     // ✅ Apply semantic button variant classes (zTheme button components)
-    // Map zCLI semantic colors to zTheme button variant classes (.zBtn-primary, etc.)
+    // Map zKernel semantic colors to zTheme button variant classes (.zBtn-primary, etc.)
     const colorMap = {
-      'primary': 'zBtn-primary',       // Green (zCLI brand)
+      'primary': 'zBtn-primary',       // Green (zKernel brand)
       'danger': 'zBtn-danger',         // Red (destructive action)
       'success': 'zBtn-success',       // Green (positive action)
       'warning': 'zBtn-warning',       // Orange (cautious action)

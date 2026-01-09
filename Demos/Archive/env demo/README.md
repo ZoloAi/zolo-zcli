@@ -3,7 +3,7 @@
 Micro-step tutorials for the zConfig subsystem. Start at Level 0 and work your way up.
 
 ### Level 0 — `Level_0_Hello/hello_config.py`
-- Initialize zCLI (zConfig loads automatically).
+- Initialize zKernel (zConfig loads automatically).
 - Read the machine hostname and current deployment.
 - Print the active workspace path.
 - **Run:** `python Demos/Layer_0/zConfig_Demo/Level_0_Hello/hello_config.py`

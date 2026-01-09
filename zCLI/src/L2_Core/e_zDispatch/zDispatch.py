@@ -4,7 +4,7 @@
 zDispatch - Core Command Dispatch Subsystem (Facade).
 
 This module provides the zDispatch class, which acts as a facade for command
-dispatch and routing in zCLI. It orchestrates two core components (CommandLauncher
+dispatch and routing in zKernel. It orchestrates two core components (CommandLauncher
 and ModifierProcessor) to provide flexible command execution with modifier support.
 
 Facade Pattern:
@@ -71,7 +71,7 @@ Usage Examples:
     result = handle_zDispatch("action", command, walker=walker)
 
 Thread Safety:
-    - Relies on thread-safe instances from zCLI (logger, display, session)
+    - Relies on thread-safe instances from zKernel (logger, display, session)
     - No internal state mutation during dispatch
     - Components (ModifierProcessor, CommandLauncher) are stateless
 
@@ -80,10 +80,10 @@ Constants:
     and reduce the risk of typos.
 """
 
-from zCLI import Any, Optional, Dict
+from zKernel import Any, Optional, Dict
 
 # Import SESSION_KEY_ZMODE from zConfig for mode detection
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZMODE, ZMODE_ZBIFROST
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZMODE, ZMODE_ZBIFROST
 
 from .dispatch_modules.dispatch_modifiers import ModifierProcessor
 from .dispatch_modules.dispatch_launcher import CommandLauncher
@@ -116,13 +116,13 @@ from .dispatch_modules.dispatch_constants import (
 
 class zDispatch:
     """
-    Core command dispatch subsystem for zCLI (Facade).
+    Core command dispatch subsystem for zKernel (Facade).
     
     Orchestrates command routing through ModifierProcessor and CommandLauncher,
     providing a simplified interface for command execution with modifier support.
     
     Attributes:
-        zcli: Root zCLI instance
+        zcli: Root zKernel instance
         session: Session dictionary from zCLI
         logger: Logger instance from zCLI
         mycolor: Color identifier for display ("DISPATCH")
@@ -148,7 +148,7 @@ class zDispatch:
     """
     
     # Class-level type declarations
-    zcli: Any  # zCLI instance
+    zcli: Any  # zKernel instance
     session: Dict[str, Any]  # Session dictionary
     logger: Any  # Logger instance
     mycolor: str  # Color identifier
@@ -163,13 +163,13 @@ class zDispatch:
         to zCLI, session, and logger, and displays ready message.
         
         Args:
-            zcli: Root zCLI instance providing access to session, logger, and display
+            zcli: Root zKernel instance providing access to session, logger, and display
         
         Raises:
             ValueError: If zcli parameter is None
         
         Examples:
-            # Initialize as part of zCLI startup
+            # Initialize as part of zKernel startup
             dispatch = zDispatch(zcli)
             
             # Access components
@@ -179,7 +179,7 @@ class zDispatch:
         Notes:
             - Validates zcli parameter before initialization
             - Displays ready message using zDisplay
-            - Logs initialization to zCLI logger
+            - Logs initialization to zKernel logger
             - Creates stateless components (ModifierProcessor, CommandLauncher)
         """
         if zcli is None:
@@ -360,12 +360,12 @@ def handle_zDispatch(
     
     Convenience function that provides a simplified interface to zDispatch.handle()
     without requiring direct access to the dispatch instance. Automatically resolves
-    the zCLI instance from either the zcli or walker parameter.
+    the zKernel instance from either the zcli or walker parameter.
     
     Args:
         zKey: Command key (may include modifiers, e.g., "^action", "menu*")
         zHorizontal: Command data (string, dict, or other format)
-        zcli: Optional zCLI instance (used if walker not provided)
+        zcli: Optional zKernel instance (used if walker not provided)
         walker: Optional walker instance (takes precedence over zcli)
         context: Optional context dict with mode and session metadata
     
@@ -407,7 +407,7 @@ def handle_zDispatch(
         3. Else → raise ValueError
         4. Call zcli_instance.dispatch.handle()
     """
-    # Determine zCLI instance (walker takes precedence)
+    # Determine zKernel instance (walker takes precedence)
     if walker:
         zcli_instance = walker.zcli
     elif zcli:

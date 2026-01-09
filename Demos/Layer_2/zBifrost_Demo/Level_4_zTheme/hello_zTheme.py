@@ -18,7 +18,7 @@ How to run:
 4. Watch zTheme auto-render everything beautifully!
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 print("🎨 Starting Hello zCLI Server with zTheme Auto-Rendering...")
 print("📝 Goal: Ultimate simplicity - zTheme handles ALL rendering")
@@ -26,7 +26,7 @@ print("🎉 autoTheme: true = zero custom CSS/JS needed!")
 print()
 
 # Initialize zCLI in zBifrost mode (WebSocket server)
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {
         "host": "127.0.0.1",

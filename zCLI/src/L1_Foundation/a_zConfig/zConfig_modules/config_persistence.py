@@ -1,7 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_persistence.py
-"""Configuration persistence for saving/loading zCLI config changes."""
+"""Configuration persistence for saving/loading zKernel config changes."""
 
-from zCLI import Colors, Any, Dict, List, Optional
+from zKernel import Colors, Any, Dict, List, Optional
 from .config_session import SESSION_KEY_ZMACHINE
 
 # Module Constants
@@ -81,7 +81,7 @@ _HEADER_CONFIG_FILE = "Config file: {file_path}"
 
 
 class ConfigPersistence:
-    """Manages configuration persistence to files - handles only editable zCLI config parts."""
+    """Manages configuration persistence to files - handles only editable zKernel config parts."""
 
     def __init__(self, machine_config: Any, environment_config: Any, paths: Any, zcli: Optional[Any] = None) -> None:
         """Initialize config persistence with dependencies."""

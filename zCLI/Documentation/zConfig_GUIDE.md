@@ -4,11 +4,11 @@
 
 # zConfig
 
-**zConfig** is the **first sub-system** initialized by **zCLI**.
+**zConfig** is the **first sub-system** initialized by **zKernel**.
 > See [**zArchitecture**](../README.md#the-zarchitecture) for full context.
 
 It auto detects **machine context**, **environment**, and manages **in-memory zSessions**.  
-All **other subsystems** rely on **zConfig** for the delerative nature of **zCLI**.
+All **other subsystems** rely on **zConfig** for the delerative nature of **zKernel**.
 
 You get: 
 
@@ -25,10 +25,10 @@ You get:
 
 The tutorials below are organized in a bottom-up fashion. Every tutorial below has a working demo you can run and modify.
 
-**A Note on Learning zCLI:**  
+**A Note on Learning zKernel:**  
 Each tutorial (lvl1, lvl2, lvl3...) progressively introduces more complex features of **this subsystem**. The early tutorials start with familiar imperative patterns (think Django-style conventions) to meet you where you are as a developer.
 
-As you progress through zCLI's subsystems, you'll notice a gradual shift from imperative to declarative patterns. This intentional journey helps reshape your mental model from imperative to declarative thinking. Only when you reach **Layer 3 (Orchestration)** will you see subsystems used **fully declaratively** as intended in production. By then, the true magic of declarative coding will reveal itself, and you'll understand why we started this way.
+As you progress through zKernel's subsystems, you'll notice a gradual shift from imperative to declarative patterns. This intentional journey helps reshape your mental model from imperative to declarative thinking. Only when you reach **Layer 3 (Orchestration)** will you see subsystems used **fully declaratively** as intended in production. By then, the true magic of declarative coding will reveal itself, and you'll understand why we started this way.
 
 Get the demos:
 
@@ -45,9 +45,9 @@ git sparse-checkout set Demos
 
 # **zConfig - Level 1** (Initialization)
 
-### **i. Initialize zCLI**
+### **i. Initialize zKernel**
 
-One line does everything. When you call `zCLI()`, it automatically:
+One line does everything. When you call `zKernel()`, it automatically:
 - **Detects your machine** (OS, CPU, browser, IDE, terminal)
 - **Creates config folders** in your OS-native application support directory (first run)
 - **Loads configs** from multiple sources (system defaults, config files, environment variables)
@@ -56,9 +56,9 @@ One line does everything. When you call `zCLI()`, it automatically:
 No setup files. No configuration needed. **Just import and go**.
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI()  # That's it!
+z = zKernel()  # That's it!
 ```
 
 **🎯 Run the demo to see for yourself**
@@ -69,7 +69,7 @@ python3 Demos/Layer_0/zConfig_Demo/lvl1_initialize/1_initialize.py
 
 [View demo source →](../Demos/Layer_0/zConfig_Demo/lvl1_initialize/1_initialize.py)
 
-When you run `z = zCLI()`, you see colorful banners like "zConfig Ready", "zComm Ready", etc. These are **system messages** - visual feedback showing that internal subsystems are loading successfully.
+When you run `z = zKernel()`, you see colorful banners like "zConfig Ready", "zComm Ready", etc. These are **system messages** - visual feedback showing that internal subsystems are loading successfully.
 
 In addition, between those banners, you'll see the **framework logger** outputting initialization details:
 
@@ -80,37 +80,37 @@ zConfig - DEBUG - Logger initialized at level: INFO
 zComm - DEBUG - Communication subsystem ready
 ```
 
-This is the **framework logger** - it captures DEBUG-level details of all internal zCLI operations automatically. You never need to touch it, but it's invaluable for debugging!
+This is the **framework logger** - it captures DEBUG-level details of all internal zKernel operations automatically. You never need to touch it, but it's invaluable for debugging!
 
-**What are logs?** Logs are like a detailed history book of everything that happens in your application. While those banners display on your screen, zCLI is *also* recording detailed framework operations to a file.
+**What are logs?** Logs are like a detailed history book of everything that happens in your application. While those banners display on your screen, zKernel is *also* recording detailed framework operations to a file.
 
 **The distinction:**
 - **Banners** = what you *see*
 - **Framework logs** = what's *recorded*
 
-**Where are logs stored?** When you initialize zCLI for the first time, it creates a designated directory in your OS-native application support folder.
+**Where are logs stored?** When you initialize zKernel for the first time, it creates a designated directory in your OS-native application support folder.
 
-**This is where all zCLI configurations, logs, and default data live.** Located at:
+**This is where all zKernel configurations, logs, and default data live.** Located at:
 
 - **macOS**: `~/Library/Application Support/zolo-zcli/`
 - **Linux**: `~/.local/share/zolo-zcli/`
 - **Windows**: `%APPDATA%/zolo-zcli/`
 
-Inside this directory, zCLI creates:
+Inside this directory, zKernel creates:
 - `zConfigs/` - Machine and environment configuration files
 - `zUIs/` - Custom UI definitions
 - `logs/` - Application logs (both framework and app logs, kept separate)
 
-> **Note:** This OS-native folder structure is what makes zCLI truly cross-platform - your code works identically on macOS, Linux, and Windows without any path changes!
+> **Note:** This OS-native folder structure is what makes zKernel truly cross-platform - your code works identically on macOS, Linux, and Windows without any path changes!
 >
-> Behind the scenes, zCLI uses **zParser** (subsystem #8) to handle all path operations decleratively. For **advanced** path manipulation and file operations, see [**zParser Guide**](zParser_GUIDE.md).
+> Behind the scenes, zKernel uses **zParser** (subsystem #8) to handle all path operations decleratively. For **advanced** path manipulation and file operations, see [**zParser Guide**](zParser_GUIDE.md).
 
 
 ---
 
 ### **ii. zSpark** - The Simplest Entry Point
 
-**zSpark** is a dictionary you pass `zCLI()` to override any presistent and/or enviornment settings. It has **the highest priority** — whatever you put in zSpark wins over everything else (config files, environment variables, system defaults).
+**zSpark** is a dictionary you pass `zKernel()` to override any presistent and/or enviornment settings. It has **the highest priority** — whatever you put in zSpark wins over everything else (config files, environment variables, system defaults).
 
 **How zConfig resolves configuration** (5 sources, bottom to top priority):
 
@@ -131,7 +131,7 @@ Inside this directory, zCLI creates:
 ```python
 # Production mode (silent)
 zSpark = {"deployment": "Production"}  # Development, Testing, Production
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 ```
 
 **🎯 Try zSpark yourself:**
@@ -150,7 +150,7 @@ python3 Demos/Layer_0/zConfig_Demo/lvl1_initialize/2_zspark.py
 
 In the previous demo, you saw `deployment: "Production"` in the zSpark dictionary. Now let's understand what deployment modes actually do!
 
-The deployment setting controls **how zCLI behaves** in different environments:
+The deployment setting controls **how zKernel behaves** in different environments:
 
 | Mode | Behavior | Default Logger | Use Case |
 |------|----------|----------------|----------|
@@ -160,7 +160,7 @@ The deployment setting controls **how zCLI behaves** in different environments:
 
 > **Note:** The `logger` column shows **default** levels when not explicitly set. You can override: `{"deployment": "Production", "logger": "DEBUG"}` for troubleshooting.
 
-**Default behavior:** If you don't specify a deployment mode (like in the basic `zCLI()` initialization from Level 1.i), zCLI defaults to **Development** mode. This means full output with banners and INFO-level logging - perfect for getting started and seeing everything work!
+**Default behavior:** If you don't specify a deployment mode (like in the basic `zKernel()` initialization from Level 1.i), zKernel defaults to **Development** mode. This means full output with banners and INFO-level logging - perfect for getting started and seeing everything work!
 
 ### iii. Deployment Modes - All Three Options
 
@@ -172,7 +172,7 @@ zSpark = {
     # "deployment": "Testing",      # Clean logs
     "deployment": "Production",    # Minimal (active)
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 ```
 
 **What you'll discover by running each mode:**
@@ -196,16 +196,16 @@ python3 Demos/Layer_0/zConfig_Demo/lvl1_initialize/3_deployment.py
 
 # **zConfig - Level 2** (zSettings)
 
-Now that you understand deployment modes, let's explore **logging in detail**. You saw framework logs during initialization, but zCLI also provides a powerful application logger for your code!
+Now that you understand deployment modes, let's explore **logging in detail**. You saw framework logs during initialization, but zKernel also provides a powerful application logger for your code!
 
 ### **i. Logger Basics - Your First Logs**
 
-Start using the built-in logger. No configuration, no imports beyond zCLI itself!
+Start using the built-in logger. No configuration, no imports beyond zKernel itself!
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI()  # That's it! Logger is ready
+z = zKernel()  # That's it! Logger is ready
 
 # Five log levels, from most to least verbose:
 z.logger.debug("DEBUG: Detailed diagnostic information")
@@ -223,14 +223,14 @@ z.logger.critical("CRITICAL: System failure!")
 
 **Where are your logs stored?**
 
-Remember the zCLI support folder from Level 1? Your logs live in the `logs/` directory, but with a smart twist: **each script gets its own log file**:
+Remember the zKernel support folder from Level 1? Your logs live in the `logs/` directory, but with a smart twist: **each script gets its own log file**:
 
 ```
 ~/Library/Application Support/zolo-zcli/logs/
 ├── my_app.log           # Your app (my_app.py)
 ├── api_server.log       # Another app (api_server.py)
 ├── 1_logger_basics.log  # This demo
-└── zcli-framework.log   # Internal zCLI (automatic, separate)
+└── zcli-framework.log   # Internal zKernel (automatic, separate)
 ```
 
 **🎯 Try it yourself:**
@@ -259,7 +259,7 @@ Check the log file created: `~/Library/.../logs/1_logger_basics.log`
    - Controlled by `logger` setting
    - Goes to `{script_name}.log`
    
-2. **`z.logger.framework`** - Internal zCLI logs
+2. **`z.logger.framework`** - Internal zKernel logs
    - Controlled by `deployment` setting
    - Goes to `zcli-framework.log`
    - Automatic, transparent (you never touch it)
@@ -278,7 +278,7 @@ zSpark = {
     "logger": "INFO",  # Override Production default (ERROR)
     "logger_path": "./logs",  # Custom directory (relative to cwd)
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 z.logger.info("API started")  # Goes to ./logs/api-server.log
 ```
@@ -322,12 +322,12 @@ Check both log files: custom location AND framework location!
 
 ### iii. PROD Logger Level - Silent 
 
-Now discover zCLI's unique 6th logger level that doesn't exist in standard Python logging.
+Now discover zKernel's unique 6th logger level that doesn't exist in standard Python logging.
 
 **Standard Python logging levels:**
 - DEBUG, INFO, WARNING, ERROR, CRITICAL (5 levels)
 
-**zCLI adds a 6th level:**
+**zKernel adds a 6th level:**
 - **PROD** = Silent console + DEBUG file logging
 
 ```python
@@ -335,7 +335,7 @@ zSpark = {
     "deployment": "Production",
     "logger": "PROD",  # The special 6th level!
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 z.logger.info("API started")  # Silent in console, DEBUG in file
 ```
@@ -374,7 +374,7 @@ zSpark = {
     "logger_path": "./logs",
     "zTraceback": True,  # Automatic exception handling
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # Just write your code - errors are handled automatically
 result = handle_request()  # If error occurs, interactive menu launches
@@ -407,7 +407,7 @@ Watch the interactive menu launch when the error occurs!
 
 **🎯 Level 2 Complete!**
 
-You've mastered the development-critical settings: **logging** and **error handling**. zCLI has many more configuration options (network, security, performance), but these two are essential for every project. In Level 3, you'll learn how to **read** all configuration values—from machine detection to environment settings.
+You've mastered the development-critical settings: **logging** and **error handling**. zKernel has many more configuration options (network, security, performance), but these two are essential for every project. In Level 3, you'll learn how to **read** all configuration values—from machine detection to environment settings.
 
 ---
 
@@ -417,7 +417,7 @@ You've mastered the development-critical settings: **logging** and **error handl
 
 Now that you understand configuration basics (Level 1) and settings (Level 2), it's time to **read** configuration values.
 
-Remember from Level 1: zCLI auto-detects your hardware, OS, Python runtime, and tools during initialization. This **zMachine** configuration persists in your zCLI support folder, shared across all projects:
+Remember from Level 1: zKernel auto-detects your hardware, OS, Python runtime, and tools during initialization. This **zMachine** configuration persists in your zKernel support folder, shared across all projects:
 
 - **macOS**: `~/Library/Application Support/zolo-zcli/zConfigs/zConfig.machine.yaml`
 - **Linux**: `~/.local/share/zolo-zcli/zConfigs/zConfig.machine.yaml`
@@ -434,7 +434,7 @@ zSpark = {
     "logger": "INFO",
     "logger_path": "./logs",
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # Get all machine values at once
 machine = z.config.get_machine()
@@ -457,7 +457,7 @@ python3 Demos/Layer_0/zConfig_Demo/lvl3_get/1_zmachine.py
 [View demo source →](../Demos/Layer_0/zConfig_Demo/lvl3_get/1_zmachine.py)
 
 **What you'll discover:**
-- **10 logical categories**: Hardware (System, CPU, Memory, GPU, Network) → Environment (User, Tools) → Software (Python, zCLI) → Settings
+- **10 logical categories**: Hardware (System, CPU, Memory, GPU, Network) → Environment (User, Tools) → Software (Python, zKernel) → Settings
 - **Metal-aware detection**: P-cores vs E-cores on Apple Silicon
 - **GPU capabilities**: Type, vendor, VRAM, compute APIs (Metal, CUDA, ROCm)
 - **Network awareness**: 6 essential properties (interfaces, primary, local IP, MAC, gateway, public IP)
@@ -495,7 +495,7 @@ Below are **all zMachine properties** available via `z.config.get_machine()`:
 | **User & Paths** | username | From USER or USERNAME env var |
 | | home | User's home path |
 | | cwd | Current directory (safe) |
-| | user_data_dir | OS-native zCLI support folder path |
+| | user_data_dir | OS-native zKernel support folder path |
 | | path | Full PATH environment variable |
 | **Development Tools** | ✏️ browser | Chrome, Firefox, Arc, Safari, Brave, Edge, Opera |
 | | ✏️ ide | Cursor, VS Code, Sublime, Vim, Nano, Fleet, Zed, PyCharm, WebStorm |
@@ -507,7 +507,7 @@ Below are **all zMachine properties** available via `z.config.get_machine()`:
 | | python_compiler | Compiler used to build Python |
 | | python_executable | Path to Python executable |
 | | libc_ver | System C library version |
-| **zCLI Installation** | zcli_install_path | Where zCLI package is installed |
+| **zKernel Installation** | zcli_install_path | Where zKernel package is installed |
 | | zcli_install_type | editable (development) or standard |
 | **System Settings** | lang | System locale (en_US.UTF-8, etc.) |
 | | timezone | From TZ or system default |
@@ -537,7 +537,7 @@ Your environment settings persist across all projects, stored alongside zMachine
 - **Linux**: `~/.local/share/zolo-zcli/zConfigs/zConfig.environment.yaml`
 - **Windows**: `%APPDATA%/zolo-zcli/zConfigs/zConfig.environment.yaml`
 
-This means you set your deployment mode once (e.g., "Production") and every zCLI project respects it by default.
+This means you set your deployment mode once (e.g., "Production") and every zKernel project respects it by default.
 
 **Access environment configuration:**
 
@@ -548,7 +548,7 @@ zSpark = {
     "logger": "INFO",
     "logger_path": "./logs",
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # Get all environment values at once
 env = z.config.get_environment()
@@ -645,7 +645,7 @@ So far you've learned about **zMachine** (Layer 2: hardware) and **zEnvironment*
 | **4** | **Dotenv** | **.env/.zEnv** | **Workspace-specific variables** |
 | 5 (highest) | zSpark | Your code | Runtime overrides |
 
-**Layer 4** is where workspace-specific variables live. These come from **dotenv files** (`.env` / `.zEnv`) that zCLI automatically loads from your project folder.
+**Layer 4** is where workspace-specific variables live. These come from **dotenv files** (`.env` / `.zEnv`) that zKernel automatically loads from your project folder.
 
 This is a standard **computer science convention** - without the need to import `python-dotenv`!
 
@@ -654,7 +654,7 @@ This is a standard **computer science convention** - without the need to import 
 **Access workspace variables:**
 
 ```python
-# .zEnv or .env file in your project folder (auto-loaded by zCLI)
+# .zEnv or .env file in your project folder (auto-loaded by zKernel)
 # APP_NAME=My Application
 # API_KEY=secret_key_123
 # DEBUG_MODE=true
@@ -665,7 +665,7 @@ zSpark = {
     "logger": "INFO",
     "logger_path": "./logs",
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # Get values with fallback defaults
 app_name = z.config.environment.get_env_var("APP_NAME", "Unknown")
@@ -693,7 +693,7 @@ python3 3_dotenv.py
 - **Layer 4 priority** - Overrides global config, overridden by zSpark
 
 **Important:**
-- zCLI looks for `.zEnv` (preferred) or `.env` in your current working directory
+- zKernel looks for `.zEnv` (preferred) or `.env` in your current working directory
 - `.zEnv` wins if both files exist
 - **Always add these files to `.gitignore` if they contain secrets!**
 - Use for project-specific values that shouldn't be hardcoded
@@ -716,7 +716,7 @@ zSpark = {
     "logger_path": "./logs",
     "zTraceback": True,
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # Get session dictionary
 session = z.session
@@ -804,7 +804,7 @@ Every configuration layer has a role - **Layer 2** provides hardware specs, **La
 
 | Priority | Source | What | Where | Example |
 |----------|--------|------|-------|---------|
-| **5 (highest)** | **zSpark** | Runtime overrides | Your code | `zCLI({"deployment": "Production"})` |
+| **5 (highest)** | **zSpark** | Runtime overrides | Your code | `zKernel({"deployment": "Production"})` |
 | **4** | **.zEnv** | Workspace secrets | Project folder | `MIN_CPU_CORES=4` |
 | **3** | **zEnvironment** | Global settings | Config file | `deployment: Development` |
 | **2** | **zMachine** | Hardware specs | Config file | `cpu_cores: 8` (auto-detected) |
@@ -821,7 +821,7 @@ zSpark = {
     "logger": "INFO",
     "logger_path": "./logs",
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # Get requirements from .zEnv (Layer 4 - workspace-specific)
 min_cores = int(z.config.environment.get_env_var("MIN_CPU_CORES", "2"))
@@ -896,19 +896,19 @@ You've completed the entire zConfig tutorial journey:
 
 ---
 
-### So Why Use zCLI? 
+### So Why Use zKernel? 
 Declarative vs Imperative - Let's compare what you just **built decleratively** to the **traditional imperative approach**.
 
-### **Your zCLI App (Level 4 Demo)**
+### **Your zKernel App (Level 4 Demo)**
 
 **Files:** 1 Python file + 1 .zEnv file  
 **Lines of code:** ~130 lines total (heavily commented for learning)  
 **Actual logic:** ~60 lines
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"deployment": "Production", "logger": "INFO"})
+z = zKernel({"deployment": "Production", "logger": "INFO"})
 
 # Everything just works:
 # ✓ Hardware detection (42 properties)
@@ -923,7 +923,7 @@ actual_cores = z.config.get_machine("cpu_cores")
 
 ### **Traditional Imperative Approach**
 
-To achieve the same functionality without zCLI:
+To achieve the same functionality without zKernel:
 
 **Files needed:** 8+ files  
 **Lines of code:** ~800-1000+ lines  
@@ -982,9 +982,9 @@ project/
 
 **Total:** ~800-1000 lines of infrastructure code **before** you write your app logic.
 
-### **The zCLI Advantage**
+### **The zKernel Advantage**
 
-| Aspect | zCLI (Declarative) | Traditional (Imperative) |
+| Aspect | zKernel (Declarative) | Traditional (Imperative) |
 |--------|-------------------|--------------------------|
 | **Lines of code** | ~60 lines | ~800-1000 lines |
 | **Files** | 1-2 files | 8+ files |
@@ -996,7 +996,7 @@ project/
 
 ### **Key Benefits**
 
-1. **Declarative Magic**: `z = zCLI()` - everything is ready
+1. **Declarative Magic**: `z = zKernel()` - everything is ready
 2. **Zero Boilerplate**: No config file parsing, no path handling, no logger setup
 3. **Production-Ready**: Metal-aware detection, resource limits, dual loggers
 4. **Maintained**: Framework updates benefit all apps automatically
@@ -1004,7 +1004,7 @@ project/
 
 ### **From Imperative to Declarative**
 
-This is just **subsystem #1 of 18**. As you progress through zCLI's architecture:
+This is just **subsystem #1 of 18**. As you progress through zKernel's architecture:
 - **Layer 0** (zConfig, zComm) - Configuration and communication
 - **Layer 1** (zDisplay, zAuth, zDispatch) - Display, auth, and command dispatch  
 - **Layer 2** (zParser, zLoader, zUtils, zFunc) - Parsing and utilities
@@ -1012,7 +1012,7 @@ This is just **subsystem #1 of 18**. As you progress through zCLI's architecture
 
 You'll see the imperative-to-declarative shift become even more powerful. What traditionally takes thousands of lines becomes a few declarative configurations.
 
-**That's the zCLI philosophy: Focus on WHAT you want, not HOW to build it.**
+**That's the zKernel philosophy: Focus on WHAT you want, not HOW to build it.**
 
 ---
 

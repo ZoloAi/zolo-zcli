@@ -17,14 +17,14 @@ Compare with Level 0:
 Same Python code, different rendering target. That's zCLI!
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 print("🌉 Starting Hello zCLI Server (zBifrost mode)...")
 print("📝 Same code as hello_terminal.py, different rendering target!")
 print()
 
 # Initialize zCLI in zBifrost mode (WebSocket server)
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {
         "host": "127.0.0.1",

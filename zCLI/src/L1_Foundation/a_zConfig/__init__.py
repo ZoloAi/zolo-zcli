@@ -3,7 +3,7 @@
 zConfig - Cross-platform configuration management subsystem.
 
 Provides hierarchical configuration loading, machine/environment detection,
-session management, and logging infrastructure for the zCLI framework.
+session management, and logging infrastructure for the zKernel framework.
 
 Key Responsibilities:
     - Cross-platform path resolution using OS-native conventions

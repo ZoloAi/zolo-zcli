@@ -157,8 +157,8 @@ EXAMPLES
 **zPath Display:**
     >>> runner.run()
     zCLI> where on
-    zCLI [~.projects.myapp]> cd ..
-    zCLI [~.projects]> exit
+    zKernel [~.projects.myapp]> cd ..
+    zKernel [~.projects]> exit
     Goodbye!
 
 ────────────────────────────────────────────────────────────────────────────────
@@ -174,10 +174,10 @@ NOTES
 - History File: Created in ~/.zolo/ directory (hidden, user-specific)
 """
 
-from zCLI import os, Path, Any, Optional, Dict
+from zKernel import os, Path, Any, Optional, Dict
 from .shell_help import HelpSystem
 from .shell_executor import CommandExecutor
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_WIZARD_MODE
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_WIZARD_MODE
 
 try:
     import readline
@@ -206,8 +206,8 @@ PROMPT_ZPATH_TEMPLATE = "zCLI [{}]> "
 # MESSAGES
 # ============================================================
 MSG_GOODBYE = "Goodbye!"
-MSG_STARTING_SHELL = "Starting zCLI shell..."
-MSG_EXITING_SHELL = "Exiting zCLI shell..."
+MSG_STARTING_SHELL = "Starting zKernel shell..."
+MSG_EXITING_SHELL = "Exiting zKernel shell..."
 MSG_HISTORY_ENABLED = "Command history enabled (up/down arrows to navigate)"
 MSG_HISTORY_LOADED = "Loaded command history from %s"
 MSG_HISTORY_SAVED = "Saved command history to %s"
@@ -289,7 +289,7 @@ class ShellRunner:
     the main input loop, persistent command history, and special commands.
     
     Attributes:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         logger: Logger instance for debugging
         display: zDisplay instance for output
         executor: CommandExecutor for command routing
@@ -306,7 +306,7 @@ class ShellRunner:
         History setup is deferred until run() is called (lazy initialization).
         
         Args:
-            zcli: The zCLI instance
+            zcli: The zKernel instance
             
         Examples:
             >>> runner = ShellRunner(zcli)
@@ -451,7 +451,7 @@ class ShellRunner:
         """
         Format current OS working directory as zPath for prompt display.
         
-        Converts OS filesystem path to zCLI zPath notation:
+        Converts OS filesystem path to zKernel zPath notation:
         - Home directory: ~ or ~.folder.subfolder
         - Outside home: absolute path
         
@@ -788,24 +788,24 @@ class ShellRunner:
 
 def launch_zCLI_shell(zcli: Any) -> str:
     """
-    Launch zCLI shell from within the UI.
+    Launch zKernel shell from within the UI.
     
     Wrapper function for launching shell from menu-driven UI mode.
     Displays transition messages and delegates to zcli.run_shell().
     
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         
     Returns:
-        str: Status message "Returned from zCLI shell"
+        str: Status message "Returned from zKernel shell"
         
     Examples:
         >>> launch_zCLI_shell(zcli)
-        # Displays: Launching zCLI Shell from UI
+        # Displays: Launching zKernel Shell from UI
         # Displays: Type 'exit' to return to UI menu
         # [runs shell]
         # Displays: Returning to UI menu
-        "Returned from zCLI shell"
+        "Returned from zKernel shell"
         
     Notes:
         - Used when transitioning from UI menu to shell
@@ -813,7 +813,7 @@ def launch_zCLI_shell(zcli: Any) -> str:
         - Returns status string for UI menu display
     """
     zcli.display.zDeclare(
-        "Launching zCLI Shell from UI",
+        "Launching zKernel Shell from UI",
         color=COLOR_EXTERNAL, indent=INDENT_NORMAL, style=STYLE_FULL
     )
 
@@ -829,5 +829,5 @@ def launch_zCLI_shell(zcli: Any) -> str:
         color=COLOR_EXTERNAL, indent=INDENT_NORMAL, style=STYLE_FULL
     )
 
-    return "Returned from zCLI shell"
+    return "Returned from zKernel shell"
 

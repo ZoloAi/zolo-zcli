@@ -91,7 +91,7 @@ USAGE
 
 **From Main (Terminal Mode):**
     ```python
-    from zCLI.L3_Abstraction.p_zShell import zShell
+    from zKernel.L3_Abstraction.p_zShell import zShell
     
     # Initialize facade
     shell = zShell(zcli)
@@ -102,7 +102,7 @@ USAGE
 
 **From UI Menu (Walker Mode):**
     ```python
-    from zCLI.L3_Abstraction.p_zShell import launch_zCLI_shell
+    from zKernel.L3_Abstraction.p_zShell import launch_zCLI_shell
     
     # Launch from menu
     status = launch_zCLI_shell(zcli)
@@ -158,7 +158,7 @@ NOTES
 - All 3 Level 3 modules are industry-grade (A+, 95/100)
 - Total internal complexity: 2,340 lines hidden behind 3 methods
 - Initialization displays "zShell Ready" message via zDisplay
-- Facade follows same pattern as other zCLI subsystems
+- Facade follows same pattern as other zKernel subsystems
 """
 
 from typing import Any, List
@@ -205,7 +205,7 @@ class zShell:
     HelpSystem). All operations are delegated to these modules.
     
     Attributes:
-        zcli: The zCLI instance (main application object)
+        zcli: The zKernel instance (main application object)
         logger: Logger instance for debugging and info messages
         display: zDisplay instance for mode-agnostic output
         mycolor: Display color for zShell messages (default: "SHELL")
@@ -244,7 +244,7 @@ class zShell:
         - All 3 internal modules are industry-grade (A+, 95/100)
         - Initialization displays "zShell Ready" message
         - Maintains stable API regardless of internal changes
-        - Follows same pattern as other zCLI subsystem facades
+        - Follows same pattern as other zKernel subsystem facades
     """
 
     def __init__(self, zcli: Any) -> None:
@@ -255,7 +255,7 @@ class zShell:
         and HelpSystem (documentation), then displays ready message.
         
         Args:
-            zcli: The zCLI instance (main application object with logger, display, etc.)
+            zcli: The zKernel instance (main application object with logger, display, etc.)
             
         Returns:
             None
@@ -365,7 +365,7 @@ class zShell:
             >>> shell.show_help()
             # Displays:
             # ═══════════════════════════════════════════
-            #  Welcome to zCLI Shell
+            #  Welcome to zKernel Shell
             # ═══════════════════════════════════════════
             # Available Commands: data, func, config...
             # Quick Tips: Type 'help <command>' for details
@@ -382,26 +382,26 @@ class zShell:
 
 def launch_zCLI_shell(zcli: Any) -> str:
     """
-    Launch zCLI shell from within the UI menu.
+    Launch zKernel shell from within the UI menu.
     
     Wrapper function for launching shell from menu-driven UI mode (Walker).
     Provides transition messages and delegates to shell_modules implementation.
     
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         
     Returns:
-        str: Status message "Returned from zCLI shell"
+        str: Status message "Returned from zKernel shell"
         
     Examples:
         >>> # From Walker menu
         >>> status = launch_zCLI_shell(zcli)
-        # Displays: "Launching zCLI Shell from UI"
+        # Displays: "Launching zKernel Shell from UI"
         # Displays: "Type 'exit' to return to UI menu"
         # [runs shell]
         # Displays: "Returning to UI menu"
         >>> print(status)
-        "Returned from zCLI shell"
+        "Returned from zKernel shell"
         
     Notes:
         - Used when transitioning from UI menu to shell

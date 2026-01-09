@@ -129,9 +129,9 @@ routes:
 
 ---
 
-## 📊 Comparison: Flask vs zCLI
+## 📊 Comparison: Flask vs zKernel
 
-| Feature | Flask | zCLI zServer |
+| Feature | Flask | zKernel zServer |
 |---------|-------|--------------|
 | Static folder | `static/` | ✅ `static/` (default) |
 | Static URL | `/static/*` | ✅ `/static/*` (auto) |
@@ -159,7 +159,7 @@ if __name__ == '__main__':
     app.run(debug=True)
 ```
 
-### **zCLI** (Declarative):
+### **zKernel** (Declarative):
 ```python
 # Backend: level4a_backend.py
 z.server = z.comm.create_http_server(
@@ -192,7 +192,7 @@ routes:
 
 ---
 
-**Version**: zCLI v1.5.5  
+**Version**: zKernel v1.5.5  
 **Status**: Production Ready ✅  
 **Test Date**: 2025-11-16
 

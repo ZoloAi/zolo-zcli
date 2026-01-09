@@ -72,9 +72,9 @@ Cleans up your terminal when it gets cluttered
 - **Paste:** `Ctrl + V` or right-click and select Paste
 - **Note:** In older terminals, right-click automatically pastes
 
-## How to follow zCLI Guides?
+## How to follow zKernel Guides?
 
-When a documentation guides (including the zCLI guide) want you to run a command-line, it looks like this:
+When a documentation guides (including the zKernel guide) want you to run a command-line, it looks like this:
 
 ```bash
 python3 --version
@@ -156,9 +156,9 @@ This usually means:
 
 ## You're Ready!
 
-That's everything you need to know to follow the zCLI installation guide. The terminal might feel strange at first, but you'll get comfortable quickly.
+That's everything you need to know to follow the zKernel installation guide. The terminal might feel strange at first, but you'll get comfortable quickly.
 
-**Remember:** Every developer (including the ones who built zCLI) started exactly where you are now. Welcome to your coding journey! 🚀
+**Remember:** Every developer (including the ones who built zKernel) started exactly where you are now. Welcome to your coding journey! 🚀
 
 ---
 

@@ -73,14 +73,14 @@ The shared infrastructure enables this data flow:
 Usage Examples
 -------------
 Using parsers:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared import parse_where_clause, parse_value
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared import parse_where_clause, parse_value
     >>> parse_where_clause("age >= 18 AND status = active")
     {"age": {"$gte": 18}, "status": "active"}
     >>> parse_value("42")
     42
 
 Using DataOperations facade:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared import DataOperations
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared import DataOperations
     >>> ops = DataOperations(zcli, schema, adapter)
     >>> request = {"action": "read", "table": "users", "limit": 10}
     >>> result = ops.route_action("read", request)

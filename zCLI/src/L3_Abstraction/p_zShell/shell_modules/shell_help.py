@@ -2,10 +2,10 @@
 
 # zCLI/subsystems/zShell_modules/zShell_help.py - Help System
 # --------------------------------------------------------------
-"""Help system for zCLI shell - centralized command documentation."""
+"""Help system for zKernel shell - centralized command documentation."""
 
 class HelpSystem:
-    """Help system for zCLI - provides documentation and usage examples."""
+    """Help system for zKernel - provides documentation and usage examples."""
 
     def __init__(self, display=None):
         """Initialize help system with display instance."""
@@ -344,7 +344,7 @@ class HelpSystem:
         """Return welcome message for shell startup."""
         return """
 ============================================================
-                    zCLI Interactive Shell                 
+                    zKernel Interactive Shell                 
 ============================================================
 
 Type 'help' for available commands

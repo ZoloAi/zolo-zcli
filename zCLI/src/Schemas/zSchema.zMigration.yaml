@@ -6,9 +6,9 @@
 # Each data schema with zMigration: true gets its own migration history table.
 #
 # LOCATION:
-#   - System: zCLI/Schemas/zSchema.zMigration.yaml (this file)
+#   - System: zKernel/Schemas/zSchema.zMigration.yaml (this file)
 #   - User: ~/Library/Application Support/zolo-zcli/zSchemas/zSchema.zMigration.yaml
-#   - Copied on first zCLI initialization (like zUI.zcli_sys.yaml)
+#   - Copied on first zKernel initialization (like zUI.zcli_sys.yaml)
 #
 # PURPOSE:
 #   - Track schema evolution over time

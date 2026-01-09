@@ -9,7 +9,7 @@ output events with consistent styling.
 
 Methods:
     - header: Display section headers with formatting
-    - zDeclare: Display zCLI system declarations
+    - zDeclare: Display zKernel system declarations
     - text: Display formatted text content
 
 Pattern:
@@ -18,7 +18,7 @@ Pattern:
 Grade: A+ (Type hints, constants, comprehensive docs)
 """
 
-from zCLI import Any, Optional
+from zKernel import Any, Optional
 from ..display_constants import (
     _KEY_EVENT,
     _EVENT_HEADER,
@@ -36,7 +36,7 @@ class DelegateOutputs:
     """Mixin providing formatted output delegate methods.
     
     These methods provide consistent formatting for common output patterns
-    like headers, colored text, and zCLI declarations.
+    like headers, colored text, and zKernel declarations.
     """
 
     # Output Formatting Delegates
@@ -81,7 +81,7 @@ class DelegateOutputs:
         indent: int = DEFAULT_INDENT, 
         style: Optional[str] = None
     ) -> Any:
-        """Display zCLI system declaration.
+        """Display zKernel system declaration.
         
         Args:
             label: Declaration label/message

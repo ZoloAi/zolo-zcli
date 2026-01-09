@@ -14,7 +14,7 @@
 #   def about():
 #       return render_template('about.html')
 #
-# zCLI: Declarative routes with Jinja2 templates (no decorators!)
+# zKernel: Declarative routes with Jinja2 templates (no decorators!)
 
 Meta:
   base_path: "."

@@ -114,5 +114,5 @@ These demos use Python's built-in `websockets` library:
 pip install websockets
 ```
 
-(Already included with zCLI installation)
+(Already included with zKernel installation)
 

@@ -1,13 +1,13 @@
 # Level 2: zSettings - Logger & Error Handling
 
-**Goal:** Learn to use zCLI's built-in logger through hands-on experience, mastering the dual logger architecture and discovering the unique PROD level.
+**Goal:** Learn to use zKernel's built-in logger through hands-on experience, mastering the dual logger architecture and discovering the unique PROD level.
 
 ## Learning Flow
 
 This level follows a **learn-by-doing** approach:
 1. **Use the logger** → Experience it working (5 standard levels)
 2. **Customize everything** → Directory, filename, level overrides
-3. **Discover PROD level** → zCLI's unique 6th level (silent console + DEBUG file)
+3. **Discover PROD level** → zKernel's unique 6th level (silent console + DEBUG file)
 4. **Error handling** → Automatic exceptions
 
 ## Demos
@@ -20,7 +20,7 @@ zSpark = {
     "deployment": "Production",  # Minimal console output
     "logger": "INFO",  # But with INFO logging
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 z.logger.debug("DEBUG: Detailed diagnostics")
 z.logger.info("INFO: Application status")
@@ -33,7 +33,7 @@ z.logger.critical("CRITICAL: System failure")
 - Five standard log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 - Logs appear in console AND file automatically
 - Two separate loggers: `z.logger` (app) + `z.logger.framework` (internal)
-- App logs: `zcli-app.log` in zCLI support folder
+- App logs: `zcli-app.log` in zKernel support folder
 - Framework logs: `zcli-framework.log` (automatic, transparent)
 
 ---
@@ -48,7 +48,7 @@ zSpark = {
     "logger": "INFO",  # Override Production default (ERROR)
     "logger_path": "./logs",  # Directory: ./logs/
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 # Result: ./logs/my-production-api.log
 ```
 
@@ -61,7 +61,7 @@ z = zCLI(zSpark)
 ---
 
 ### 3. Logger PROD (`3_logger_prod.py`) ⭐ NEW
-**Action:** Discover the 6th logger level (zCLI innovation).
+**Action:** Discover the 6th logger level (zKernel innovation).
 
 ```python
 zSpark = {
@@ -71,14 +71,14 @@ zSpark = {
     "logger_path": "./logs",  # Custom directory
     "zTraceback": True,  # Error handling enabled
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 z.logger.info("API started")  # Silent in console, DEBUG in file
 z.logger.debug("Cache initialized")  # Also silent, but logged
 ```
 
 **Discovery:**
-- PROD is NOT a standard Python log level (zCLI innovation)
+- PROD is NOT a standard Python log level (zKernel innovation)
 - Console: Completely silent (zero output)
 - File: DEBUG level (captures everything)
 - Perfect for: APIs, microservices, daemons
@@ -97,7 +97,7 @@ zSpark = {
     "logger_path": "./logs",
     "zTraceback": True,  # Enable automatic exception handling
 }
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # Nested calls to demonstrate traceback depth
 level_1()  # → level_2() → level_3() → ERROR (interactive menu launches!)
@@ -113,10 +113,10 @@ level_1()  # → level_2() → level_3() → ERROR (interactive menu launches!)
 
 ## Key Concepts
 
-- **Dual logger architecture** - `z.logger` (your app) + `z.logger.framework` (internal zCLI)
+- **Dual logger architecture** - `z.logger` (your app) + `z.logger.framework` (internal zKernel)
 - **App log files** - Default: `{script_name}.log` or custom via `title` parameter
 - **Framework logs** - Always separate in `zcli-framework.log` (transparent, non-configurable)
-- **Six logger levels** - DEBUG, INFO, WARNING, ERROR, CRITICAL, **PROD** (zCLI innovation)
+- **Six logger levels** - DEBUG, INFO, WARNING, ERROR, CRITICAL, **PROD** (zKernel innovation)
 - **PROD level** - Unique feature: silent console, DEBUG to file (for production services)
 - **Smart defaults** - Production→ERROR, Development/Testing→INFO (unless overridden)
 - **Separation of concerns** - `deployment` (framework behavior) ≠ `logger` (app logs) ≠ `logger_path` (where)
@@ -130,7 +130,7 @@ level_1()  # → level_2() → level_3() → ERROR (interactive menu launches!)
 
 1. ✅ **Use it** (Demo 1) - Five standard levels, dual logger architecture
 2. ✅ **Customize it** (Demo 2) - Full control: `title`, `logger_path`, `logger` override
-3. ✅ **Discover PROD** (Demo 3) - zCLI's unique 6th level (silent console, DEBUG file)
+3. ✅ **Discover PROD** (Demo 3) - zKernel's unique 6th level (silent console, DEBUG file)
 4. ✅ **Handle errors** (Demo 4) - Automatic exception handling with clean UI
 
 **Progression:**
@@ -139,7 +139,7 @@ level_1()  # → level_2() → level_3() → ERROR (interactive menu launches!)
 - Demo 3: Discover innovation (PROD = silent production)
 - Demo 4: Debug automatically (no try/except needed)
 
-This follows zCLI's philosophy: Start with familiar patterns, gradually reveal the power.
+This follows zKernel's philosophy: Start with familiar patterns, gradually reveal the power.
 
 ## What's Next?
 

@@ -24,8 +24,8 @@ Architecture:
     zBifrost (Layer 2) → Orchestrates both for Walker-based WebSocket communication
 """
 
-from zCLI import Dict, Optional, Any
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
+from zKernel import Dict, Optional, Any
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import (
     ZAUTH_KEY_ZSESSION,
     ZAUTH_KEY_AUTHENTICATED,
     ZAUTH_KEY_ID,
@@ -42,7 +42,7 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
 _LOG_PREFIX = "[AuthManager]"
 _LOG_AUTH_SUCCESS = "Authenticated"
 _LOG_AUTH_FAIL = "Authentication failed"
-_LOG_ZSESSION_AUTH = "Internal zCLI connection authenticated via session"
+_LOG_ZSESSION_AUTH = "Internal zKernel connection authenticated via session"
 _LOG_APP_AUTH = "Application user authenticated"
 _LOG_DUAL_AUTH = "Dual authentication (zSession + Application)"
 _LOG_BLOCK = "BLOCK"
@@ -64,7 +64,7 @@ _REASON_CONFIG_ERROR = "Server configuration error"
 _REASON_INVALID_ORIGIN = "Invalid origin"
 
 # Authentication Context Values (Three-Tier Authentication)
-_CONTEXT_ZSESSION = "zSession"      # Layer 1: Internal zCLI users
+_CONTEXT_ZSESSION = "zSession"      # Layer 1: Internal zKernel users
 _CONTEXT_APPLICATION = "application"  # Layer 2: External app users
 _CONTEXT_DUAL = "dual"               # Layer 3: Both zSession + Application
 _CONTEXT_NONE = "none"               # No authentication
@@ -108,7 +108,7 @@ class AuthenticationManager:
     Manages WebSocket client authentication with three-tier support.
     
     Supports three authentication layers:
-    1. zSession Auth (Layer 1): Internal zCLI users (no token required)
+    1. zSession Auth (Layer 1): Internal zKernel users (no token required)
     2. Application Auth (Layer 2): External app users (token-based, configurable)
     3. Dual Auth (Layer 3): Both zSession and application simultaneously
     
@@ -201,7 +201,7 @@ class AuthenticationManager:
             0. Basic Auth (zComm Layer 0): Origin validation + token extraction
                - Delegates to walker.zcli.comm.websocket.auth primitives
             
-            1. Check zSession (Layer 1): Internal zCLI connection?
+            1. Check zSession (Layer 1): Internal zKernel connection?
                - If walker.zcli.session["zAuth"]["zSession"]["authenticated"]:
                  Return zSession user (no token required)
             
@@ -218,7 +218,7 @@ class AuthenticationManager:
         
         Args:
             ws: WebSocket connection
-            walker: zCLI walker instance (provides access to zcli, session, auth, data)
+            walker: zKernel walker instance (provides access to zcli, session, auth, data)
             auth_config: Optional per-request auth config (overrides instance config)
         
         Returns:
@@ -234,13 +234,13 @@ class AuthenticationManager:
             None: If authentication failed (connection will be closed)
         
         Examples:
-            # Scenario 1: Internal zCLI connection (no token)
+            # Scenario 1: Internal zKernel connection (no token)
             → Returns: {"context": "zSession", "zSession": {...}}
             
             # Scenario 2: External app user (with token)
             → Returns: {"context": "application", "application": {...}}
             
-            # Scenario 3: zCLI user connecting with app token (dual-auth)
+            # Scenario 3: zKernel user connecting with app token (dual-auth)
             → Returns: {"context": "dual", "zSession": {...}, "application": {...}}
         """
         if not self.require_auth:
@@ -486,7 +486,7 @@ class AuthenticationManager:
         Args:
             ws: WebSocket connection
             token: Authentication token
-            walker: zCLI walker instance
+            walker: zKernel walker instance
             config: Auth configuration (user_model, field names, etc.)
         
         Returns:

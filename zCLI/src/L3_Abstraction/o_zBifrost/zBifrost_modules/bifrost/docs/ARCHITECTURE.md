@@ -145,7 +145,7 @@ Adding new events is simple:
 Event handlers can be tested independently without mocking WebSocket connections.
 
 ### 5. Consistency
-Mirrors zDisplay's architecture - developers see familiar patterns throughout zCLI.
+Mirrors zDisplay's architecture - developers see familiar patterns throughout zKernel.
 
 ---
 

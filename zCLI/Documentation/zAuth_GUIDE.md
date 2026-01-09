@@ -1,7 +1,7 @@
 # zAuth: Three-Tier Authentication & Authorization
 
 ## Overview
-**zAuth** provides enterprise-grade authentication and authorization for zCLI with three-tier architecture, context-aware RBAC, and secure credential management.
+**zAuth** provides enterprise-grade authentication and authorization for zKernel with three-tier architecture, context-aware RBAC, and secure credential management.
 
 **Key Features:**
 - **Three-tier authentication**: zSession (internal), Application (external), Dual-Mode (both)
@@ -15,7 +15,7 @@
 ## Three-Tier Architecture
 
 ### Tier 1: zSession Authentication (Internal)
-**For:** zCLI/Zolo platform users (developers, admins, premium features)
+**For:** zKernel/Zolo platform users (developers, admins, premium features)
 
 ```python
 # Login as internal user
@@ -23,7 +23,7 @@ result = zcli.auth.login("dev@zolo.com", "password")
 
 # Check authentication
 if zcli.auth.is_authenticated():
-    print("Logged in to zCLI platform")
+    print("Logged in to zKernel platform")
 ```
 
 **Session Structure:**
@@ -37,7 +37,7 @@ session["zAuth"]["zSession"] = {
 ```
 
 ### Tier 2: Application Authentication (External)
-**For:** End-users of applications built with zCLI (customers, employees, students)
+**For:** End-users of applications built with zKernel (customers, employees, students)
 
 ```python
 # Authenticate app user
@@ -63,7 +63,7 @@ session["zAuth"]["applications"] = {
 ```
 
 ### Tier 3: Dual-Mode (Both Contexts)
-**For:** Users with both zCLI and application identities (store owners, app developers)
+**For:** Users with both zKernel and application identities (store owners, app developers)
 
 ```python
 # Login to both contexts
@@ -121,7 +121,7 @@ result = zcli.auth.login("user@zolo.com", "password", persist=True)
 # - Session token (random, secure)
 # - Expiry date (7 days from login)
 
-# Automatic session loading on next zCLI start
+# Automatic session loading on next zKernel start
 # No re-login needed if session not expired
 
 # Logout with cleanup
@@ -234,7 +234,7 @@ if zcli.auth.has_role("admin"):
     print("Admin access from either context")
 
 # Context-specific logout
-zcli.auth.logout(context="zSession")      # Logout zCLI only
+zcli.auth.logout(context="zSession")      # Logout zKernel only
 zcli.auth.logout(context="application", app_name="my_store")  # Logout app only
 zcli.auth.logout(context="all")            # Logout everything
 ```
@@ -326,7 +326,7 @@ zcli.auth.logout(context="all")            # Logout everything
 All session keys use zConfig constants for consistency:
 
 ```python
-from zCLI.subsystems.zConfig.zConfig_modules.config_session import (
+from zKernel.subsystems.zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZAUTH,              # "zAuth"
     ZAUTH_KEY_ZSESSION,             # "zSession"
     ZAUTH_KEY_APPLICATIONS,         # "applications"
@@ -373,8 +373,8 @@ zolo ztests
 
 # Or directly via Python
 python3 -c "
-from zCLI import zCLI
-test_cli = zCLI({'zSpace': 'zTestRunner', 'zMode': 'Terminal'})
+from zKernel import zKernel
+test_cli = zKernel({'zSpace': 'zTestRunner', 'zMode': 'Terminal'})
 test_cli.zspark_obj['zVaFile'] = '@.zUI.zAuth_tests'
 test_cli.walker.run()
 "
@@ -448,7 +448,7 @@ zcli.auth.logout(context="all", delete_persistent=True)
 
 ---
 
-## Integration with zCLI Subsystems
+## Integration with zKernel Subsystems
 
 ### zConfig
 Provides all session constants and structure.

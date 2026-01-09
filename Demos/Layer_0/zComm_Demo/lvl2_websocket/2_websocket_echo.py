@@ -15,7 +15,7 @@ Key Discovery:
   - Custom message handler
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 async def echo_handler(websocket, message):
     """Echo messages back to the client."""
@@ -25,7 +25,7 @@ async def echo_handler(websocket, message):
     print(f"  Sent back: {echo_msg}")
 
 # Initialize zCLI
-z = zCLI({
+z = zKernel({
     "deployment": "Production",
     "title": "websocket-echo",
     "logger": "INFO",

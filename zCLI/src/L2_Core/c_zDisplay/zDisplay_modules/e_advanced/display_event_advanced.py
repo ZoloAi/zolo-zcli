@@ -4,7 +4,7 @@ AdvancedData Event Package - Database Query Results with Pagination & Formatting
 
                               ARCHITECTURE OVERVIEW
 
-This module provides advanced data display capabilities for zCLI, specifically
+This module provides advanced data display capabilities for zKernel, specifically
 designed for database query results from the zData subsystem. It consists of
 two main components:
 

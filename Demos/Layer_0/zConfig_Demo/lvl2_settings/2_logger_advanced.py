@@ -13,7 +13,7 @@ Key Discovery:
   - Custom session title (custom log filename)
   - Custom log path (save logs wherever you want)
 """
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
@@ -28,7 +28,7 @@ def run_demo():
         "logger": "INFO",  # Override Production default (ERROR)
         "logger_path": "./logs",  # Directory: ./logs/
     }
-    z = zCLI(zSpark)
+    z = zKernel(zSpark)
 
     print("\n# Configuration:")
     print("  deployment  : Production")

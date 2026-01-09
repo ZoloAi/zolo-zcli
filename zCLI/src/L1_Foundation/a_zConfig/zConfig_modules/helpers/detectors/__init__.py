@@ -7,7 +7,7 @@ This package provides comprehensive machine capability detection, organized by c
 - Media apps (image viewers, video players, audio players)
 - IDE detection (text editors and IDEs)
 - Hardware detection (CPU, GPU, memory, network)
-- System orchestration (auto-detect, config generation, zCLI install info)
+- System orchestration (auto-detect, config generation, zKernel install info)
 """
 
 # Browser detection

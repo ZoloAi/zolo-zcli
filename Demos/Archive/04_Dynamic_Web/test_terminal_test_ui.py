@@ -9,14 +9,14 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 print("\n" + "="*60)
 print("🧪 Testing zUI_test.yaml in Terminal Mode")
 print("="*60)
 print()
 
-z = zCLI({
+z = zKernel({
     "zSpace": os.path.dirname(os.path.abspath(__file__)),
     "zVaFile": "@.zUI.test",
     "zBlock": "zVaF",

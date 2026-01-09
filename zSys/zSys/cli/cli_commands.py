@@ -2,8 +2,8 @@
 """
 CLI command handlers for the zolo entry point.
 
-Bridges main.py (argument parsing) and zCLI framework (execution).
-Each handler initializes zCLI with command-specific config, flushes bootstrap logs,
+Bridges main.py (argument parsing) and zKernel framework (execution).
+Each handler initializes zKernel with command-specific config, flushes bootstrap logs,
 and delegates to the appropriate subsystem.
 
 Handlers:
@@ -106,8 +106,8 @@ def handle_zspark_command(boot_logger, Path, zspark_path: str, verbose: bool = F
         if verbose:
             boot_logger.print_buffered_logs()
 
-        from zCLI import zCLI
-        zcli = zCLI(zspark_config)
+        from zKernel import zKernel
+        zcli = zKernel(zspark_config)
 
         if hasattr(zcli, 'logger'):
             boot_logger.flush_to_framework(zcli.logger, verbose=False)
@@ -230,7 +230,7 @@ def display_info(boot_logger, zcli_package, get_version, get_package_info, detec
     
     Args:
         boot_logger: BootstrapLogger instance
-        zcli_package: Imported zCLI package
+        zcli_package: Imported zKernel package
         get_version: Function to get package version
         get_package_info: Function to get package info dict
         detect_install_type: Function to detect install type
@@ -252,8 +252,8 @@ def handle_shell_command(boot_logger, verbose: bool = False):
         boot_logger: BootstrapLogger instance
         verbose: If True, show bootstrap logs on stdout
     """
-    from zCLI import zCLI  # Lazy import
-    cli = zCLI()
+    from zKernel import zKernel  # Lazy import
+    cli = zKernel()
     boot_logger.flush_to_framework(cli.logger, verbose=verbose)
     cli.run_shell()
 
@@ -266,8 +266,8 @@ def handle_config_command(boot_logger, verbose: bool = False):
         boot_logger: BootstrapLogger instance
         verbose: If True, show bootstrap logs on stdout
     """
-    from zCLI import zCLI  # Lazy import
-    cli = zCLI({'zMode': 'Terminal', 'logger': 'PROD', 'deployment': 'Production'})
+    from zKernel import zKernel  # Lazy import
+    cli = zKernel({'zMode': 'Terminal', 'logger': 'PROD', 'deployment': 'Production'})
     boot_logger.flush_to_framework(cli.logger, verbose=verbose)
     
     cli.config.persistence.show_machine_config()
@@ -280,9 +280,9 @@ def handle_ztests_command(boot_logger, Path, zcli_package, verbose: bool = False
     
     Args:
         boot_logger: BootstrapLogger instance
-        zCLI: zCLI class
+        zCLI: zKernel class
         Path: pathlib.Path class
-        zcli_package: Imported zCLI package (for __file__ access)
+        zcli_package: Imported zKernel package (for __file__ access)
         verbose: If True, show bootstrap logs on stdout
     
     Returns:
@@ -295,21 +295,21 @@ def handle_ztests_command(boot_logger, Path, zcli_package, verbose: bool = False
         project_root = main_file.parent
         test_runner_dir = project_root / "zTestRunner"
     except Exception:
-        # Fallback: use zCLI package location
+        # Fallback: use zKernel package location
         zcli_path = Path(zcli_package.__file__).resolve()
         project_root = zcli_path.parent.parent
         test_runner_dir = project_root / "zTestRunner"
     
     if not test_runner_dir.exists():
         boot_logger.error("zTestRunner directory not found: %s", test_runner_dir)
-        from zCLI import zCLI  # Lazy import
-        temp_cli = zCLI({'zMode': 'Terminal'})
+        from zKernel import zKernel  # Lazy import
+        temp_cli = zKernel({'zMode': 'Terminal'})
         boot_logger.flush_to_framework(temp_cli.logger, verbose=verbose)
         temp_cli.display.text(f"Error: zTestRunner directory not found at {test_runner_dir}")
         return 1
     
-    from zCLI import zCLI  # Lazy import
-    test_cli = zCLI({
+    from zKernel import zKernel  # Lazy import
+    test_cli = zKernel({
         "zSpace": str(test_runner_dir.absolute()),
         "zMode": "Terminal"
     })
@@ -327,7 +327,7 @@ def handle_migrate_command(boot_logger, Path, args, verbose: bool = False):
     
     Args:
         boot_logger: BootstrapLogger instance
-        zCLI: zCLI class
+        zCLI: zKernel class
         Path: pathlib.Path class
         args: Parsed arguments from argparse
         verbose: If True, show bootstrap logs on stdout
@@ -338,14 +338,14 @@ def handle_migrate_command(boot_logger, Path, args, verbose: bool = False):
     app_file = args.app_file
     if not Path(app_file).exists():
         boot_logger.error("App file not found: %s", app_file)
-        from zCLI import zCLI  # Lazy import
-        temp_z = zCLI({'zMode': 'Terminal', 'logger': 'PROD', 'deployment': 'Production'})
+        from zKernel import zKernel  # Lazy import
+        temp_z = zKernel({'zMode': 'Terminal', 'logger': 'PROD', 'deployment': 'Production'})
         boot_logger.flush_to_framework(temp_z.logger, verbose=verbose)
         temp_z.display.text(f"❌ Error: App file not found: {app_file}")
         return 1
     
-    from zCLI import zCLI  # Lazy import
-    z = zCLI({'zMode': 'Terminal'})
+    from zKernel import zKernel  # Lazy import
+    z = zKernel({'zMode': 'Terminal'})
     boot_logger.flush_to_framework(z.logger, verbose=verbose)
     
     return z.data.cli_migrate(
@@ -363,14 +363,14 @@ def handle_uninstall_command(boot_logger, Path, zcli_package, verbose: bool = Fa
     
     Args:
         boot_logger: BootstrapLogger instance
-        zCLI: zCLI class
+        zCLI: zKernel class
         Path: pathlib.Path class
-        zcli_package: Imported zCLI package (for __file__ access)
+        zcli_package: Imported zKernel package (for __file__ access)
         verbose: If True, show bootstrap logs on stdout
     """
     zcli_package_dir = Path(zcli_package.__file__).parent
-    from zCLI import zCLI  # Lazy import
-    uninstall_cli = zCLI({
+    from zKernel import zKernel  # Lazy import
+    uninstall_cli = zKernel({
         "zWorkspace": str(zcli_package_dir),
         "zVaFile": "@.UI.zUI.zcli_sys",
         "zBlock": "Uninstall"

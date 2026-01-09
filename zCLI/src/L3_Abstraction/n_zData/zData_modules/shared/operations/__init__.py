@@ -49,17 +49,17 @@ Usage Examples
 Handlers are called by DataOperations facade, not directly by users:
 
 INSERT operation:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.operations import handle_insert
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.operations import handle_insert
     >>> request = {"table": "users", "fields": ["name", "age"], "values": ["Alice", 30]}
     >>> result = handle_insert(ops, request, display)
 
 READ operation with pagination:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.operations import handle_read
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.operations import handle_read
     >>> request = {"table": "users", "where": "age >= 18", "limit": 20, "offset": 40}
     >>> result = handle_read(ops, request, display)
 
 DROP TABLE with safety:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.operations import handle_drop
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.operations import handle_drop
     >>> request = {"tables": ["temp_table"], "if_exists": True}
     >>> result = handle_drop(ops, request, display)
 

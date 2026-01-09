@@ -17,10 +17,10 @@ Then open: http://127.0.0.1:8080/level1_client.html
 """
 
 from pathlib import Path
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Create zCLI with both HTTP and WebSocket
-z = zCLI({
+z = zKernel({
     "zWorkspace": str(Path(__file__).parent),
     "zVaFile": "@.zUI.level1",
     "zBlock": "Level1Menu",

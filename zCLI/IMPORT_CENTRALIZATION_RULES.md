@@ -1,7 +1,7 @@
-# zCLI Import Centralization Rules
+# zKernel Import Centralization Rules
 
 ## Purpose
-All Python standard library and third-party imports are centralized in `zCLI/__init__.py` to:
+All Python standard library and third-party imports are centralized in `zKernel/__init__.py` to:
 1. **Prevent namespace collisions** (e.g., `time` module vs `datetime.time` class)
 2. **Ensure consistent versioning** across the codebase
 3. **Simplify dependency management**
@@ -9,10 +9,10 @@ All Python standard library and third-party imports are centralized in `zCLI/__i
 
 ## Rules
 
-### ✅ DO: Import from zCLI
+### ✅ DO: Import from zKernel
 ```python
 # In subsystem files
-from zCLI import time, datetime, os, Path, json
+from zKernel import time, datetime, os, Path, json
 ```
 
 ### ❌ DON'T: Direct imports in subsystems
@@ -34,7 +34,7 @@ def some_function():
 
 ### The Bug
 ```python
-# zCLI/__init__.py (BROKEN)
+# zKernel/__init__.py (BROKEN)
 import time                               # Line 223: time module
 from datetime import datetime, date, time, timedelta  # Line 229: OVERWRITES time!
 ```
@@ -45,7 +45,7 @@ from datetime import datetime, date, time, timedelta  # Line 229: OVERWRITES tim
 
 ### The Fix
 ```python
-# zCLI/__init__.py (FIXED)
+# zKernel/__init__.py (FIXED)
 import time                               # Line 223: time module
 # NOTE: Do NOT import 'time' from datetime - it would overwrite the time module
 from datetime import datetime, date, timedelta  # Line 229: time removed
@@ -65,12 +65,12 @@ from datetime import time as datetime_time  # Explicit alias
 
 ## __all__ Export List
 
-All imports in `zCLI/__init__.py` must be listed in `__all__`:
+All imports in `zKernel/__init__.py` must be listed in `__all__`:
 
 ```python
 __all__: List[str] = [
     # Core class
-    "zCLI",
+    "zKernel",
     
     # System modules
     "asyncio", "datetime", "date", "time", "timedelta", ...
@@ -84,7 +84,7 @@ __all__: List[str] = [
 Run this to verify imports work correctly:
 ```bash
 python3 -B -c "
-from zCLI import time, datetime, date, timedelta
+from zKernel import time, datetime, date, timedelta
 assert str(type(time)) == \"<class 'module'>\"
 assert hasattr(time, 'time')
 assert str(type(datetime)) == \"<class 'type'>\"
@@ -105,13 +105,13 @@ import json
 
 ### After (Centralized)
 ```python
-# 1 file (zCLI/__init__.py):
+# 1 file (zKernel/__init__.py):
 import time
 from datetime import datetime, date, timedelta
 import json
 
 # 50 files with:
-from zCLI import time, datetime, json
+from zKernel import time, datetime, json
 ```
 **Benefits**: Single source of truth, no collisions, easy mocking
 
@@ -126,8 +126,8 @@ from asyncio import open_connection as open  # Shadows open()
 
 ### 2. Circular Dependencies
 ```python
-# If zCLI/__init__.py imports from subsystems:
-from zCLI.subsystems.zData import zData  # Circular!
+# If zKernel/__init__.py imports from subsystems:
+from zKernel.subsystems.zData import zData  # Circular!
 ```
 **Solution**: Only import external libraries in `__init__.py`, not internal modules.
 
@@ -135,17 +135,17 @@ from zCLI.subsystems.zData import zData  # Circular!
 ```python
 # Added to imports but forgot __all__
 import new_module  # In imports
-# Missing from __all__ → not accessible via `from zCLI import new_module`
+# Missing from __all__ → not accessible via `from zKernel import new_module`
 ```
 
 ## Maintenance Checklist
 
-When adding new imports to `zCLI/__init__.py`:
+When adding new imports to `zKernel/__init__.py`:
 
 - [ ] Check for namespace collisions (e.g., `time` vs `datetime.time`)
 - [ ] Add to `__all__` export list
 - [ ] Update `EXPORT_COUNT` (auto-calculated from `len(__all__)`)
-- [ ] Verify with `python3 -B -c "from zCLI import new_module; print(new_module)"`
+- [ ] Verify with `python3 -B -c "from zKernel import new_module; print(new_module)"`
 - [ ] Clear `__pycache__` after changes: `find . -name "*.pyc" -delete`
 - [ ] Document breaking changes in this file
 

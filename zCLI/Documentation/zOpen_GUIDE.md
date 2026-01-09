@@ -7,7 +7,7 @@
 
 ## What It Does
 
-**zOpen** handles all file and URL opening operations in zCLI:
+**zOpen** handles all file and URL opening operations in zKernel:
 
 - ✅ **Opens files** - Routes by extension (.html→browser, .txt/.py→IDE)
 - ✅ **Opens URLs** - http/https in your preferred or default browser
@@ -29,7 +29,7 @@
 - Industry-grade: 3-tier modular architecture, 97 constants, comprehensive error handling
 
 ### For Executives
-- **Reduces friction** - Developers open files/URLs without leaving zCLI
+- **Reduces friction** - Developers open files/URLs without leaving zKernel
 - **Cross-platform** - Works on macOS, Linux, Windows
 - **Production-ready** - 83 comprehensive tests covering all scenarios
 - **Extensible** - Easy to add new file types (PDF, images, archives)
@@ -96,9 +96,9 @@ zcli.open.handle({
 ### Basic Usage
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-zcli = zCLI()
+zcli = zKernel()
 
 # Open local file (auto-detects .py → IDE)
 zcli.open.handle("zOpen(/path/to/script.py)")
@@ -469,7 +469,7 @@ if ext in EXTENSIONS_IMAGES:
 
 ## Summary
 
-**zOpen** provides intelligent file and URL opening for zCLI:
+**zOpen** provides intelligent file and URL opening for zKernel:
 
 - ✅ **3-tier architecture** - Modular (paths, URLs, files) + facade + root
 - ✅ **Type detection** - Automatically routes to appropriate handler
@@ -487,4 +487,4 @@ if ext in EXTENSIONS_IMAGES:
 - Uses **zFunc** for hook callback execution
 - Integrates with **zDispatch** for command routing
 
-Use **zOpen** whenever you need to open files or URLs in your zCLI workflows!
+Use **zOpen** whenever you need to open files or URLs in your zKernel workflows!

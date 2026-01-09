@@ -6,7 +6,7 @@ Schema file parsing for zVaFile package.
 Handles parsing, validation, and metadata extraction for zSchema.* files.
 """
 
-from zCLI import Any, Dict, Optional
+from zKernel import Any, Dict, Optional
 
 # Import constants from parent package
 from . import (

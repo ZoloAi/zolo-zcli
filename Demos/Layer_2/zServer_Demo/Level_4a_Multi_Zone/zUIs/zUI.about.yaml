@@ -16,19 +16,19 @@ zVaF:
     zDisplay:
       event: text
       indent: 1
-      content: "zBlog is a demonstration project that mirrors Corey Schafer's Flask Blog Tutorial, but built with zCLI instead of Flask."
+      content: "zBlog is a demonstration project that mirrors Corey Schafer's Flask Blog Tutorial, but built with zKernel instead of Flask."
   
   Why_title:
     zDisplay:
       event: header
       indent: 2
-      content: "Why zCLI?"
+      content: "Why zKernel?"
   
   Why_description:
     zDisplay:
       event: text
       indent: 1
-      content: "zCLI is a declarative Python framework that reduces boilerplate by 90% compared to traditional web frameworks like Flask or Django."
+      content: "zKernel is a declarative Python framework that reduces boilerplate by 90% compared to traditional web frameworks like Flask or Django."
   
   Features_title:
     zDisplay:
@@ -82,7 +82,7 @@ zVaF:
       event: list
       indent: 1
       items:
-        - "Backend: zCLI (Python)"
+        - "Backend: zKernel (Python)"
         - "Frontend: Jinja2 + BifrostClient (JavaScript)"
         - "Database: SQLite (via zData)"
         - "Real-time: WebSocket (via zBifrost)"

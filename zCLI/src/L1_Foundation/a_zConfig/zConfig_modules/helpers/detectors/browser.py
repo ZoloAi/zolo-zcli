@@ -1,7 +1,7 @@
 # zCLI/L1_Foundation/a_zConfig/zConfig_modules/helpers/detectors/browser.py
-"""Browser detection for zCLI machine configuration."""
+"""Browser detection for zKernel machine configuration."""
 
-from zCLI import os, platform, subprocess, shutil
+from zKernel import os, platform, subprocess, shutil
 from typing import Optional
 from .shared import SUBPROCESS_TIMEOUT_SEC, _log_info, _log_warning
 

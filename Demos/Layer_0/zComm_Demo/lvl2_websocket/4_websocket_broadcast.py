@@ -16,7 +16,7 @@ What you'll discover:
     - Real-time synchronization with security
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 # ═══════════════════════════════════════════════════════════
 # zSpark Configuration (Production-ready with authentication)
@@ -35,7 +35,7 @@ zSpark = {
     }
 }
 
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 
 # Define broadcast handler with access to z.comm
 async def broadcast_handler(websocket, message):

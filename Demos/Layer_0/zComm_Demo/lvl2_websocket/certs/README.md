@@ -47,6 +47,6 @@ Or manually:
 ```bash
 openssl req -x509 -newkey rsa:4096 -keyout demo.key -out demo.cert \
   -days 3650 -nodes \
-  -subj "/C=US/ST=Demo/L=Demo/O=zCLI/CN=localhost"
+  -subj "/C=US/ST=Demo/L=Demo/O=zKernel/CN=localhost"
 ```
 

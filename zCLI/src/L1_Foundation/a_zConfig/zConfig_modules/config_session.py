@@ -1,18 +1,18 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_session.py
 """
-Session Configuration and Management for zCLI.
+Session Configuration and Management for zKernel.
 
 Manages runtime session creation with three-tier authentication architecture:
 
 1. zSession Auth (Layer 1): Internal zCLI/Zolo users
-   - session["zAuth"]["zSession"] contains zCLI user credentials
-   - Used for zCLI features, premium plugins, Zolo cloud services
+   - session["zAuth"]["zSession"] contains zKernel user credentials
+   - Used for zKernel features, premium plugins, Zolo cloud services
    - Authenticated via zcli.auth.login()
 
 2. Application Auth (Layer 2): External application users
    - session["zAuth"]["applications"] is a dict of app-specific credentials
    - Multiple apps can be authenticated simultaneously (multi-app support!)
-   - Used for applications BUILT on zCLI (e.g., eCommerce stores, SaaS apps)
+   - Used for applications BUILT on zKernel (e.g., eCommerce stores, SaaS apps)
    - Authenticated via zcli.auth.authenticate_app_user(app_name, token, config)
    - Configurable user model (developer defines schema)
    - session["zAuth"]["active_app"] tracks which app is currently focused
@@ -20,7 +20,7 @@ Manages runtime session creation with three-tier authentication architecture:
 3. Dual-Auth (Layer 3): Both contexts active simultaneously
    - session["zAuth"]["active_context"] = "dual"
    - session["zAuth"]["dual_mode"] = True
-   - Example: Store owner using zCLI analytics on their store
+   - Example: Store owner using zKernel analytics on their store
 
 Session Structure:
     session["session_hash"] = "a1b2c3d4"  # v1.6.0: Cache invalidation token (regenerates on login/logout)
@@ -54,8 +54,8 @@ Session Structure:
     }
 """
 
-from zCLI import secrets, Any, Dict, Optional
-from zCLI.utils import print_ready_message, validate_zcli_instance
+from zKernel import secrets, Any, Dict, Optional
+from zKernel.utils import print_ready_message, validate_zkernel_instance
 from .helpers.detectors.shared import _safe_getcwd
 
 # Import all public constants from centralized constants module
@@ -149,7 +149,7 @@ _LOG_LEVEL_INFO = "INFO"
 
 class SessionConfig:
     """
-    Manages runtime session creation and configuration for zCLI.
+    Manages runtime session creation and configuration for zKernel.
     
     Creates isolated session instances with machine config, environment settings,
     logger initialization, and zSpark integration for programmatic use.
@@ -164,19 +164,19 @@ class SessionConfig:
         zconfig: Optional[Any] = None
     ) -> None:
         """
-        Initialize SessionConfig with machine/environment configs and zCLI instance.
+        Initialize SessionConfig with machine/environment configs and zKernel instance.
         
         Args:
             machine_config: MachineConfig instance for hardware/OS details
             environment_config: EnvironmentConfig instance for deployment settings
-            zcli: zCLI instance (required for validation)
+            zcli: zKernel instance (required for validation)
             zSpark_obj: Optional dict for programmatic configuration override
             zconfig: zConfig instance (required for logger creation)
         
         Raises:
             ValueError: If zconfig is None (required for logger initialization)
         """
-        validate_zcli_instance(zcli, _SUBSYSTEM_NAME, require_session=False)
+        validate_zkernel_instance(zcli, _SUBSYSTEM_NAME, require_session=False)
         if zconfig is None:
             raise ValueError(f"{_SUBSYSTEM_NAME} requires a zConfig instance")
 
@@ -188,7 +188,7 @@ class SessionConfig:
         self.mycolor = _COLOR_MAIN
 
         # Extract log level for log-aware printing
-        from zCLI.utils import get_log_level_from_zspark
+        from zKernel.utils import get_log_level_from_zspark
         self._log_level = get_log_level_from_zspark(zSpark_obj)
 
         # Print ready message (deployment-aware)
@@ -220,7 +220,7 @@ class SessionConfig:
         frontend caches. Frontend should detect hash change and clear stale caches.
         
         Args:
-            session: zCLI session dict
+            session: zKernel session dict
         
         Returns:
             New session hash (8-character hex)
@@ -296,11 +296,11 @@ class SessionConfig:
 
     def create_session(self, machine_config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
-        Create isolated session instance for zCLI with optional machine config.
+        Create isolated session instance for zKernel with optional machine config.
         
         Builds complete session dict with machine config, environment detection,
         zSpark overrides, and logger initialization. Session dict is the foundation
-        for all runtime state in zCLI.
+        for all runtime state in zKernel.
         
         Args:
             machine_config: Optional machine config dict (uses self.machine if None)
@@ -432,7 +432,7 @@ class SessionConfig:
             
             # Handle deprecated PROD level
             if level == _LOG_LEVEL_PROD:
-                from zCLI.utils import Colors
+                from zKernel.utils import Colors
                 if not self.environment.is_production():
                     print(f"{Colors.WARNING}{_LOG_PREFIX} 'PROD' log level is deprecated.{Colors.RESET}")
                     print(f"{Colors.WARNING}{_LOG_PREFIX} Deployment and logger level are now separate!{Colors.RESET}")

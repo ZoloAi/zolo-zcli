@@ -38,7 +38,7 @@ of the data. Validation stops at the first failure (fail-fast):
 - datetime: Datetime format validation (uses zConfig datetime_format)
 
 **Layer 5: Plugin Validators**
-- Custom business logic via zCLI plugin system
+- Custom business logic via zKernel plugin system
 - Cross-field validation support
 - Reusable validation functions
 
@@ -75,7 +75,7 @@ This allows partial updates without requiring all fields.
 
 Plugin Validator Integration
 ----------------------------
-Layer 5 validators use the zCLI plugin system (&plugin.function syntax):
+Layer 5 validators use the zKernel plugin system (&plugin.function syntax):
 
 Schema example:
     email:
@@ -139,7 +139,7 @@ See Also
 - zParser plugin system: Plugin resolution mechanism
 """
 
-from zCLI import Dict, Tuple, Optional, Any, re
+from zKernel import Dict, Tuple, Optional, Any, re
 
 # ============================================================
 # Module Constants - Schema Keys
@@ -312,7 +312,7 @@ class DataValidator:
     
     Plugin Validator Integration
     ---------------------------
-    Plugin validators (Layer 5) are resolved via the zCLI plugin system.
+    Plugin validators (Layer 5) are resolved via the zKernel plugin system.
     Requires zcli instance to be provided during initialization.
     
     Example:
@@ -324,7 +324,7 @@ class DataValidator:
     Attributes:
         schema (Dict): Schema definition with table/field structure
         logger: Logger instance for validation messages
-        zcli: zCLI instance (required for plugin validator resolution)
+        zcli: zKernel instance (required for plugin validator resolution)
         format_validators (Dict): Registry of format validator functions
     """
 
@@ -359,7 +359,7 @@ class DataValidator:
                    If provided, logs warnings for validation failures
                    and debug messages for successful validations.
             
-            zcli: Optional zCLI instance. Required if using plugin validators
+            zcli: Optional zKernel instance. Required if using plugin validators
                   (Layer 5). Provides access to plugin cache and resolution.
         
         Example:
@@ -1097,7 +1097,7 @@ class DataValidator:
         Check custom plugin validator (Layer 5 - business logic).
         
         Plugin validators run AFTER all built-in validators pass (layered validation).
-        Uses existing zCLI plugin infrastructure (&PluginName.function(args) pattern).
+        Uses existing zKernel plugin infrastructure (&PluginName.function(args) pattern).
         
         Args:
             field_name: Name of the field being validated
@@ -1146,10 +1146,10 @@ class DataValidator:
             return None  # Skip invalid syntax
         
         try:
-            # Use existing zCLI plugin infrastructure to resolve and execute
+            # Use existing zKernel plugin infrastructure to resolve and execute
             # Parse the plugin invocation (e.g., "&validators.check_email_domain(['company.com'])")
             # pylint: disable=import-outside-toplevel
-            from zCLI.L2_Core.g_zParser.parser_modules.parser_plugin import (
+            from zKernel.L2_Core.g_zParser.parser_modules.parser_plugin import (
                 _parse_invocation, _parse_arguments
             )
             

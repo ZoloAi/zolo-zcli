@@ -4,7 +4,7 @@
 Command Launcher for zDispatch Subsystem.
 
 This module provides the CommandLauncher class, which handles routing and execution
-of commands within the zCLI framework. It acts as a central dispatcher for various
+of commands within the zKernel framework. It acts as a central dispatcher for various
 command types (string-based and dict-based), routing them to appropriate subsystem
 handlers.
 
@@ -112,10 +112,10 @@ Constants:
     and reduce the risk of typos. See module-level constants below for complete list.
 """
 
-from zCLI import ast, Any, Optional, Dict, Union, List
+from zKernel import ast, Any, Optional, Dict, Union, List
 
 # Import ACTION_PLACEHOLDER and SESSION_KEY_ZMODE from zConfig
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import ACTION_PLACEHOLDER, SESSION_KEY_ZMODE
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import ACTION_PLACEHOLDER, SESSION_KEY_ZMODE
 
 # Import all dispatch constants from centralized location
 from .dispatch_constants import (
@@ -215,7 +215,7 @@ class CommandLauncher:
     
     Attributes:
         dispatch: Parent zDispatch instance
-        zcli: Root zCLI instance
+        zcli: Root zKernel instance
         logger: Logger instance from zCLI
         display: zDisplay instance for UI output
     
@@ -248,7 +248,7 @@ class CommandLauncher:
     
     # Class-level type declarations
     dispatch: Any  # zDispatch instance
-    zcli: Any  # zCLI instance
+    zcli: Any  # zKernel instance
     logger: Any  # Logger instance
     display: Any  # zDisplay instance
 
@@ -2010,7 +2010,7 @@ class CommandLauncher:
         }
         
         # Import and call handle_zLogin
-        from zCLI.L2_Core.d_zAuth.zAuth_modules import handle_zLogin
+        from zKernel.L2_Core.d_zAuth.zAuth_modules import handle_zLogin
         
         self.logger.debug(
             f"[zLauncher] Calling zLogin with zConv keys: {list(zConv.keys())}, "
@@ -2051,7 +2051,7 @@ class CommandLauncher:
         zContext = {}
         
         # Import and call handle_zLogout
-        from zCLI.L2_Core.d_zAuth.zAuth_modules import handle_zLogout
+        from zKernel.L2_Core.d_zAuth.zAuth_modules import handle_zLogout
         
         self.logger.debug(f"[zLauncher] Calling zLogout for app: {app_name}")
         

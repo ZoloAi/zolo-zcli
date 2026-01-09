@@ -1,8 +1,8 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_http_server.py
 """HTTP Server Configuration Module"""
 
-from zCLI import Any, Dict, Optional, os
-from zCLI.utils import print_ready_message
+from zKernel import Any, Dict, Optional, os
+from zKernel.utils import print_ready_message
 
 # Module Constants
 

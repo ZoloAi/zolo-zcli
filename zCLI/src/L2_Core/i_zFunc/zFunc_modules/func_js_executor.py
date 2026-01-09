@@ -11,7 +11,7 @@ Architecture Position
 **Tier 1: Foundation** - Extension for JavaScript function execution
 
 This module extends the zFunc subsystem to support JavaScript alongside Python,
-allowing zCLI applications to call Node.js functions seamlessly.
+allowing zKernel applications to call Node.js functions seamlessly.
 
 Key Functionality
 -----------------
@@ -66,7 +66,7 @@ Example 2: Error handling
     ...     print(f"JavaScript execution failed: {e}")
 """
 
-from zCLI import os, json, subprocess, Any, List
+from zKernel import os, json, subprocess, Any, List
 
 # ============================================================================
 # Constants

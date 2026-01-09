@@ -21,7 +21,7 @@ Pattern:
 Grade: A+ (Type hints, constants, comprehensive docs)
 """
 
-from zCLI import Any, Optional, List, Dict
+from zKernel import Any, Optional, List, Dict
 from ..display_constants import (
     _KEY_EVENT,
     _EVENT_ZSESSION,
@@ -188,7 +188,7 @@ class DelegateSystem:
         
         Args:
             context: Dialog context dictionary
-            zcli: Optional zCLI instance (default: None)
+            zcli: Optional zKernel instance (default: None)
             walker: Optional walker instance (default: None)
             
         Returns:

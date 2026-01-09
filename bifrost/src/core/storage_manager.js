@@ -1,6 +1,6 @@
 /**
  * ════════════════════════════════════════════════════════════════════════════
- * zCLI - StorageManager (Layer 0 Primitive)
+ * zKernel - StorageManager (Layer 0 Primitive)
  * ════════════════════════════════════════════════════════════════════════════
  *
  * Unified storage interface with progressive enhancement:

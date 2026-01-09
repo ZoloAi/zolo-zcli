@@ -149,7 +149,7 @@ Backward-Compatible Aliases:
         - .read → .read_string
 """
 
-from zCLI import json, time, getpass, asyncio, uuid, os, shutil, subprocess, Any, Dict, Union, Optional
+from zKernel import json, time, getpass, asyncio, uuid, os, shutil, subprocess, Any, Dict, Union, Optional
 from .display_constants import (
     # Modes (PUBLIC API)
     MODE_TERMINAL,

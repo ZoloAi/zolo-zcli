@@ -38,7 +38,7 @@ Usage:
     ```
 """
 
-from zCLI import Dict, Any, Optional, Callable
+from zKernel import Dict, Any, Optional, Callable
 
 # Import authentication context constants from bridge_auth (shared auth constants)
 try:

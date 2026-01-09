@@ -6,7 +6,7 @@
 
 ## Overview
 
-zConfig uses a **5-layer configuration hierarchy** where each layer can override the previous one. Understanding this hierarchy is crucial for effective zCLI configuration.
+zConfig uses a **5-layer configuration hierarchy** where each layer can override the previous one. Understanding this hierarchy is crucial for effective zKernel configuration.
 
 ## The 5 Layers (Lowest to Highest Priority)
 
@@ -29,7 +29,7 @@ zConfig uses a **5-layer configuration hierarchy** where each layer can override
 ## Layer 1: Hardcoded Defaults
 
 **Priority:** Lowest  
-**Location:** Built into zCLI code  
+**Location:** Built into zKernel code  
 **Purpose:** Fallback values when nothing else is configured
 
 ```python
@@ -55,7 +55,7 @@ export ZOLO_DEPLOYMENT="Production"
 export ZOLO_LOGGER="ERROR"
 ```
 
-**When used:** When you want consistent settings across ALL zCLI projects on your machine.
+**When used:** When you want consistent settings across ALL zKernel projects on your machine.
 
 ---
 
@@ -108,11 +108,11 @@ z.config.environment.get_env_var("APP_API_KEY")
 ## Layer 5: zSpark (Runtime Dict)
 
 **Priority:** **HIGHEST**  
-**Location:** Passed to `zCLI()` constructor  
+**Location:** Passed to `zKernel()` constructor  
 **Purpose:** Runtime overrides, experimentation, programmatic control
 
 ```python
-z = zCLI({
+z = zKernel({
     "deployment": "Production",  # Overrides everything
     "logger": "ERROR",           # Highest priority
     "zTraceback": True,          # Runtime behavior
@@ -150,7 +150,7 @@ export ZOLO_LOGGER="WARNING"
 # → logger = "DEBUG"
 
 # Layer 5: zSpark
-z = zCLI({"logger": "CRITICAL"})
+z = zKernel({"logger": "CRITICAL"})
 # → logger = "CRITICAL" ✅ WINS!
 ```
 
@@ -165,7 +165,7 @@ z = zCLI({"logger": "CRITICAL"})
 # → deployment = "Production"
 
 # Layer 5: zSpark
-z = zCLI({"deployment": "Debug"})
+z = zKernel({"deployment": "Debug"})
 # → deployment = "Debug" ✅ WINS!
 ```
 
@@ -214,9 +214,9 @@ zSpark accepts deployment in any case:
 
 ```python
 # All work the same:
-z = zCLI({"deployment": "Production"})
-z = zCLI({"Deployment": "Production"})
-z = zCLI({"DEPLOYMENT": "Production"})
+z = zKernel({"deployment": "Production"})
+z = zKernel({"Deployment": "Production"})
+z = zKernel({"DEPLOYMENT": "Production"})
 ```
 
 **Why?** Flexibility for different coding styles.
@@ -228,7 +228,7 @@ z = zCLI({"DEPLOYMENT": "Production"})
 Want to see which layer won?
 
 ```python
-z = zCLI({"deployment": "Production", "logger": "DEBUG"})
+z = zKernel({"deployment": "Production", "logger": "DEBUG"})
 
 # Check what's active
 print(f"Deployment: {z.config.get_environment('deployment')}")

@@ -3,7 +3,7 @@
 """
 zNavigation - Unified Navigation System Subsystem.
 
-This package provides comprehensive navigation functionality for zCLI,
+This package provides comprehensive navigation functionality for zKernel,
 including menu creation, breadcrumb management, navigation state tracking,
 and inter-file linking. The subsystem follows a facade pattern with the
 zNavigation class serving as the primary interface.
@@ -64,10 +64,10 @@ handle_zCrumbs(zBlock, zKey, walker) : function
 
 Usage
 -----
-The recommended usage is via the zCLI core facade::
+The recommended usage is via the zKernel core facade::
 
-    # Initialize zCLI (automatic in production)
-    zcli = zCLI()
+    # Initialize zKernel (automatic in production)
+    zcli = zKernel()
     
     # Use navigation via facade (recommended)
     choice = zcli.navigation.create(
@@ -85,7 +85,7 @@ The recommended usage is via the zCLI core facade::
 For legacy Walker integration (backward compatibility)::
 
     # Import standalone functions
-    from zCLI.L2_Core.f_zNavigation import handle_zLink, handle_zCrumbs
+    from zKernel.L2_Core.f_zNavigation import handle_zLink, handle_zCrumbs
     
     # Use standalone functions (legacy)
     result = handle_zLink("zLink(path.to.file)", walker)
@@ -93,7 +93,7 @@ For legacy Walker integration (backward compatibility)::
 
 Integration
 -----------
-- **Parent**: zCLI core (zCLI.py)
+- **Parent**: zKernel core (zKernel.py)
 - **Used By**: zDispatch (menu system), zWalker (navigation), external clients
 - **Dependencies**: zDisplay, zSession, zParser, zLoader, zFunc
 
@@ -109,7 +109,7 @@ See Also
 - zWalker : Navigation orchestration
 """
 
-from zCLI import List
+from zKernel import List
 
 from .zNavigation import zNavigation, handle_zLink, handle_zCrumbs
 

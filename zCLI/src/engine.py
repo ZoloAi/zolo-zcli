@@ -1,7 +1,7 @@
-# zCLI/zCLI.py — Core zCLI Engine
+# zKernel/engine.py — Core zKernel Engine
 # ═══════════════════════════════════════════════════════════════════════════════
 """
-zCLI Core Engine - Top-Level Orchestrator
+zKernel Core Engine - Top-Level Orchestrator
 
 4-Layer Architecture (bottom-up):
     Layer 0: Foundation       → zConfig, zComm
@@ -63,8 +63,8 @@ SHUTDOWN_STATUS_FAIL: str = "✗"
 # Logger Messages - Info (10)
 # ─────────────────────────────────────────────────────────────────────────────
 LOG_INIT_COMPLETE: str = "zCLI Core initialized - Mode: %s"
-LOG_MODE_TERMINAL: str = "Starting zCLI in Terminal mode..."
-LOG_MODE_ZBIFROST: str = "Starting zCLI in zBifrost mode via zWalker..."
+LOG_MODE_TERMINAL: str = "Starting zKernel in Terminal mode..."
+LOG_MODE_ZBIFROST: str = "Starting zKernel in zBifrost mode via zWalker..."
 LOG_HTTP_START: str = "HTTP server auto-started at %s"
 LOG_SESSION_INIT: str = "Session initialized:"
 LOG_SESSION_ID_PREFIX: str = "  zS_id: %s"
@@ -140,7 +140,7 @@ ZSPARK_PLUGINS_KEY: str = "plugins"
 # ─────────────────────────────────────────────────────────────────────────────
 CONTEXT_VAR_NAME: str = "current_zcli"
 
-# Global context variable for current zCLI instance (thread-safe, async-safe)
+# Global context variable for current zKernel instance (thread-safe, async-safe)
 # Follows Django/Flask/FastAPI pattern for request/application context
 _current_zcli: contextvars.ContextVar = contextvars.ContextVar(CONTEXT_VAR_NAME, default=None)
 
@@ -151,10 +151,10 @@ _current_zcli: contextvars.ContextVar = contextvars.ContextVar(CONTEXT_VAR_NAME,
 
 def get_current_zcli() -> Optional['zCLI']:
     """
-    Get current zCLI instance from thread-local context.
+    Get current zKernel instance from thread-local context.
     
     Thread-safe access following Django/Flask/FastAPI patterns. Used by zExceptions
-    for auto-registration. Returns None if not in a zCLI context.
+    for auto-registration. Returns None if not in a zKernel context.
     """
     return _current_zcli.get()
 
@@ -163,9 +163,9 @@ def get_current_zcli() -> Optional['zCLI']:
 # CORE CLASS - zCLI
 # ═══════════════════════════════════════════════════════════════════════════════
 
-class zCLI:
+class zKernel:
     """
-    Core zCLI Engine - orchestrates 17 subsystems across 4 layers.
+    Core zKernel Engine - orchestrates 17 subsystems across 4 layers.
     
     Attributes (Public):
         config, comm, display, auth, dispatch, navigation, zparser, loader, zfunc,
@@ -192,7 +192,7 @@ class zCLI:
 
     def __init__(self, zSpark_obj: Optional[Dict[str, Any]] = None) -> None:
         """
-        Initialize zCLI with all 17 subsystems in dependency order.
+        Initialize zKernel with all 17 subsystems in dependency order.
         
         Parameters
         ----------
@@ -323,9 +323,9 @@ class zCLI:
         self._register_signal_handlers()
         
         # Note: Constructor returns immediately. Call z.run() to start execution.
-        # Note: zAuth database is workspace-relative (@), ensuring each zCLI instance
+        # Note: zAuth database is workspace-relative (@), ensuring each zKernel instance
         # is fully isolated. Auth DB lazy-loads on first save_session() or grant_permission().
-        # This preserves the "no global state" principle - the secret sauce of zCLI architecture.
+        # This preserves the "no global state" principle - the secret sauce of zKernel architecture.
 
         self.logger.framework.debug(LOG_INIT_COMPLETE, self.session.get(SESSION_KEY_ZMODE))
 
@@ -381,7 +381,7 @@ class zCLI:
 
     def run(self) -> Any:
         """
-        Main entry point - centralized execution for all zCLI modes.
+        Main entry point - centralized execution for all zKernel modes.
         
         Decision Priority:
         1. zServer running + zShell → REPL with HTTP in background

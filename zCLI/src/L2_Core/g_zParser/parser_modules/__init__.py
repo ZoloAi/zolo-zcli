@@ -1,9 +1,9 @@
 # zCLI/subsystems/zParser/parser_modules/__init__.py
 
 """
-Parser modules package - specialized parsing functionality for zCLI.
+Parser modules package - specialized parsing functionality for zKernel.
 
-This package provides comprehensive parsing capabilities for the zCLI framework,
+This package provides comprehensive parsing capabilities for the zKernel framework,
 organized into specialized modules following a bottom-up dependency architecture.
 Each module handles a specific aspect of parsing, from path resolution to command
 parsing to file content parsing.
@@ -72,7 +72,7 @@ Module Breakdown:
         Complexity: High (RBAC transformation, UI file detection)
     
     **vafile/ package** (Specialized):
-        zVaFile (zVacuum File) parsing for declarative zCLI files.
+        zVaFile (zVacuum File) parsing for declarative zKernel files.
         - parse_ui_file: UI file parser with RBAC (CRITICAL for zWalker)
         - parse_schema_file: Database schema file parser
         - parse_config_file: Configuration file parser (NEW in v1.5.4)
@@ -104,29 +104,29 @@ Public API Categories:
 Usage Examples:
 
     >>> # Path operations
-    >>> from zCLI.L2_Core.g_zParser.parser_modules import zPath_decoder, identify_zFile
+    >>> from zKernel.L2_Core.g_zParser.parser_modules import zPath_decoder, identify_zFile
     >>> path = zPath_decoder("zMachine.Config", logger)
     >>> file_type = identify_zFile("zUI.users.yaml")
     
     >>> # Command parsing
-    >>> from zCLI.L2_Core.g_zParser.parser_modules import parse_command
+    >>> from zKernel.L2_Core.g_zParser.parser_modules import parse_command
     >>> cmd = parse_command("zFunc users.list --limit 10", logger)
     
     >>> # Expression evaluation
-    >>> from zCLI.L2_Core.g_zParser.parser_modules import zExpr_eval
+    >>> from zKernel.L2_Core.g_zParser.parser_modules import zExpr_eval
     >>> result = zExpr_eval('{"key": "value"}', logger)
     
     >>> # Plugin invocation
-    >>> from zCLI.L2_Core.g_zParser.parser_modules import is_plugin_invocation, resolve_plugin_invocation
+    >>> from zKernel.L2_Core.g_zParser.parser_modules import is_plugin_invocation, resolve_plugin_invocation
     >>> if is_plugin_invocation("&MyPlugin.do_something()"):
     ...     result = resolve_plugin_invocation("&MyPlugin.do_something()", logger, session)
     
     >>> # File parsing
-    >>> from zCLI.L2_Core.g_zParser.parser_modules import parse_file_content
+    >>> from zKernel.L2_Core.g_zParser.parser_modules import parse_file_content
     >>> data = parse_file_content(raw_yaml, logger, ".yaml")
     
     >>> # zVaFile parsing
-    >>> from zCLI.L2_Core.g_zParser.parser_modules import parse_ui_file
+    >>> from zKernel.L2_Core.g_zParser.parser_modules import parse_ui_file
     >>> ui_data = parse_ui_file(yaml_data, logger, file_path="zUI.users.yaml")
 
 Design Principles:

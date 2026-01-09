@@ -1,6 +1,6 @@
 # zBifrost Client (JavaScript)
 
-Production-ready JavaScript WebSocket client for zCLI's zBifrost bridge.
+Production-ready JavaScript WebSocket client for zKernel's zBifrost bridge.
 
 ## Structure
 
@@ -10,7 +10,7 @@ client/
 │   ├── bifrost_client.js      # Main BifrostClient class
 │   ├── core/                  # Core modules (connection, hooks, logger, message_handler)
 │   ├── rendering/             # Rendering modules (renderer, theme_loader)
-│   └── api/                   # API wrappers (CRUD, zCLI operations) [future]
+│   └── api/                   # API wrappers (CRUD, zKernel operations) [future]
 ├── dist/                      # Built files for production [future]
 └── tests/                     # Unit tests [future]
 ```
@@ -20,7 +20,7 @@ client/
 ### Via CDN (jsDelivr)
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zKernel/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
 
 <script>
   const client = new BifrostClient('ws://localhost:8765', {
@@ -42,7 +42,7 @@ client/
 ### Local Development
 
 ```html
-<script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
+<script src="../../../../zKernel/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
 ```
 
 ## Features
@@ -53,7 +53,7 @@ client/
 - **Hooks System**: Lifecycle callbacks (onConnected, onDisconnected, onMessage, etc.)
 - **CRUD Operations**: `create()`, `read()`, `update()`, `delete()` methods
 - **Auto-Rendering**: `renderTable()`, `renderForm()`, `renderMenu()` helpers
-- **zCLI Integration**: `zFunc()`, `zLink()`, `zOpen()` for backend commands
+- **zKernel Integration**: `zFunc()`, `zLink()`, `zOpen()` for backend commands
 
 ## Documentation
 

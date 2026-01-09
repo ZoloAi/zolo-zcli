@@ -7,7 +7,7 @@ Works with users table storage fields.
 Part of Phase 1.5: Storage Architecture & Quotas
 """
 
-from zCLI import Dict, Any
+from zKernel import Dict, Any
 
 
 class StorageQuotaManager:

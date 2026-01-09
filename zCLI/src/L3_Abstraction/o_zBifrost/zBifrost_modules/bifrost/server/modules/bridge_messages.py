@@ -48,7 +48,7 @@ Example:
     await handler.handle_message(ws, json_message, broadcast_func)
 """
 
-from zCLI import asyncio, json, Dict, Any, Optional, Callable, Awaitable, safe_json_dumps
+from zKernel import asyncio, json, Dict, Any, Optional, Callable, Awaitable, safe_json_dumps
 from .bridge_auth import _CONTEXT_ZSESSION, _CONTEXT_APPLICATION, _CONTEXT_DUAL
 
 # ═══════════════════════════════════════════════════════════
@@ -131,7 +131,7 @@ class MessageHandler:
     Attributes:
         logger: Logger instance for diagnostics
         cache: CacheManager instance for query result caching
-        zcli: zCLI instance for access to subsystems
+        zcli: zKernel instance for access to subsystems
         walker: Walker instance for data operations
         connection_info: ConnectionInfoManager for API discovery
         auth: AuthenticationManager for user context extraction
@@ -152,7 +152,7 @@ class MessageHandler:
         Args:
             logger: Logger instance for diagnostics and error reporting
             cache_manager: CacheManager instance for query result caching
-            zcli: zCLI instance for access to zDisplay, zDispatch, etc.
+            zcli: zKernel instance for access to zDisplay, zDispatch, etc.
             walker: Walker instance for data operations and schema loading
             connection_info_manager: Optional ConnectionInfoManager for introspection
             auth_manager: Optional AuthenticationManager for user context extraction
@@ -432,7 +432,7 @@ class MessageHandler:
         
         Process:
             1. Extract zVaFile/zVaFolder/zBlock from request
-            2. Update zCLI session with these values
+            2. Update zKernel session with these values
             3. Load YAML file via zLoader
             4. Execute block via walker.zBlock_loop()
             5. All display events automatically buffered and sent
@@ -564,7 +564,7 @@ class MessageHandler:
                 self._ws_schema_caches = {}
             
             if ws_id not in self._ws_schema_caches:
-                from zCLI.L2_Core.h_zLoader.loader_modules.loader_cache_schema import SchemaCache
+                from zKernel.L2_Core.h_zLoader.loader_modules.loader_cache_schema import SchemaCache
                 self._ws_schema_caches[ws_id] = SchemaCache(self.zcli.session, self.logger)
                 self.logger.debug(f"[Phase1] Created schema cache for ws_id={ws_id} (DB connection reuse)")
             
@@ -864,7 +864,7 @@ class MessageHandler:
             {
                 "_requestId": 5,
                 "success": true,
-                "message": "✓ Registration successful! Welcome to zCLI."
+                "message": "✓ Registration successful! Welcome to zKernel."
             }
         
         Example Response (validation error):
@@ -885,7 +885,7 @@ class MessageHandler:
             dialog_id = data.get('dialogId', 'unknown')
             
             # Mask passwords in form_data for logging
-            from zCLI.L2_Core.j_zDialog.dialog_modules.dialog_submit import _mask_passwords_in_dict
+            from zKernel.L2_Core.j_zDialog.dialog_modules.dialog_submit import _mask_passwords_in_dict
             masked_form_data = _mask_passwords_in_dict(form_data)
             
             self.logger.debug(f"[FormSubmit] Dialog ID: {dialog_id}")
@@ -915,7 +915,7 @@ class MessageHandler:
                         table_name = model.split('.')[-1]
                         
                         # Create validator
-                        from zCLI.L3_Abstraction.n_zData.zData_modules.shared.validator import DataValidator
+                        from zKernel.L3_Abstraction.n_zData.zData_modules.shared.validator import DataValidator
                         validator = DataValidator(schema_dict, self.logger)
                         
                         # Validate insert data
@@ -956,7 +956,7 @@ class MessageHandler:
                 return True
             
             # Inject form data into onSubmit action (placeholder replacement)
-            from zCLI.L2_Core.j_zDialog.dialog_modules.dialog_context import inject_placeholders
+            from zKernel.L2_Core.j_zDialog.dialog_modules.dialog_context import inject_placeholders
             
             # Create dialog context for placeholder injection
             dialog_context = {
@@ -1014,7 +1014,7 @@ class MessageHandler:
                 self.logger.debug(f"[FormSubmit] Executing zLogin: {injected_action['zLogin']}")
                 
                 # Import and execute handle_zLogin
-                from zCLI.L2_Core.d_zAuth.zAuth_modules import handle_zLogin
+                from zKernel.L2_Core.d_zAuth.zAuth_modules import handle_zLogin
                 
                 result = await asyncio.to_thread(
                     handle_zLogin,
@@ -1245,7 +1245,7 @@ class MessageHandler:
             context = {"_resolved_data": {"user": {"name": "Gal", "email": "gal@..."}}}
             result = {"label": "Gal", "items": ["gal@..."]}
         """
-        from zCLI.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
+        from zKernel.L2_Core.g_zParser.parser_modules.parser_functions import resolve_variables
         
         if isinstance(data, dict):
             # Recursively process dictionary values
@@ -1270,7 +1270,7 @@ class MessageHandler:
         
         Args:
             data: The data structure to process (dict, list, or string)
-            zcli: zCLI instance for accessing zparser and zserver
+            zcli: zKernel instance for accessing zparser and zserver
             
         Returns:
             The data structure with all zPath references resolved to web URLs
@@ -1342,7 +1342,7 @@ class MessageHandler:
         
         Args:
             ui_zpath: UI zPath string (e.g., @.UI.zProducts.zUI.zTheme.zTheme_Details)
-            zcli: zCLI instance (currently unused but available for future enhancements)
+            zcli: zKernel instance (currently unused but available for future enhancements)
         
         Returns:
             str: HTTP route (e.g., /zProducts/zTheme)
@@ -1515,7 +1515,7 @@ class MessageHandler:
                     
                     try:
                         # Import and execute zLogout via zDispatch
-                        from zCLI.L2_Core.e_zDispatch import handle_zDispatch
+                        from zKernel.L2_Core.e_zDispatch import handle_zDispatch
                         
                         # Build context for zLogout (empty zConv, no model needed)
                         context = {
@@ -1598,7 +1598,7 @@ class MessageHandler:
                     
                     try:
                         # Execute via zDispatch
-                        from zCLI.L2_Core.e_zDispatch import handle_zDispatch
+                        from zKernel.L2_Core.e_zDispatch import handle_zDispatch
                         
                         # Note: Mode is in session, context for request-scoped data only
                         context = {}
@@ -1728,7 +1728,7 @@ class MessageHandler:
         """
         Handle zDispatch command with cache support and user context isolation.
         
-        This method executes zCLI commands via the zDispatch subsystem, with
+        This method executes zKernel commands via the zDispatch subsystem, with
         intelligent caching for read operations. Cache keys include user context
         (user_id, app_name, role, auth_context) to prevent data leaks.
         
@@ -1754,7 +1754,7 @@ class MessageHandler:
             await broadcast_func(safe_json_dumps(data), sender=ws)
             return True
         
-        from zCLI.L2_Core.e_zDispatch import handle_zDispatch
+        from zKernel.L2_Core.e_zDispatch import handle_zDispatch
         
         # Check if cacheable
         is_cacheable = self._is_cacheable_operation(data, zKey)
@@ -1855,7 +1855,7 @@ class MessageHandler:
             Returns None if no authentication info available (falls back to anonymous)
             
         Three-Tier Authentication Support:
-            - zSession (Layer 1): Internal zCLI connections
+            - zSession (Layer 1): Internal zKernel connections
             - Application (Layer 2): External application users
             - Dual (Layer 3): Both zSession and application authenticated
         """

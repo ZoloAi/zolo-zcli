@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/shell_modules/commands/shell_cmd_auth.py
 
 """
-Authentication Commands for zCLI Three-Tier Auth System
+Authentication Commands for zKernel Three-Tier Auth System
 
 This module provides shell commands for managing authentication in zCLI's three-tier
 authentication architecture. It handles user authentication for both zSession (platform
@@ -25,13 +25,13 @@ Three-Tier Authentication:
         Session stored in: session["zAuth"]["zSession"]
         
     **Tier 2 - Application Authentication:**
-        Authenticates end-users of applications BUILT with zCLI. Each app maintains
+        Authenticates end-users of applications BUILT with zKernel. Each app maintains
         independent credentials. Multiple apps can be authenticated simultaneously.
         Session stored in: session["zAuth"]["applications"][app_name]
         
     **Tier 3 - Dual-Mode Authentication:**
         Both zSession AND application authenticated simultaneously. Example: Store owner
-        using zCLI analytics (logged in as Zolo user + store owner).
+        using zKernel analytics (logged in as Zolo user + store owner).
         Context management: session["zAuth"]["active_context"]
 
 Architecture:
@@ -103,16 +103,16 @@ Notes:
     - Mode-agnostic output works in both Terminal and Bifrost modes
     - Session structure follows three-tier auth constants from zConfig
 
-Author: zCLI Development Team
+Author: zKernel Development Team
 Version: 1.5.4+
 Last Updated: Week 6.13
 """
 
 # Type hints (centralized import from zCLI)
-from zCLI import Any, Dict, List, Optional, Tuple
+from zKernel import Any, Dict, List, Optional, Tuple
 
 # Three-tier auth constants from zConfig
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (  # pylint: disable=unused-import
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import (  # pylint: disable=unused-import
     SESSION_KEY_ZAUTH,
     ZAUTH_KEY_ZSESSION,
     ZAUTH_KEY_APPLICATIONS,
@@ -187,7 +187,7 @@ def execute_auth(zcli: Any, parsed: Dict[str, Any]) -> None:
     handler based on action. Validates zAuth availability before delegation.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         parsed: Parsed command dictionary with keys:
             - action (str): The command action (login, logout, status)
             - args (List[str]): Command arguments (e.g., username, password)
@@ -244,7 +244,7 @@ def _handle_login(zcli: Any, args: List[str]) -> None:
     both command-line arguments and interactive prompting.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         args: Command arguments [username, password] (optional)
 
     Returns:
@@ -309,7 +309,7 @@ def _handle_logout(zcli: Any, args: List[str]) -> None:  # pylint: disable=unuse
     Logs out the current authenticated user and clears session state.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         args: Command arguments (unused, for signature consistency)
 
     Returns:
@@ -354,7 +354,7 @@ def _handle_status(zcli: Any) -> None:
     and authentication state for all three tiers.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
 
     Returns:
         None (uses zDisplay for output)
@@ -406,7 +406,7 @@ def _validate_zauth(zcli: Any) -> bool:
     any authentication operations.
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
 
     Returns:
         bool: True if zAuth is available, False otherwise
@@ -440,7 +440,7 @@ def _prompt_credentials(zcli: Any, args: List[str]) -> Tuple[Optional[str], Opti
     and getpass for password (hidden input).
 
     Args:
-        zcli: The zCLI instance
+        zcli: The zKernel instance
         args: Command arguments (may contain username as args[0])
 
     Returns:

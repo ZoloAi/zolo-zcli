@@ -4,7 +4,7 @@ zAuth Subsystem - Three-Tier Authentication Facade (v1.5.4+)
 
 ARCHITECTURE OVERVIEW
 
-This module implements the **Facade Pattern** for zCLI's authentication subsystem.
+This module implements the **Facade Pattern** for zKernel's authentication subsystem.
 It orchestrates four modular components to provide a unified, developer-friendly API
 while maintaining clean separation of concerns internally.
 
@@ -35,9 +35,9 @@ THREE-TIER AUTHENTICATION MODEL
         }
 
 **Tier 2 - Application Authentication (External Users - Multi-App):**
-    Authenticates end-users of applications BUILT with zCLI. Each app maintains
+    Authenticates end-users of applications BUILT with zKernel. Each app maintains
     independent credentials and user identities. Multiple apps can be authenticated
-    simultaneously within the same zCLI session.
+    simultaneously within the same zKernel session.
     
     Methods:
         - authenticate_app_user(app_name, token, config) → Dict
@@ -53,7 +53,7 @@ THREE-TIER AUTHENTICATION MODEL
 
 **Tier 3 - Dual-Mode Authentication (Both Contexts):**
     Both zSession AND application authenticated simultaneously. Example: Store owner
-    using zCLI analytics on their store (logged in as Zolo user + store owner).
+    using zKernel analytics on their store (logged in as Zolo user + store owner).
     
     Context Management:
         - set_active_context(context) → bool  # "zSession", "application", "dual"
@@ -145,9 +145,9 @@ USAGE EXAMPLES
 ═══════════════════════════════════════════════════════════════════════════════
 
 Basic zSession Authentication (Tier 1):
-    from zCLI import zCLI
+    from zKernel import zKernel
     
-    zcli = zCLI()
+    zcli = zKernel()
     
     # Login (zSession)
     result = zcli.auth.login("user@zolo.com", "password", persist=True)
@@ -206,16 +206,16 @@ Dual-Mode Authentication (Tier 3):
 
 THREAD SAFETY
 
-All methods operate on the zCLI session object, which is NOT thread-safe by design.
-Each zCLI instance maintains a single session dictionary.
+All methods operate on the zKernel session object, which is NOT thread-safe by design.
+Each zKernel instance maintains a single session dictionary.
 
 For multi-threaded applications:
-- Each thread should use its own zCLI instance
+- Each thread should use its own zKernel instance
 - Multi-app authentication within a SINGLE session is fully supported and isolated
 """
 
-from zCLI import Any, Optional, Dict, Union, List
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZAUTH
+from zKernel import Any, Optional, Dict, Union, List
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZAUTH
 
 from .zAuth_modules import PasswordSecurity, SessionPersistence, Authentication, RBAC
 
@@ -304,7 +304,7 @@ class zAuth:
         - zWizard: RBAC integration for zVaF menu access control
     
     Thread Safety:
-        NOT thread-safe. Each thread should use its own zCLI instance.
+        NOT thread-safe. Each thread should use its own zKernel instance.
         Multi-app authentication within a SINGLE session is fully supported.
     
     Examples:
@@ -340,7 +340,7 @@ class zAuth:
         a ready message via zDisplay.
         
         Args:
-            zcli: The main zCLI instance (provides session, logger, display, data)
+            zcli: The main zKernel instance (provides session, logger, display, data)
         
         Returns:
             None
@@ -352,7 +352,7 @@ class zAuth:
               (lazy initialization on first use)
         
         Example:
-            # Automatically called during zCLI initialization
+            # Automatically called during zKernel initialization
             auth = zAuth(zcli)
         """
         self.zcli = zcli
@@ -687,7 +687,7 @@ class zAuth:
         Delegates to: authentication.authenticate_app_user()
         
         This method handles application-specific user authentication for apps
-        BUILT with zCLI. Each app maintains independent user identities and
+        BUILT with zKernel. Each app maintains independent user identities and
         credentials. Multiple apps can be authenticated simultaneously.
         
         Args:

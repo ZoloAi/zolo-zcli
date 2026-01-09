@@ -1,6 +1,6 @@
 # zSys/errors/__init__.py
 """
-Error handling subsystem for zCLI.
+Error handling subsystem for zKernel.
 
 This module provides comprehensive error handling and runtime validation:
 - Custom exceptions with actionable hints
@@ -9,12 +9,12 @@ This module provides comprehensive error handling and runtime validation:
 """
 
 # Runtime validation
-from .validation import validate_zcli_instance
+from .validation import validate_zkernel_instance
 
 # All custom exceptions
 from .exceptions import (
     # Base exception
-    zCLIException,
+    zKernelException,
     # Schema/Data exceptions
     SchemaNotFoundError,
     FormModelNotFoundError,
@@ -47,10 +47,10 @@ from .traceback import (
 
 __all__ = [
     # Validation
-    "validate_zcli_instance",
+    "validate_zkernel_instance",
     
     # Base exception
-    "zCLIException",
+    "zKernelException",
     
     # Schema/Data exceptions
     "SchemaNotFoundError",

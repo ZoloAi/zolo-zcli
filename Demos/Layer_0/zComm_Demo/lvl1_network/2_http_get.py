@@ -13,7 +13,7 @@ Key Discovery:
   - Returns None on failure (no crashes)
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 def run_demo():
     """Make a simple GET request to a public API."""
@@ -24,7 +24,7 @@ def run_demo():
         "logger": "INFO",
         "logger_path": "./logs",
     }
-    z = zCLI(zSpark)
+    z = zKernel(zSpark)
 
     # Public API for testing (no auth needed)
     url = "https://httpbin.org/get"

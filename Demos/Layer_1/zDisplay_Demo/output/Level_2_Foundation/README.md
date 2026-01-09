@@ -20,14 +20,14 @@ python signals.py
 ## Micro-Steps
 
 > <span style="color:#8FBE6D">**Step 2A: header()**</span>
-- Create `z = zCLI({"logger": "PROD"})`
+- Create `z = zKernel({"logger": "PROD"})`
 - Call `z.display.header("Section Title", color="CYAN", style="full")`
 - **What you see:** Formatted header with ═══ lines and colored text
 - **Styles:** "full" (═), "single" (─), "wave" (~)
 - **Colors:** CYAN, GREEN, YELLOW, MAGENTA, BLUE, RED
 
 > <span style="color:#8FBE6D">**Step 2B: text()**</span>
-- Reuse the same zCLI instance
+- Reuse the same zKernel instance
 - Call `z.display.text("Content", indent=1)`
 - **What you see:** Text with automatic indentation (2 spaces per level)
 - **Use case:** Hierarchical content, nested structures

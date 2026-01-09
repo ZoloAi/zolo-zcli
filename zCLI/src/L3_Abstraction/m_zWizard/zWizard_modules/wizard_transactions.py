@@ -149,7 +149,7 @@ Week: 6.14
 Version: v1.5.4 Phase 1 (Industry-Grade)
 """
 
-from zCLI import Any, Optional
+from zKernel import Any, Optional
 
 # Import constants from centralized file
 from .wizard_constants import (

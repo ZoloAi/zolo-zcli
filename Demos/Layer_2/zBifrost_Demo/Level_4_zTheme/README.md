@@ -38,7 +38,7 @@ python3 hello_zTheme.py
 You should see:
 
 ```
-🎨 Starting Hello zCLI Server with zTheme Auto-Rendering...
+🎨 Starting Hello zKernel Server with zTheme Auto-Rendering...
 📝 Goal: Ultimate simplicity - zTheme handles ALL rendering
 🎉 autoTheme: true = zero custom CSS/JS needed!
 
@@ -74,7 +74,7 @@ Double-click **<span style="color:#F8961F">`hello_client.html`</span>** (or drag
 ```python
 # NO CHANGES from Level 3!
 # The Python code is IDENTICAL
-z.display.success("Hello from zCLI!")
+z.display.success("Hello from zKernel!")
 z.display.header("🎨 zDisplay Events Showcase", color="CYAN", indent=0)
 z.display.list(subsystems, style="bullet", indent=1)
 ```
@@ -283,11 +283,11 @@ const client = new BifrostClient('ws://127.0.0.1:8765', {
 - **Level 3**: Declarative server (zDisplay events auto-broadcast)
 - **Level 4**: Declarative everything (zTheme auto-renders)
 
-**You now have everything needed** to build production-ready WebSocket apps with zCLI! 🎉
+**You now have everything needed** to build production-ready WebSocket apps with zKernel! 🎉
 
 ### Next Steps:
 1. **Build your own app** - Use Level 4 as a template
-2. **Explore zTheme** - Check out `zCLI/subsystems/zTheme/` for all CSS classes
+2. **Explore zTheme** - Check out `zKernel/subsystems/zTheme/` for all CSS classes
 3. **Read zDisplay Guide** - See all available display events
 4. **Join the community** - Share your creations!
 

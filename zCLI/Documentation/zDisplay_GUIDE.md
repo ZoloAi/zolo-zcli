@@ -15,7 +15,7 @@
 
 **<span style="color:#8FBE6D">Every application needs output.</span>** Tables, progress bars, menus, user input—you either write mode-specific code (terminal vs web) or duplicate everything.
 
-<span style="color:#8FBE6D">**zDisplay**</span> is zCLI's **<span style="color:#F8961F">Layer 1 rendering engine</span>**, initialized after zConfig/zComm to provide **<span style="color:#8FBE6D">30+ display events</span>** for professional Terminal output. Get **<span style="color:#8FBE6D">progress bars</span>**, **<span style="color:#F8961F">interactive tables</span>**, and **<span style="color:#F8961F">structured data display</span>** through one facade.<br>**No curses library, no ANSI escape sequences, no manual formatting.**
+<span style="color:#8FBE6D">**zDisplay**</span> is zKernel's **<span style="color:#F8961F">Layer 1 rendering engine</span>**, initialized after zConfig/zComm to provide **<span style="color:#8FBE6D">30+ display events</span>** for professional Terminal output. Get **<span style="color:#8FBE6D">progress bars</span>**, **<span style="color:#F8961F">interactive tables</span>**, and **<span style="color:#F8961F">structured data display</span>** through one facade.<br>**No curses library, no ANSI escape sequences, no manual formatting.**
 
 > **Need GUI rendering?** All these display methods also work in Browser mode. See [zBifrost Guide](zBifrost_GUIDE.md) for real-time Terminal ↔ Web rendering.
 
@@ -23,11 +23,11 @@
 
 ### <span style="color:#8FBE6D">Centralized Imports</span>
 
-zCLI provides a **unified import namespace** for all standard library modules and typing helpers. Instead of importing directly from `typing`, `asyncio`, `json`, etc., use the centralized pattern:
+zKernel provides a **unified import namespace** for all standard library modules and typing helpers. Instead of importing directly from `typing`, `asyncio`, `json`, etc., use the centralized pattern:
 
 **✅ Recommended (Centralized):**
 ```python
-from zCLI import zCLI, Any, Dict, Optional, asyncio, json, uuid
+from zKernel import zKernel, Any, Dict, Optional, asyncio, json, uuid
 ```
 
 **❌ Avoid (Direct Imports):**
@@ -39,7 +39,7 @@ from typing import Any, Dict, Optional
 ```
 
 **Why Centralized Imports?**
-- **Single source of truth** - All imports defined in `zCLI/__init__.py`
+- **Single source of truth** - All imports defined in `zKernel/__init__.py`
 - **Consistency** - All modules use the same pattern
 - **Future-proof** - Easy to add polyfills or compatibility layers
 - **Type safety** - Centralized typing helpers ensure consistency
@@ -53,9 +53,9 @@ from typing import Any, Dict, Optional
 
 **Example:**
 ```python
-from zCLI import zCLI, Dict, List, json
+from zKernel import zKernel, Dict, List, json
 
-z = zCLI()
+z = zKernel()
 
 # Use centralized imports throughout your code
 data: Dict[str, List[str]] = {"users": ["alice", "bob"]}
@@ -72,9 +72,9 @@ z.display.text(f"Data: {json_str}", color="CYAN")
 ### <span style="color:#8FBE6D">Level 1A: raw() - No Newline</span>
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # All on one line - raw() never adds newlines
 z.display.raw("First")
@@ -97,9 +97,9 @@ The most primitive display operation—**write text with no automatic newline**.
 ### <span style="color:#8FBE6D">Level 1B: line() - Automatic Newline</span>
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Each call becomes its own line
 z.display.line("1) Each call becomes its own line")
@@ -114,9 +114,9 @@ Single-line output with automatic newline handling. No need to manually add `\n`
 ### <span style="color:#8FBE6D">Level 1C: block() - Multi-Line Output</span>
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Multi-line string, formatting preserved
 block = """Deployment Summary
@@ -134,9 +134,9 @@ Send multiple lines at once while preserving your formatting. `block()` handles 
 ### <span style="color:#8FBE6D">Level 1D: read_string() - Collect Text Input</span>
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Simple prompt
 name = z.display.read_string("What's your name? ")
@@ -160,9 +160,9 @@ The most basic input primitive—**collect user text input**. Prompts the user, 
 ### <span style="color:#8FBE6D">Level 1E: read_password() - Masked Input</span>
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Secure password input
 password = z.display.read_password("Password: ")
@@ -185,9 +185,9 @@ Secure input collection with **masked typing**—just like `read_string()`, but 
 ### <span style="color:#8FBE6D">Level 2A: header() - Formatted Headers</span>
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Style: full (═══)
 z.display.header("System Initialization", color="CYAN", style="full")
@@ -210,9 +210,9 @@ Create **visual structure** with formatted section headers. Three styles: `full`
 ### <span style="color:#8FBE6D">Level 2B: text() - Display with Control</span>
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Simple text output
 z.display.text("Configuration loaded successfully")
@@ -234,9 +234,9 @@ Display text with **indent and pause control**. Indent creates hierarchy (0-3+ l
 ### <span style="color:#8FBE6D">Level 2C: signals() - Color-Coded Feedback</span>
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Success (green ✓)
 z.display.success("Operation completed successfully")
@@ -270,9 +270,9 @@ z.display.zMarker("Checkpoint 2", color="CYAN")
 > **💡 Note:** These system display events build on concepts from **[zConfig Guide](zConfig_GUIDE.md)**. If you've worked through the early zConfig demos, you've already seen `z.session`, `z.config.get_machine()`, and `z.config.get_environment()`. This tutorial shows how to **display** that configuration data professionally. For more on reading and managing config values, see the [zConfig Guide](zConfig_GUIDE.md).
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # System announcements with zDeclare()
 z.display.zDeclare("System Initialization")
@@ -309,9 +309,9 @@ z.display.zDeclare("Application Ready", color="GREEN")
 ### <span style="color:#8FBE6D">Level 2E: button() - Action Confirmation</span>
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Safe action confirmation
 if z.display.button("Save Profile", color="success"):
@@ -339,9 +339,9 @@ if z.display.button("Start Backup", color="info"):
 ### <span style="color:#8FBE6D">Level 2F: selection() - Choose from List</span>
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Single selection
 role = z.display.selection(
@@ -376,9 +376,9 @@ z.display.success(f"Selected: {theme}")
 ### <span style="color:#8FBE6D">Level 3: Data - Structured Data Display</span>
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # List - Bullet/Number/Letter styles
 z.display.list(["Fast", "Simple", "Multi-mode"], style="bullet")
@@ -392,7 +392,7 @@ z.display.outline([
         "children": [
             {
                 "content": "Python Runtime",
-                "children": ["zCLI initialization", "Event handling"]
+                "children": ["zKernel initialization", "Event handling"]
             },
             "Data Processing Layer"
         ]
@@ -415,9 +415,9 @@ z.display.json_data(config, color=True)
 ### <span style="color:#8FBE6D">Level 3: Data - Tables (zTable)</span>
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 users = [
     {"ID": 1, "Name": "Alice", "Email": "alice@example.com"},
@@ -467,9 +467,9 @@ z.display.zTable(
 
 ```python
 import time
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Manual mode: Full control over progress
 total = 50
@@ -504,9 +504,9 @@ for filename in z.display.progress_iterator(files, "Processing files"):
 
 ```python
 import time
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Automatic mode: Context manager with auto-animation
 with z.display.spinner("Loading data", style="dots"):
@@ -530,14 +530,14 @@ z.display.raw("\n")  # Add newline when done
 ### <span style="color:#8FBE6D">Level 4C: swiper() - Interactive Slideshow</span>
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"logger": "PROD"})
+z = zKernel({"logger": "PROD"})
 
 # Simple auto-advancing slideshow
 intro_slides = [
-    "Welcome to zCLI!",
-    "zCLI is a declarative CLI framework",
+    "Welcome to zKernel!",
+    "zKernel is a declarative CLI framework",
     "Professional terminal UI with one API",
     "Let's explore the features..."
 ]
@@ -551,7 +551,7 @@ z.display.zEvents.TimeBased.swiper(
 
 # Manual navigation tutorial
 tutorial_slides = [
-    "Step 1: Initialize zCLI\n\n  from zCLI import zCLI\n  z = zCLI()",
+    "Step 1: Initialize zKernel\n\n  from zKernel import zKernel\n  z = zKernel()",
     "Step 2: Display Progress\n\n  z.display.progress_bar(50, 100)",
     "Step 3: Show Spinners\n\n  with z.display.spinner('Loading'):\n      time.sleep(2)"
 ]

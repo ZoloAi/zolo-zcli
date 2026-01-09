@@ -301,7 +301,7 @@ def completions(params: lsp_types.CompletionParams):
     Offers context-aware completions for:
     - Type hints (inside parentheses)
     - Common values (after colon)
-    - zCLI shorthands (at line start)
+    - zKernel shorthands (at line start)
     """
     uri = params.text_document.uri
     line = params.position.line

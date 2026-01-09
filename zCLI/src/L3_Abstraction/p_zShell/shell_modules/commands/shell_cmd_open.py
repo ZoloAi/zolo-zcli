@@ -10,7 +10,7 @@ platform-specific handling.
 Architecture Position:
     - Tier 2c (Shell Command Executor) within zShell's 4-tier architecture
     - Bridges zShell user commands with zOpen subsystem functionality
-    - Part of Group C: zCLI Subsystem Integration commands
+    - Part of Group C: zKernel Subsystem Integration commands
 
 Command Syntax:
     open <path>                     # Open file or URL
@@ -86,12 +86,12 @@ Version History:
     - v1.5.4: Initial shell command implementation (basic delegation)
     - v1.5.4+: Industry-grade modernization (full validation, logging, error handling)
 
-Module: zShell (Command Executors - Group C: zCLI Subsystem Integration)
-Author: zCLI Framework
+Module: zShell (Command Executors - Group C: zKernel Subsystem Integration)
+Author: zKernel Framework
 Version: 1.5.4+
 """
 
-from zCLI import Any, Dict, Optional
+from zKernel import Any, Dict, Optional
 
 # ═══════════════════════════════════════════════════════════════
 # Module Constants
@@ -152,7 +152,7 @@ def _validate_open_subsystem(zcli: Any) -> bool:
     before attempting to delegate.
     
     Args:
-        zcli: zCLI instance with potential open subsystem
+        zcli: zKernel instance with potential open subsystem
     
     Returns:
         bool: True if zOpen is available, False otherwise
@@ -193,7 +193,7 @@ def _validate_args(zcli: Any, args: list) -> Optional[str]:
     the path if valid, or None if validation fails.
     
     Args:
-        zcli: zCLI instance for display/logging
+        zcli: zKernel instance for display/logging
         args: Command arguments list from parser
     
     Returns:
@@ -268,7 +268,7 @@ def _interpret_open_result(zcli: Any, result: str, path: str) -> None:
     cases with appropriate logging and display messages.
     
     Args:
-        zcli: zCLI instance for display/logging
+        zcli: zKernel instance for display/logging
         result: Return value from zcli.open.handle()
         path: Original path that was opened (for logging/display)
     
@@ -318,7 +318,7 @@ def execute_open(zcli: Any, parsed: Dict[str, Any]) -> None:
     via zDisplay. Uses UI adapter pattern (returns None).
     
     Args:
-        zcli: zCLI instance with access to:
+        zcli: zKernel instance with access to:
             - zcli.open: zOpen subsystem for opening files/URLs
             - zcli.display: zDisplay for user feedback
             - zcli.logger: Logger for debug/error output

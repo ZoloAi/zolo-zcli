@@ -9,12 +9,12 @@ Try:
 """
 
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
     # Production deployment = minimal output + ERROR logging (auto-default)
-    z = zCLI({
+    z = zKernel({
         "deployment": "Production",
         # logger: "ERROR" is implicit in Production
         # Add explicit "logger": "INFO" or "DEBUG" to override

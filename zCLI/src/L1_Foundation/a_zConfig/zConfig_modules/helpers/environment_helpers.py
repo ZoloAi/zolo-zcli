@@ -1,7 +1,7 @@
 # zCLI/subsystems/zConfig/zConfig_modules/helpers/environment_helpers.py
 """Helper functions for environment configuration."""
 
-from zCLI import Path, Colors, Dict, Any
+from zKernel import Path, Colors, Dict, Any
 
 def create_default_env_config(path: Path, _env_data: Dict[str, Any]) -> None:
     """Create default environment config YAML file from template."""
@@ -61,7 +61,7 @@ def create_default_env_config(path: Path, _env_data: Dict[str, Any]) -> None:
     level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
     format: "detailed"  # simple, detailed, json
     file_enabled: true  # enable file logging
-      file_path: ""  # empty = use zCLI support folder (zcli-app.log)
+      file_path: ""  # empty = use zKernel support folder (zcli-app.log)
     
     # Framework Logs (internal zCLI) - fixed path
     framework:

@@ -6,7 +6,7 @@ Provides network-level utilities for port checking, availability testing,
 and other low-level network operations needed by zComm services.
 """
 
-from zCLI import Any, socket
+from zKernel import Any, socket
 from ..comm_constants import PORT_MIN, PORT_MAX, DEFAULT_HOST, DEFAULT_TIMEOUT_SECONDS
 
 # Module Constants

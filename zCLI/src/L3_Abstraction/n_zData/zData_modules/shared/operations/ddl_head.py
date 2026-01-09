@@ -183,7 +183,7 @@ This module is used by:
 - data_operations.py: DDL operation router
 """
 
-from zCLI import Any, Dict, List
+from zKernel import Any, Dict, List
 
 try:
     from .helpers import extract_table_from_request

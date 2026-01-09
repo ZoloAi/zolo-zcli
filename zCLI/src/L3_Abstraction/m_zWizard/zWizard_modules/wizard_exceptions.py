@@ -83,7 +83,7 @@ Usage Patterns
 -------------
 ### Importing Exceptions
 ```python
-from zCLI.L3_Abstraction.m_zWizard.zWizard_modules.wizard_exceptions import (
+from zKernel.L3_Abstraction.m_zWizard.zWizard_modules.wizard_exceptions import (
     WizardInitializationError,
     WizardExecutionError,
     WizardRBACError,

@@ -13,10 +13,10 @@ Key Discovery:
   - Safe shutdown with Ctrl+C (zCLI handles cleanup!)
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Initialize zCLI - gets WebSocket infrastructure
-z = zCLI({
+z = zKernel({
     "deployment": "Production",
     "title": "websocket-server",
     "logger": "PROD",

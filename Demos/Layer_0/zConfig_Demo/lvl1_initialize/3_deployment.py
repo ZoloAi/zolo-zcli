@@ -9,7 +9,7 @@ Run:
     python3 Demos/Layer_0/zConfig_Demo/lvl1_initialize/3_deployment.py
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 def run_demo():
     print("\n" + "="*60)
@@ -26,7 +26,7 @@ def run_demo():
         # "deployment": "Testing",      # Clean logs
         "deployment": "Production",   # Minimal (active)
     }
-    z = zCLI(zSpark)
+    z = zKernel(zSpark)
 
     print("\n# Notice the difference:")
     print("  Did you see colorful banners above? (No = Production or Testing)")

@@ -1,8 +1,8 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_machine.py
 """Machine-level configuration management for system identity and preferences."""
 
-from zCLI import yaml, Any, Dict
-from zCLI.utils import print_ready_message
+from zKernel import yaml, Any, Dict
+from zKernel.utils import print_ready_message
 from .helpers import auto_detect_machine, create_user_machine_config, load_config_with_override
 from .config_paths import zConfigPaths
 

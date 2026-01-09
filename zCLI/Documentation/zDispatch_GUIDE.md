@@ -1,7 +1,7 @@
 # zDispatch: Command Routing & Execution
 
 ## Overview
-**zDispatch** is zCLI's command router - it takes any command (string, dict, function call) and executes it correctly. Think of it as a smart switchboard that understands command syntax, special modifiers, and routing rules.
+**zDispatch** is zKernel's command router - it takes any command (string, dict, function call) and executes it correctly. Think of it as a smart switchboard that understands command syntax, special modifiers, and routing rules.
 
 **Key Features:**
 - **Universal command routing**: Handles strings, dicts, function calls, and more
@@ -277,9 +277,9 @@ result = zcli.dispatch.handle("key", "zFunc(")  # Missing closing paren
 
 ### Using the Facade
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-zcli = zCLI(config)
+zcli = zKernel(config)
 
 # Execute command
 result = zcli.dispatch.handle(
@@ -296,7 +296,7 @@ result = zcli.dispatch.handle(
 
 ### Standalone Function
 ```python
-from zCLI.subsystems.zDispatch import handle_zDispatch
+from zKernel.subsystems.zDispatch import handle_zDispatch
 
 # Quick dispatch without class instance
 result = handle_zDispatch(
@@ -410,7 +410,7 @@ else:
 
 ## Summary
 
-**zDispatch** is the traffic controller for zCLI commands:
+**zDispatch** is the traffic controller for zKernel commands:
 - ✅ Routes all command types (strings, dicts, functions)
 - ✅ Processes modifiers (^ ~ * !) for special behavior
 - ✅ Mode-aware (Terminal vs Web)
@@ -422,7 +422,7 @@ else:
 - `*` - Auto-create menu from array
 - `!` - Require successful completion
 
-**Key insight:** Every command in zCLI flows through zDispatch - it's the central nervous system of command execution.
+**Key insight:** Every command in zKernel flows through zDispatch - it's the central nervous system of command execution.
 
 ---
 
@@ -432,7 +432,7 @@ else:
 **Documentation:** Complete
 
 For more details, see:
-- `zCLI/subsystems/zDispatch/` - Implementation
+- `zKernel/subsystems/zDispatch/` - Implementation
 - `zTestRunner/zUI.zDispatch_tests.yaml` - Declarative tests
 - `AGENT.md` - Full subsystem documentation
 

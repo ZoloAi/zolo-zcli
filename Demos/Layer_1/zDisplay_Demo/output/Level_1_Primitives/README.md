@@ -20,13 +20,13 @@ python write_block.py
 ## Micro-Steps
 
 > <span style="color:#8FBE6D">**Step 1: raw()**</span>
-- Create `z = zCLI({"logger": "PROD"})`
+- Create `z = zKernel({"logger": "PROD"})`
 - Call `z.display.raw("Downloading...")`
 - **What you see:** Text streams on the same line—no newline added.
 - **Note:** `write_raw()` still works as a backward-compatible alias.
 
 > <span style="color:#8FBE6D">**Step 2: line()**</span>
-- Reuse the same zCLI instance
+- Reuse the same zKernel instance
 - Call `z.display.line("Each call is a new line")`
 - **What you see:** Every call ends cleanly with a newline—no manual `\n` required.
 - **Note:** `write_line()` still works as a backward-compatible alias.

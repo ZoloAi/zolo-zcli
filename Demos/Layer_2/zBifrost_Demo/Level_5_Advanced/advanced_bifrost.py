@@ -27,7 +27,7 @@ How to run:
 4. Click navigation buttons to browse table pages!
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 print("🎨 Starting Advanced zDisplay Events Server (zBifrost mode)...")
 print("📝 Goal: Show ALL advanced display events in browser")
@@ -35,7 +35,7 @@ print("🎉 Same Python from zDisplay Level 1, now in WebSocket!")
 print()
 
 # Initialize zCLI in zBifrost mode (WebSocket server)
-z = zCLI({
+z = zKernel({
     "zMode": "zBifrost",
     "websocket": {
         "host": "127.0.0.1",

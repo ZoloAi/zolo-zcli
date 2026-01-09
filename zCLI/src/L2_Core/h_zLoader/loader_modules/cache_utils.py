@@ -45,7 +45,7 @@ External Usage
 --------------
 **Used By**:
     - zCLI/L3_Abstraction/p_zShell/shell_modules/commands/shell_cmd_shortcut.py
-      Usage: from zCLI.utils import create_shortcut_from_cache
+      Usage: from zKernel.utils import create_shortcut_from_cache
       Purpose: shortcut cache command (interactive shortcut creation)
 
 See Also
@@ -61,7 +61,7 @@ Version History
 - v1.5.8: Original implementation in zSys
 """
 
-from zCLI import Any, List, Dict
+from zKernel import Any, List, Dict
 
 
 def get_cached_files(zcli: Any) -> List[str]:
@@ -72,7 +72,7 @@ def get_cached_files(zcli: Any) -> List[str]:
     returning a deduplicated list of file names/paths.
     
     Args:
-        zcli: zCLI instance (auto-injected when called via func command)
+        zcli: zKernel instance (auto-injected when called via func command)
             - zcli.loader.cache.system_cache: System-level cache
             - zcli.loader.cache.pinned_cache: User-pinned cache
     
@@ -82,14 +82,14 @@ def get_cached_files(zcli: Any) -> List[str]:
     
     Examples:
         # From zShell
-        >>> func @.zCLI.utils.cache_utils.get_cached_files
+        >>> func @.zKernel.utils.cache_utils.get_cached_files
         [
             "/workspace/zUI.users.yaml (System Cache)",
             "@.Schemas.zSchema.users → $users (Pinned)"
         ]
         
         # From Python
-        >>> from zCLI.utils.cache_utils import get_cached_files
+        >>> from zKernel.utils.cache_utils import get_cached_files
         >>> cached = get_cached_files(zcli)
         >>> print(f"Found {len(cached)} cached files")
     
@@ -127,7 +127,7 @@ def get_cached_files_count(zcli: Any) -> Dict[str, Any]:
     Returns a summary of cache statistics across both tiers.
     
     Args:
-        zcli: zCLI instance (auto-injected when called via func command)
+        zcli: zKernel instance (auto-injected when called via func command)
     
     Returns:
         Dict[str, Any]: Cache statistics
@@ -138,7 +138,7 @@ def get_cached_files_count(zcli: Any) -> Dict[str, Any]:
             }
     
     Examples:
-        >>> func @.zCLI.utils.cache_utils.get_cached_files_count
+        >>> func @.zKernel.utils.cache_utils.get_cached_files_count
         {
             "system_cache": 3,
             "pinned_cache": 2,
@@ -163,14 +163,14 @@ def clear_system_cache(zcli: Any) -> Dict[str, str]:
     preserving pinned cache entries.
     
     Args:
-        zcli: zCLI instance (auto-injected when called via func command)
+        zcli: zKernel instance (auto-injected when called via func command)
     
     Returns:
         Dict[str, str]: Status message
             {"status": "System cache cleared"}
     
     Examples:
-        >>> func @.zCLI.utils.cache_utils.clear_system_cache
+        >>> func @.zKernel.utils.cache_utils.clear_system_cache
         {"status": "System cache cleared"}
     
     Notes:
@@ -194,7 +194,7 @@ def create_shortcut_from_cache(zcli: Any) -> Dict[str, str]:
     5. Display success message
     
     Args:
-        zcli: zCLI instance (auto-injected when called via func command)
+        zcli: zKernel instance (auto-injected when called via func command)
             - zcli.display: For menu and input display
             - zcli.shell.shortcuts: For shortcut creation
     
@@ -210,7 +210,7 @@ def create_shortcut_from_cache(zcli: Any) -> Dict[str, str]:
         # (Interactive menu appears, user selects file and enters name)
         
         # From Python
-        >>> from zCLI.utils.cache_utils import create_shortcut_from_cache
+        >>> from zKernel.utils.cache_utils import create_shortcut_from_cache
         >>> result = create_shortcut_from_cache(zcli)
         >>> print(result["status"])
     

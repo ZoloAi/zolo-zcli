@@ -15,7 +15,7 @@ Key Discovery:
   - Layer 4 of the configuration hierarchy
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 import os
 from pathlib import Path
 
@@ -36,7 +36,7 @@ def run_demo():
         "logger": "INFO",
         "logger_path": "./logs",
     }
-    z = zCLI(zSpark)
+    z = zKernel(zSpark)
 
     print("\n# Dotenv file location:")
     print("  This folder contains a .zEnv file")

@@ -9,7 +9,7 @@
 
 ## What is zData?
 
-**zData** is zCLI's unified data management subsystem providing a consistent API for database operations across multiple backends:
+**zData** is zKernel's unified data management subsystem providing a consistent API for database operations across multiple backends:
 
 - ✅ **Multi-Backend** - SQLite, PostgreSQL, CSV (same API for all)
 - ✅ **Schema-Driven** - YAML schemas with automatic validation
@@ -27,9 +27,9 @@
 ### Quick Start (4 Lines)
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI()
+z = zKernel()
 schema = z.loader.handle("zSchema.myapp.yaml")
 z.data.load_schema(schema)
 z.data.insert("users", ["name", "email"], ["Alice", "alice@example.com"])
@@ -286,10 +286,10 @@ users:
 ### 2. Use in Python
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Initialize
-z = zCLI()
+z = zKernel()
 
 # Load schema
 schema = z.loader.handle("zSchema.myapp.yaml")
@@ -578,7 +578,7 @@ def short_uuid():
 plugin load @.plugins.id_generator
 
 # Or in zSpark
-z = zCLI({"zPlugins": ["@.plugins.id_generator"]})
+z = zKernel({"zPlugins": ["@.plugins.id_generator"]})
 ```
 
 ---

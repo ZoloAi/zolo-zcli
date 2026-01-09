@@ -128,11 +128,11 @@ More systems that meet people where they already are.
 
 **Choose Your Path:**
 
-- **Haven't installed zCLI yet?**  
+- **Haven't installed zKernel yet?**  
   → **[Go to zInstall Guide](zInstall_GUIDE.md)** — Get set up first.
 
-- **Already installed zCLI?** (e.g., from the README)  
-  → **[Start with zConfig](zConfig_GUIDE.md)** — The **cornerstone of Layer 0 and zCLI as a whole**.
+- **Already installed zKernel?** (e.g., from the README)  
+  → **[Start with zConfig](zConfig_GUIDE.md)** — The **cornerstone of Layer 0 and zKernel as a whole**.
 
 To turn philosophy into practice, we begin where all intentional systems should:  
 with **structure and context**, not with business logic.

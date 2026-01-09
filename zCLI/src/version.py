@@ -1,13 +1,13 @@
-# zCLI/version.py — Version Management
+# zKernel/version.py — Version Management
 # ───────────────────────────────────────────────────────────────
-"""Version management for zCLI package."""
+"""Version management for zKernel package."""
 
 __version__ = "1.5.8"
 __version_info__ = (1, 5, 8)
 
 # Package metadata
-__name__ = "zolo-zcli"
-__description__ = "A YAML-driven CLI framework for interactive applications"
+__name__ = "zkernel"
+__description__ = "A declarative Python kernel that orchestrates 17 subsystems across Terminal and Web contexts"
 __author__ = "Gal Nachshon"
 __author_email__ = "gal@zolo.media"
 

@@ -28,10 +28,10 @@ from pathlib import Path
 # Add zCLI to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Initialize zCLI with workspace path
-z = zCLI({"zWorkspace": str(Path(__file__).parent)})
+z = zKernel({"zWorkspace": str(Path(__file__).parent)})
 
 # Create the users table from schema
 print("\n📋 Creating users table from zSchema.demo_users...")

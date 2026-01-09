@@ -111,7 +111,7 @@ USAGE
 
 **Direct Launch from UI:**
     ```python
-    from zCLI.L3_Abstraction.p_zShell.shell_modules import launch_zCLI_shell
+    from zKernel.L3_Abstraction.p_zShell.shell_modules import launch_zCLI_shell
     
     # Launch shell from menu
     launch_zCLI_shell(zcli)

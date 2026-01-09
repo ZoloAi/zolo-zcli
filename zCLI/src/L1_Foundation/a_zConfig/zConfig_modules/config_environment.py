@@ -1,8 +1,8 @@
 # zCLI/subsystems/zConfig/zConfig_modules/config_environment.py
 """Environment-level configuration management for deployment and runtime settings."""
 
-from zCLI import os, sys, yaml, Any, Dict, Optional
-from zCLI.utils import print_ready_message
+from zKernel import os, sys, yaml, Any, Dict, Optional
+from zKernel.utils import print_ready_message
 from .helpers import create_default_env_config, load_config_with_override
 from .config_paths import zConfigPaths
 
@@ -140,7 +140,7 @@ class EnvironmentConfig:
                 if deployment_value:
                     # Handle deprecated deployment modes with migration
                     if deployment_value in DEPRECATED_DEPLOYMENTS:
-                        from zCLI.utils import Colors
+                        from zKernel.utils import Colors
                         new_value = DEPRECATED_DEPLOYMENTS[deployment_value]
                         if not is_production:
                             print(f"{Colors.WARNING}⚠️  Deprecated deployment: '{deployment_value}' → Use '{new_value}' instead{Colors.RESET}")

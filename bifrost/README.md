@@ -1,6 +1,6 @@
 # zBifrost Client (JavaScript)
 
-Production-ready JavaScript WebSocket client for zCLI's zBifrost bridge.
+Production-ready JavaScript WebSocket client for zKernel's zBifrost bridge.
 
 ## Structure
 
@@ -43,9 +43,9 @@ bifrost/
 ### Swiper-Style Elegance (Recommended)
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@main/zKernel/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
 
-<div id="zVaF"></div> <!-- Default zCLI container (zView and Function) -->
+<div id="zVaF"></div> <!-- Default zKernel container (zView and Function) -->
 
 <script>
   // One declaration, everything happens automatically!
@@ -81,7 +81,7 @@ bifrost/
 ### Local Development
 
 ```html
-<script src="../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
+<script src="../../../../zKernel/subsystems/zComm/zComm_modules/bifrost/client/src/bifrost_client.js"></script>
 ```
 
 ## Features
@@ -96,7 +96,7 @@ bifrost/
 - **Error Boundaries**: Graceful error handling with visual fallback UI
 - **Auto-Rendering**: Renderers for all zDisplay events (text, table, form, menu, etc.)
 - **Client-Side Routing**: Delta navigation without page reloads
-- **zCLI Integration**: Full support for zDisplay, zDialog, zMenu, zDash events
+- **zKernel Integration**: Full support for zDisplay, zDialog, zMenu, zDash events
 
 ## Documentation
 

@@ -4,7 +4,7 @@ Completion Provider for .zolo Language Server
 Provides smart autocomplete for:
 - Type hints when typing inside ()
 - Common values (true, false, null)
-- zCLI shorthands (zImage, zURL, etc.)
+- zKernel shorthands (zImage, zURL, etc.)
 """
 
 from typing import List
@@ -126,13 +126,13 @@ VALUE_COMPLETIONS = [
 ]
 
 
-# zCLI shorthand completions
+# zKernel shorthand completions
 ZCLI_SHORTHAND_COMPLETIONS = [
     {
         "label": "zImage",
         "kind": lsp_types.CompletionItemKind.Class,
         "detail": "Image shorthand",
-        "documentation": "Display an image in zCLI.\n\nExample: `zImage: /path/to/image.png`",
+        "documentation": "Display an image in zKernel.\n\nExample: `zImage: /path/to/image.png`",
         "insert_text": "zImage: "
     },
     {
@@ -153,7 +153,7 @@ ZCLI_SHORTHAND_COMPLETIONS = [
         "label": "zText",
         "kind": lsp_types.CompletionItemKind.Class,
         "detail": "Text shorthand",
-        "documentation": "Display text in zCLI.\n\nExample: `zText: Hello World`",
+        "documentation": "Display text in zKernel.\n\nExample: `zText: Hello World`",
         "insert_text": "zText: "
     },
     {
@@ -229,7 +229,7 @@ def get_completions(content: str, line: int, character: int) -> List[lsp_types.C
     Detects context and provides appropriate completions:
     1. Inside () → type hint completions
     2. After : → value completions
-    3. Start of line with 'z' → zCLI shorthand completions
+    3. Start of line with 'z' → zKernel shorthand completions
     
     Args:
         content: Full .zolo file content
@@ -272,7 +272,7 @@ def get_completions(content: str, line: int, character: int) -> List[lsp_types.C
             return _create_completion_items(matching)
     
     # Context 4: Empty line or start of key
-    # Offer zCLI shorthands
+    # Offer zKernel shorthands
     if not stripped or len(stripped) == 1:
         return _create_completion_items(ZCLI_SHORTHAND_COMPLETIONS)
     

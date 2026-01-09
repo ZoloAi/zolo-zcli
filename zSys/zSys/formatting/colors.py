@@ -7,7 +7,7 @@ Pure color definitions with no logic or dependencies.
 
 
 class Colors:
-    """ANSI color codes for zCLI terminal output."""
+    """ANSI color codes for zKernel terminal output."""
     
     # Subsystem colors
     ZDATA      = "\033[97;48;5;94m"         # Brown bg (CRUD operations)

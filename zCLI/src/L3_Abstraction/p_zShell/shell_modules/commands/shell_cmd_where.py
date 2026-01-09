@@ -15,7 +15,7 @@ FEATURE OVERVIEW:
 
 PROMPT FORMATS:
     • Default (off):  zCLI> 
-    • Enabled (on):   zCLI [~.Projects.zolo-zcli]> 
+    • Enabled (on):   zKernel [~.Projects.zolo-zcli]> 
 
 WHY "WHERE"?
     The command name 'where' is intentionally chosen as a natural question word
@@ -47,7 +47,7 @@ PROMPT FORMAT SPECIFICATION:
     When enabled, the prompt follows this format:
         [PREFIX] [zPath]> 
     
-    Example: zCLI [~.Projects.zolo-zcli]> 
+    Example: zKernel [~.Projects.zolo-zcli]> 
     
     Components:
         • PREFIX: "zCLI" (configurable)
@@ -73,7 +73,7 @@ CROSS-SUBSYSTEM DEPENDENCIES:
 
 TYPE SAFETY:
     All functions include comprehensive type hints using types imported from
-    the zCLI namespace for consistency across the framework.
+    the zKernel namespace for consistency across the framework.
 
 ERROR HANDLING:
     Gracefully handles edge cases such as invalid paths, permissions issues,
@@ -88,7 +88,7 @@ EXAMPLES:
     # Displays: "Prompt display: OFF (zCLI> )"
     
     >>> where on
-    # Displays: "Prompt display enabled: zCLI [~.Projects.zolo-zcli]> "
+    # Displays: "Prompt display enabled: zKernel [~.Projects.zolo-zcli]> "
     # Prompt changes from "zCLI> " to "zCLI [~.Projects.zolo-zcli]> "
     
     >>> where toggle
@@ -98,7 +98,7 @@ EXAMPLES:
     # Displays: "Prompt display disabled"
     # Prompt returns to "zCLI> "
 
-Author: zCLI Framework
+Author: zKernel Framework
 Version: 1.5.4
 Module: zShell (Command Executors - Group A: Basic Terminal Commands)
 """
@@ -106,7 +106,7 @@ Module: zShell (Command Executors - Group A: Basic Terminal Commands)
 import os
 from pathlib import Path
 
-from zCLI import Any, Dict, Optional
+from zKernel import Any, Dict, Optional
 
 # ============================================================================
 # MODULE CONSTANTS
@@ -177,7 +177,7 @@ def execute_where(zcli: Any, parsed: Dict[str, Any]) -> Optional[Dict[str, str]]
     - toggle: Switch between on/off states
     
     Args:
-        zcli: zCLI instance with session, config, and display access
+        zcli: zKernel instance with session, config, and display access
         parsed: Parsed command dictionary with 'args' and 'options'
     
     Returns:
@@ -243,14 +243,14 @@ def _show_status(zcli: Any) -> None:
     a preview of what the prompt looks like in the current mode.
     
     Args:
-        zcli: zCLI instance for session and display access
+        zcli: zKernel instance for session and display access
     
     Returns:
         None: All output is displayed directly to user
     
     Display Output:
         Prompt display: ON
-        Current prompt: zCLI [~.Projects.zolo-zcli]> 
+        Current prompt: zKernel [~.Projects.zolo-zcli]> 
         
         OR
         
@@ -285,7 +285,7 @@ def _enable_display(zcli: Any) -> None:
     message with a preview of the new prompt format.
     
     Args:
-        zcli: zCLI instance for session and display access
+        zcli: zKernel instance for session and display access
     
     Returns:
         None: All output is displayed directly to user
@@ -295,7 +295,7 @@ def _enable_display(zcli: Any) -> None:
     
     Display Output:
         Prompt display enabled
-        New prompt: zCLI [~.Projects.zolo-zcli]> 
+        New prompt: zKernel [~.Projects.zolo-zcli]> 
     
     Note:
         Shell commands are UI adapters - they display messages directly.
@@ -317,7 +317,7 @@ def _disable_display(zcli: Any) -> None:
     message with the simple prompt format.
     
     Args:
-        zcli: zCLI instance for session and display access
+        zcli: zKernel instance for session and display access
     
     Returns:
         None: All output is displayed directly to user
@@ -349,7 +349,7 @@ def _toggle_display(zcli: Any) -> None:
     with the new prompt format.
     
     Args:
-        zcli: zCLI instance for session and display access
+        zcli: zKernel instance for session and display access
     
     Returns:
         None: All output is displayed directly to user
@@ -359,7 +359,7 @@ def _toggle_display(zcli: Any) -> None:
     
     Display Output:
         Prompt display toggled ON
-        New prompt: zCLI [~.Projects.zolo-zcli]> 
+        New prompt: zKernel [~.Projects.zolo-zcli]> 
         
         OR
         
@@ -395,7 +395,7 @@ def _get_current_mode(zcli: Any) -> bool:
     Get current prompt display mode from session.
     
     Args:
-        zcli: zCLI instance for session access
+        zcli: zKernel instance for session access
     
     Returns:
         bool: True if zPath display is enabled, False otherwise
@@ -420,7 +420,7 @@ def _format_prompt_preview(zcli: Any, enabled: bool) -> str:
     prompt will look like.
     
     Args:
-        zcli: zCLI instance for session access
+        zcli: zKernel instance for session access
         enabled: Whether zPath display should be shown
     
     Returns:
@@ -460,7 +460,7 @@ def _format_zpath_display(zcli: Any) -> Optional[str]:  # pylint: disable=unused
     3. Outside Home: Returns absolute path as fallback
     
     Args:
-        zcli: zCLI instance (not currently used, kept for interface compatibility)
+        zcli: zKernel instance (not currently used, kept for interface compatibility)
     
     Returns:
         Optional[str]: zPath formatted string, or None if invalid path

@@ -12,7 +12,7 @@ Methods:
     - warning: Display warning messages
     - success: Display success messages
     - info: Display informational messages
-    - zMarker: Display zCLI markers (breadcrumbs, indicators)
+    - zMarker: Display zKernel markers (breadcrumbs, indicators)
 
 Pattern:
     All methods delegate to handle() with signal event dictionaries.
@@ -21,7 +21,7 @@ Pattern:
 Grade: A+ (Type hints, constants, comprehensive docs)
 """
 
-from zCLI import Any
+from zKernel import Any
 from ..display_constants import (
     _KEY_EVENT,
     _EVENT_ERROR,
@@ -130,7 +130,7 @@ class DelegateSignals:
         color: str = DEFAULT_COLOR_MAGENTA, 
         indent: int = DEFAULT_INDENT
     ) -> Any:
-        """Display zCLI marker for visual separation.
+        """Display zKernel marker for visual separation.
         
         Args:
             label: Marker label text (default: "Marker")

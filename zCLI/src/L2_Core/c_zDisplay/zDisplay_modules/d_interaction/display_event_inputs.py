@@ -142,7 +142,7 @@ choice = basic_inputs.selection("Choose:", ["Option 1", "Option 2"])
 ```
 """
 
-from zCLI import Any, Optional, Union, List, Dict
+from zKernel import Any, Optional, Union, List, Dict
 from typing import Set
 
 # Import constants from centralized module
@@ -882,7 +882,7 @@ class BasicInputs:
             if hasattr(self.display, 'zcli') and hasattr(self.display.zcli, 'open'):
                 self._output_text(f"Opening '{label}' in browser...", break_after=False)
                 # Import the open_url function from the zOpen module
-                from zCLI.L2_Core.k_zOpen.open_modules.open_urls import open_url
+                from zKernel.L2_Core.k_zOpen.open_modules.open_urls import open_url
                 open_url(href, self.display.zcli.session, self.display, self.display.zcli.logger)
             else:
                 self._output_text(f"Link: {href}", break_after=False)

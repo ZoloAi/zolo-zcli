@@ -12,11 +12,11 @@ Then open: http://127.0.0.1:8080/demo.html
 """
 
 from pathlib import Path
-from zCLI import zCLI
+from zKernel import zKernel
 import time
 
 # Create minimal zCLI instance
-z = zCLI({"zWorkspace": str(Path(__file__).parent)})
+z = zKernel({"zWorkspace": str(Path(__file__).parent)})
 
 # Create and start HTTP server
 print("\n" + "="*60)

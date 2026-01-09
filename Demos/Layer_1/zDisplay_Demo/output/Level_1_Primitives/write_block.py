@@ -11,12 +11,12 @@ Run:
     python Demos/Layer_1/zDisplay_Demo/output/Level_1_Primitives/write_block.py
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
     """Demonstrate multi-line output with block()."""
-    z = zCLI({"logger": "PROD"})
+    z = zKernel({"logger": "PROD"})
 
     print()
     print("=== Level 1C: block() - Multi-line output ===")

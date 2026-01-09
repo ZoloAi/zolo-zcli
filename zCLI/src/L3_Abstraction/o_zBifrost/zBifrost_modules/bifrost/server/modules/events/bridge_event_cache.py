@@ -62,7 +62,7 @@ Notes:
     - All WebSocket operations wrapped in try/except for resilience
 """
 
-from zCLI import json, Dict, Any, Optional
+from zKernel import json, Dict, Any, Optional
 from .base_event_handler import BaseEventHandler
 from ..bridge_auth import _CONTEXT_ZSESSION, _CONTEXT_APPLICATION, _CONTEXT_DUAL
 

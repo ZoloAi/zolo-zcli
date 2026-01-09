@@ -71,8 +71,8 @@ You'll see a purple page with a big "Connect to Server" button.
 ### The Server (Python)
 
 ```python
-z = zCLI({
-    "zMode": "zBifrost",  # This tells zCLI to start a WebSocket server
+z = zKernel({
+    "zMode": "zBifrost",  # This tells zKernel to start a WebSocket server
     "websocket": {
         "host": "127.0.0.1",  # localhost (your computer)
         "port": 8765           # The "phone number" to call
@@ -82,7 +82,7 @@ z = zCLI({
 z.walker.run()  # Keep the server running
 ```
 
-When you run this, zCLI automatically:
+When you run this, zKernel automatically:
 1. Starts a WebSocket server on port 8765
 2. Waits for browsers to connect
 3. Sends a welcome message when they do
@@ -112,7 +112,7 @@ The browser:
 3. BifrostClient automatically parses JSON and calls your hooks
 4. Displays the welcome message when it arrives
 
-**Key Point:** You're using the same production-ready library that powers all of zCLI's WebSocket features!
+**Key Point:** You're using the same production-ready library that powers all of zKernel's WebSocket features!
 
 ### Why This Approach? (Imperative vs Declarative)
 
@@ -157,14 +157,14 @@ onDisplay: (data) => {
 - **Level 3**: See the magic (declarative zDisplay events)
 - **Level 5+**: Pure productivity (auto-rendering)
 
-This is the **zCLI teaching philosophy**: understand the foundation, then leverage the abstractions.
+This is the **zKernel teaching philosophy**: understand the foundation, then leverage the abstractions.
 
 ### Development vs Production
 
 **Right now (Development):**
-- The HTML loads BifrostClient from your local zCLI installation
+- The HTML loads BifrostClient from your local zKernel installation
 - Works offline, no internet required
-- Path: `../../../../zCLI/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js`
+- Path: `../../../../zKernel/subsystems/zComm/zComm_modules/bifrost/bifrost_client_modular.js`
 
 **In Production (After deploying):**
 - Switch to CDN: `https://cdn.jsdelivr.net/gh/ZoloAi/zolo-zcli@v1.5.5/...`

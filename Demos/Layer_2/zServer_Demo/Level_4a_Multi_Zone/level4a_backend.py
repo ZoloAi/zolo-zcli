@@ -8,7 +8,7 @@ Goal:
     - Run HTTP + WebSocket servers together
     - Prepare for zDisplay events (Level 4b will send them)
 """
-from zCLI import zCLI
+from zKernel import zKernel
 import os
 import time
 
@@ -22,7 +22,7 @@ print("\n" + "=" * 60)
 # Initialize zCLI with zBifrost mode (enables WebSocket)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-z = zCLI({
+z = zKernel({
     "zWorkspace": current_dir,
     "zSpace": current_dir,
     "zMode": "zBifrost",  # Enable WebSocket server

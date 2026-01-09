@@ -6,7 +6,7 @@ Generic file parsing for zVaFile package.
 Handles parsing and metadata extraction for unrecognized file types (fallback).
 """
 
-from zCLI import Any, Dict, Optional
+from zKernel import Any, Dict, Optional
 
 # Import constants from parent package
 from . import (

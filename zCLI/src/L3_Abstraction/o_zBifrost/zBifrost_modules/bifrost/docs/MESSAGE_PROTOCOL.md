@@ -27,8 +27,8 @@ This document defines the standard message protocol for communication between th
   "event": "string",        // Required: Event type (e.g., "create", "read", "update", "delete")
   "_requestId": 123,        // Required: Unique request ID for correlation
   "model": "string",        // Optional: Model/resource name
-  "zKey": "string",         // Optional: zCLI command key
-  "zHorizontal": "string",  // Optional: zCLI horizontal routing
+  "zKey": "string",         // Optional: zKernel command key
+  "zHorizontal": "string",  // Optional: zKernel horizontal routing
   "data": {},               // Optional: Payload data
   "params": {}              // Optional: Query parameters
 }
@@ -332,7 +332,7 @@ This document defines the standard message protocol for communication between th
 
 ---
 
-### zCLI Command Dispatch
+### zKernel Command Dispatch
 
 #### zDispatch Command Execution
 

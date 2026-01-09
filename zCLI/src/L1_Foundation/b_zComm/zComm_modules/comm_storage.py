@@ -1,6 +1,6 @@
 # zCLI/subsystems/zComm/zComm_modules/comm_storage.py
 """
-Object Storage Client for zCLI - Hierarchical Config Aware.
+Object Storage Client for zKernel - Hierarchical Config Aware.
 
 Provides unified interface to storage backends with automatic config
 resolution through zConfig's 5-layer hierarchy.
@@ -48,7 +48,7 @@ class StorageClient:
         Initialize storage client with auto-detected backend.
         
         Args:
-            zcli: zCLI instance (provides access to config hierarchy)
+            zcli: zKernel instance (provides access to config hierarchy)
         """
         self.zcli = zcli
         self.logger = zcli.logger
@@ -86,7 +86,7 @@ class StorageClient:
             return value
         
         # Fallback to OS environment (for uppercase env vars like STORAGE_BACKEND)
-        from zCLI import os
+        from zKernel import os
         upper_key = key.upper()
         value = os.environ.get(upper_key)
         if value is not None:

@@ -27,14 +27,14 @@ Architecture Position
 Usage Examples
 -------------
 WHERE clause parsing:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.parsers import parse_where_clause
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.parsers import parse_where_clause
     >>> parse_where_clause("age >= 18")
     {"age": {"$gte": 18}}
     >>> parse_where_clause("status IN active,pending OR age > 65")
     {"$or": [{"status": ["active", "pending"]}, {"age": {"$gt": 65}}]}
 
 Value type parsing:
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.parsers import parse_value
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.parsers import parse_value
     >>> parse_value("42")
     42
     >>> parse_value("true")

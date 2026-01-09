@@ -11,12 +11,12 @@ Run:
     python Demos/Layer_1/zDisplay_Demo/output/Level_1_Primitives/write_line.py
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
     """Demonstrate line() adding newlines for you."""
-    z = zCLI({"logger": "PROD"})
+    z = zKernel({"logger": "PROD"})
 
     print()
     print("=== Level 1B: line() - Automatic newline ===")

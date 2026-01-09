@@ -3,7 +3,7 @@
  * Header Renderer - Semantic Headers (h1-h6)
  * ═══════════════════════════════════════════════════════════════
  *
- * Renders header events from zCLI backend. Converts indent levels
+ * Renders header events from zKernel backend. Converts indent levels
  * to semantic HTML header tags (h1-h6) with optional colors.
  *
  * @module rendering/header_renderer
@@ -11,7 +11,7 @@
  * @pattern Strategy (single event type)
  *
  * Philosophy:
- * - "Terminal first" - headers structure all zCLI output
+ * - "Terminal first" - headers structure all zKernel output
  * - Pure rendering (no WebSocket, no state, no side effects)
  * - Semantic HTML (indent → h1-h6)
  * - Uses Layer 2 utilities exclusively (no inline logic)
@@ -28,7 +28,7 @@
  *
  * const renderer = new HeaderRenderer(logger);
  * renderer.render({
- *   label: 'Welcome to zCLI',
+ *   label: 'Welcome to zKernel',
  *   color: 'primary',
  *   indent: 1  // h1
  * }, 'zVaF');

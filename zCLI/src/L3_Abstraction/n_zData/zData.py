@@ -1,7 +1,7 @@
 # zCLI/subsystems/zData/zData.py
 
 """
-Unified Data Management System for zCLI.
+Unified Data Management System for zKernel.
 
 This module provides the main entry point for all data operations in zCLI, supporting
 relational databases (SQLite, PostgreSQL) and file-based data (CSV) through a unified
@@ -16,7 +16,7 @@ Architecture Overview:
        - Adapter initialization via AdapterFactory
        - Connection lifecycle management (wizard mode vs one-shot mode)
        - Operation routing via DataOperations facade
-       - zCLI subsystem integration (zLoader, zOpen, zDisplay, zFunc)
+       - zKernel subsystem integration (zLoader, zOpen, zDisplay, zFunc)
     
     2. Backend Adapters (SQLite, PostgreSQL, CSV):
        - Database-specific implementations
@@ -168,7 +168,7 @@ See Also:
     - zCLI/subsystems/zData/zData_modules/shared/parsers/: WHERE/value parsers
 """
 
-from zCLI import Any, Dict, List, Optional, os
+from zKernel import Any, Dict, List, Optional, os
 from zSys.errors import SchemaNotFoundError, TableNotFoundError
 from .zData_modules.shared.backends.adapter_factory import AdapterFactory
 from .zData_modules.shared.validator import DataValidator
@@ -232,8 +232,8 @@ _DECLARE_ZDATA_READY = "zData Ready"
 _DECLARE_ZDATA_REQUEST = "zData Request"
 
 # Error messages
-_ERROR_NO_ZCLI_INSTANCE = "zData requires a zCLI instance"
-_ERROR_NO_SESSION_ATTR = "Invalid zCLI instance: missing 'session' attribute"
+_ERROR_NO_ZCLI_INSTANCE = "zData requires a zKernel instance"
+_ERROR_NO_SESSION_ATTR = "Invalid zKernel instance: missing 'session' attribute"
 _ERROR_NO_ADAPTER = "No adapter initialized"
 _ERROR_NO_SCHEMA = "Cannot initialize adapter without schema"
 _ERROR_FAILED_CONNECT = "Failed to connect to backend"
@@ -306,7 +306,7 @@ __all__ = ["zData"]
 
 class zData:
     """
-    Unified Data Management System for zCLI.
+    Unified Data Management System for zKernel.
     
     This class provides a unified interface for all data operations in zCLI, supporting
     multiple backends (SQLite, PostgreSQL, CSV) through a common API. It handles schema
@@ -321,7 +321,7 @@ class zData:
         - Connection lifecycle (wizard mode vs one-shot mode)
     
     Lifecycle:
-        1. Initialization: Create zData instance with zCLI reference
+        1. Initialization: Create zData instance with zKernel reference
         2. Schema Loading: Load schema from zPath or use cached schema
         3. Adapter Init: Create backend adapter (SQLite/PostgreSQL/CSV)
         4. Connection: Establish database connection
@@ -341,7 +341,7 @@ class zData:
             - Auto-disconnect after operation
     
     Attributes:
-        zcli: zCLI core instance (provides access to all subsystems)
+        zcli: zKernel core instance (provides access to all subsystems)
         logger: Logger instance for operation logging
         display: zDisplay instance for mode-agnostic output
         loader: zLoader instance for schema loading
@@ -372,15 +372,15 @@ class zData:
 
     def __init__(self, zcli: Any) -> None:
         """
-        Initialize zData instance with zCLI reference.
+        Initialize zData instance with zKernel reference.
         
-        This method validates the zCLI instance and stores references to required
+        This method validates the zKernel instance and stores references to required
         subsystems (logger, display, loader, open). It initializes the zData state
         (schema, adapter, validator, operations) to None, which will be populated
         when a schema is loaded via handle_request() or load_schema().
         
         Args:
-            zcli: zCLI core instance with required attributes:
+            zcli: zKernel core instance with required attributes:
                   - session: Active session dictionary
                   - logger: Logger instance
                   - display: zDisplay instance
@@ -396,7 +396,7 @@ class zData:
         
         Examples:
             # Standard initialization
-            zcli = zCLI()
+            zcli = zKernel()
             zdata = zData(zcli)
             
             # Initialization with validation
@@ -408,14 +408,14 @@ class zData:
             - Schema loading happens in handle_request() or load_schema()
             - zDeclare announces "zData Ready" to display
         """
-        # PHASE 1: Validate zCLI instance
+        # PHASE 1: Validate zKernel instance
         if zcli is None:
             raise ValueError(_ERROR_NO_ZCLI_INSTANCE)
 
         if not hasattr(zcli, 'session'):
             raise ValueError(_ERROR_NO_SESSION_ATTR)
 
-        # PHASE 2: Store zCLI instance and subsystem references
+        # PHASE 2: Store zKernel instance and subsystem references
         self.zcli = zcli
         self.logger = zcli.logger
         self.display = zcli.display
@@ -853,7 +853,7 @@ class zData:
             self.logger.info(_LOG_CONNECTED_BACKEND, data_type, data_path)
 
             # PHASE 9: Initialize storage quota manager (Phase 1.5)
-            from zCLI.L3_Abstraction.n_zData.zData_modules.shared.storage_quota import StorageQuotaManager
+            from zKernel.L3_Abstraction.n_zData.zData_modules.shared.storage_quota import StorageQuotaManager
             self.storage_quota = StorageQuotaManager(self)
 
         except Exception as e:
@@ -1604,16 +1604,16 @@ class zData:
 
     def _convert_zcli_to_diff_format(self, zcli_schema: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Convert zCLI native schema format to schema_diff.py expected format.
+        Convert zKernel native schema format to schema_diff.py expected format.
         
-        zCLI Format (native):
+        zKernel Format (native):
             {'Meta': {...}, 'users': {'id': {...}, 'name': {...}}, ...}
         
         Diff Engine Format (expected):
             {'Tables': {'users': {'Columns': {'id': {...}, 'name': {...}}}, ...}}
         
         Args:
-            zcli_schema: Schema in zCLI native format
+            zcli_schema: Schema in zKernel native format
         
         Returns:
             Schema in diff engine format
@@ -1645,7 +1645,7 @@ class zData:
             - PostgreSQL: Uses information_schema queries
         
         Returns:
-            Dict[str, Any]: Schema dict in zCLI format matching self.schema structure:
+            Dict[str, Any]: Schema dict in zKernel format matching self.schema structure:
             {
                 'Meta': {...},  # Copied from loaded schema
                 'Tables': {
@@ -1686,7 +1686,7 @@ class zData:
             # We don't want to detect "extra" tables in the database as candidates for dropping.
             # This ensures we only compare the schema-defined tables' reality vs. their YAML definition.
             
-            # zCLI schema format: tables are top-level keys (excluding 'Meta')
+            # zKernel schema format: tables are top-level keys (excluding 'Meta')
             # Example: {'Meta': {...}, 'users': {...}, 'posts': {...}}
             tables = [key for key in self.schema.keys() if key != 'Meta'] if self.schema else []
             
@@ -1706,7 +1706,7 @@ class zData:
                     self.logger.warning(f"[zMigrate] Failed to introspect {table_name}: {e}")
                     continue
             
-            # Build complete schema structure matching zCLI format
+            # Build complete schema structure matching zKernel format
             # Tables are at top level, NOT nested under 'Tables' key
             introspected_schema = {
                 'Meta': self.schema.get('Meta', {}) if self.schema else {}
@@ -1788,7 +1788,7 @@ class zData:
             raise RuntimeError("No schema loaded. Call load_schema() first.")
         
         # Load new schema from path
-        from zCLI.L3_Abstraction.n_zData.zData_modules.shared.migration_history import (
+        from zKernel.L3_Abstraction.n_zData.zData_modules.shared.migration_history import (
             get_current_schema_hash
         )
         
@@ -1864,7 +1864,7 @@ class zData:
         
         # Convert both schemas to diff engine format
         # schema_diff expects {'Tables': {'users': {'Columns': {...}}}}
-        # but zCLI uses {'Meta': {...}, 'users': {...}}
+        # but zKernel uses {'Meta': {...}, 'users': {...}}
         self.logger.debug("[zMigrate] Converting schemas to diff engine format...")
         old_schema_diff = self._convert_zcli_to_diff_format(old_schema_zcli)
         new_schema_diff = self._convert_zcli_to_diff_format(new_schema)
@@ -1934,7 +1934,7 @@ class zData:
         if not self.adapter:
             raise RuntimeError(_ERROR_NO_ADAPTER)
         
-        from zCLI.L3_Abstraction.n_zData.zData_modules.shared.migration_history import (
+        from zKernel.L3_Abstraction.n_zData.zData_modules.shared.migration_history import (
             get_migration_history as _get_history
         )
         
@@ -1991,14 +1991,14 @@ class zData:
             enabling zero-config migration workflows where schemas are discovered from
             environment without manual registration.
         """
-        from zCLI import os
+        from zKernel import os
         
         schemas = []
         
-        # Get environment from zCLI (includes .zEnv from app directory)
+        # Get environment from zKernel (includes .zEnv from app directory)
         env = self.zcli.config.environment.env
         
-        # Fallback to os.environ if zCLI env doesn't have ZDATA vars
+        # Fallback to os.environ if zKernel env doesn't have ZDATA vars
         if not any(k.startswith('ZDATA_') for k in env.keys()):
             env = os.environ
             self.logger.debug("[discover_schemas] Using os.environ as fallback for ZDATA_* vars")
@@ -2011,7 +2011,7 @@ class zData:
                 schema_name = schema_name_upper.lower()
                 
                 try:
-                    # Construct schema path following zCLI convention
+                    # Construct schema path following zKernel convention
                     # ZDATA_USERS_URL → @.models.zSchema.users
                     schema_path = f"@.models.zSchema.{schema_name}"
                     
@@ -2255,11 +2255,11 @@ class zData:
         
         Examples:
             >>> # From main.py CLI handler
-            >>> z = zCLI({'zMode': 'Terminal'})
+            >>> z = zKernel({'zMode': 'Terminal'})
             >>> exit_code = z.data.cli_migrate(app_file="app.py", auto_approve=False)
             
             >>> # Programmatic use
-            >>> z = zCLI()
+            >>> z = zKernel()
             >>> exit_code = z.data.cli_migrate(specific_schema="users", dry_run=True)
         
         Notes:
@@ -2279,8 +2279,8 @@ class zData:
             self.display.text(f"   Directory: {app_path.parent}")
         self.display.text("=" * 70 + "\n")
         
-        self.display.text("1️⃣ Initializing zCLI...")
-        self.display.text("   ✅ zCLI initialized\n")
+        self.display.text("1️⃣ Initializing zKernel...")
+        self.display.text("   ✅ zKernel initialized\n")
         
         # Discover schemas
         self.display.text("2️⃣ Discovering schemas...")

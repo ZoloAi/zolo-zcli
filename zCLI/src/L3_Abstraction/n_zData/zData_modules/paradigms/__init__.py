@@ -8,7 +8,7 @@ been refactored as follows:
 
 Architecture Change (v1.5.4+):
     - Classical paradigm logic merged directly into zData.py (simplified 2-tier architecture)
-    - Quantum paradigm extracted as separate Zolo app (out of scope for zCLI core)
+    - Quantum paradigm extracted as separate Zolo app (out of scope for zKernel core)
 
 Historical Context:
     Classical Handler (removed):
@@ -22,7 +22,7 @@ Historical Context:
         - Reason: Complexity (zStrongNuclearField, zMemoryCell) doesn't belong in core
 
 New Architecture:
-    zCLI now uses a simpler 2-tier architecture:
+    zKernel now uses a simpler 2-tier architecture:
     - zData (facade) → Backend Adapters (SQLite, PostgreSQL, CSV)
     
     This eliminates the unnecessary intermediate handler layer and reduces

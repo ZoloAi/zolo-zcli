@@ -46,7 +46,7 @@ routes:
   "/bifrost_client.js":
     type: static
     file: "bifrost_client.js"
-    description: "zBifrost WebSocket client (copied from zCLI)"
+    description: "zBifrost WebSocket client (copied from zKernel)"
   
   # zBifrost lazy-loaded modules
   "/_modules/connection.js":

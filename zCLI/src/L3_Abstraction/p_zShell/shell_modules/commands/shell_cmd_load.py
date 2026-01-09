@@ -1,9 +1,9 @@
 # zCLI/subsystems/zShell/shell_modules/commands/shell_cmd_load.py
 """
-Load command execution for zCLI shell.
+Load command execution for zKernel shell.
 
 This module provides the `load` shell command for managing zLoader cache operations.
-It enables loading, displaying, and clearing cached resources in the zCLI framework.
+It enables loading, displaying, and clearing cached resources in the zKernel framework.
 
 ═══════════════════════════════════════════════════════════════════════════════
 THREE-TIER CACHE SYSTEM
@@ -93,8 +93,8 @@ EXAMPLES
 ═══════════════════════════════════════════════════════════════════════════════
 
     # Load a schema to cache
-    load @.zCLI.Schemas.zSchema.sqlite_demo
-    # Output: [OK] Loaded schema: @.zCLI.Schemas.zSchema.sqlite_demo (3 tables)
+    load @.zKernel.Schemas.zSchema.sqlite_demo
+    # Output: [OK] Loaded schema: @.zKernel.Schemas.zSchema.sqlite_demo (3 tables)
 
     # Show all cache tiers
     load show
@@ -131,7 +131,7 @@ NOTES
 AUTHOR & VERSION
 ═══════════════════════════════════════════════════════════════════════════════
 
-Author: zCLI Development Team
+Author: zKernel Development Team
 Version: 1.5.4
 Last Updated: 2025-11-06
 """
@@ -290,7 +290,7 @@ def _validate_loader_subsystem(zcli: Any) -> Optional[Dict[str, str]]:
     Validate that the zLoader subsystem is available.
     
     Args:
-        zcli: The zCLI application instance
+        zcli: The zKernel application instance
         
     Returns:
         Error dict if loader is unavailable, None if valid
@@ -312,7 +312,7 @@ def _validate_parser_subsystem(zcli: Any) -> Optional[Dict[str, str]]:
     Validate that the zParser subsystem is available.
     
     Args:
-        zcli: The zCLI application instance
+        zcli: The zKernel application instance
         
     Returns:
         Error dict if parser is unavailable, None if valid
@@ -340,9 +340,9 @@ def _detect_resource_type(zpath: str) -> str:
         Resource type string (schema, ui, config, other)
         
     Example:
-        >>> _detect_resource_type("@.zCLI.Schemas.zSchema.sqlite_demo")
+        >>> _detect_resource_type("@.zKernel.Schemas.zSchema.sqlite_demo")
         'schema'
-        >>> _detect_resource_type("@.zCLI.UI.zUI.zcli_sys")
+        >>> _detect_resource_type("@.zKernel.UI.zUI.zcli_sys")
         'ui'
     """
     if PATTERN_SCHEMA in zpath:
@@ -429,7 +429,7 @@ def _display_cache_header(
     Display a cache section header.
     
     Args:
-        zcli: The zCLI application instance
+        zcli: The zKernel application instance
         title: Header title text
         tier_name: Optional tier name for context
         
@@ -451,7 +451,7 @@ def _display_resource_item(
     Display a single cached resource item.
     
     Args:
-        zcli: The zCLI application instance
+        zcli: The zKernel application instance
         item: Resource item dictionary with name, zpath, age
         resource_type: Resource type for formatting context
         
@@ -478,7 +478,7 @@ def _display_section_summary(
     Display summary line for a cache section.
     
     Args:
-        zcli: The zCLI application instance
+        zcli: The zKernel application instance
         count: Number of items in section
         resource_type: Optional resource type for filtering context
         
@@ -505,7 +505,7 @@ def _display_empty_cache_message(
     Display message for empty cache.
     
     Args:
-        zcli: The zCLI application instance
+        zcli: The zKernel application instance
         cache_type: Type of cache (pinned, system, etc.)
         resource_filter: Optional resource type filter
         
@@ -535,7 +535,7 @@ def _get_cache_resources_by_type(
     Retrieve cached resources, optionally filtered by type.
     
     Args:
-        zcli: The zCLI application instance
+        zcli: The zKernel application instance
         filter_type: Optional resource type to filter (schema, ui, config)
         
     Returns:
@@ -595,7 +595,7 @@ def execute_load(zcli: Any, parsed: Dict[str, Any]) -> Dict[str, Any]:
     3. Clear cached resources
     
     Args:
-        zcli: The zCLI application instance
+        zcli: The zKernel application instance
         parsed: Parsed command dictionary with keys:
             - "args": List of command arguments
             - "options": Dict of command options (reserved)
@@ -731,7 +731,7 @@ def show_all_cache_tiers(zcli: Any) -> Dict[str, Any]:
     - Tier 3: Disk I/O (fallback description)
     
     Args:
-        zcli: The zCLI application instance
+        zcli: The zKernel application instance
         
     Returns:
         Result dictionary with tier counts
@@ -842,7 +842,7 @@ def show_pinned_resources(zcli: Any) -> Dict[str, Any]:
     Show only Tier 1 (pinned/loaded) resources.
     
     Args:
-        zcli: The zCLI application instance
+        zcli: The zKernel application instance
         
     Returns:
         Result dictionary with resource count
@@ -882,7 +882,7 @@ def show_cached_stats(zcli: Any) -> Dict[str, Any]:
     Show only Tier 2 (system cache) statistics.
     
     Args:
-        zcli: The zCLI application instance
+        zcli: The zKernel application instance
         
     Returns:
         Result dictionary with cache stats
@@ -944,7 +944,7 @@ def show_resources_by_type(zcli: Any, resource_type: str) -> Dict[str, Any]:
     Show resources filtered by type (schemas, ui, config).
     
     Args:
-        zcli: The zCLI application instance
+        zcli: The zKernel application instance
         resource_type: Resource type to filter (schemas, ui, config)
         
     Returns:
@@ -998,7 +998,7 @@ def clear_loaded_resources(zcli: Any, pattern: Optional[str] = None) -> Dict[str
     Clear loaded resources from Tier 1 cache.
     
     Args:
-        zcli: The zCLI application instance
+        zcli: The zKernel application instance
         pattern: Optional pattern to match resource names
         
     Returns:

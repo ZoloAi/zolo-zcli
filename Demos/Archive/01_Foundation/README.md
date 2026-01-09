@@ -71,7 +71,7 @@ This demo covers **DEMO_PLAN items 1.1-1.4** (Foundation Layer):
 **Philosophy in Action:**
 - **1 Python file** (minimal imperative code)
 - **1 YAML file** (all logic and structure)
-- **0 helper scripts** (pure zCLI patterns)
+- **0 helper scripts** (pure zKernel patterns)
 
 ---
 
@@ -107,7 +107,7 @@ python foundation_walker.py --help
 ### Using zcli CLI
 
 ```bash
-# If zCLI is installed globally
+# If zKernel is installed globally
 zcli --file @.zUI.foundation_demo --block zVaF
 ```
 
@@ -186,7 +186,7 @@ This demo is **declarative-first**:
 # - Display formatted output
 # Total: ~300 lines of code
 
-# zCLI Approach (Declarative)
+# zKernel Approach (Declarative)
 ~Root*: ["Option 1", "Option 2", "stop"]
 
 Option 1:
@@ -230,7 +230,7 @@ No code refactoring required.
 
 ```
 ════════════════════════════════════════════════════════════════════════════════
-🏗️  Foundation Layer Demo - zCLI v1.5.4
+🏗️  Foundation Layer Demo - zKernel v1.5.4
 ════════════════════════════════════════════════════════════════════════════════
 
 Philosophy: 'Seed the Demo, Let It Grow'

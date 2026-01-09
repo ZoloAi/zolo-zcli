@@ -1,8 +1,8 @@
 Uninstall:
   ~Root*: ["Framework Only", "Clean Uninstall", "Dependencies Only", "exit"]
-  "Framework Only": "zFunc(@.zCLI.utils.uninstall.uninstall_framework_only)"
-  "Clean Uninstall": "zFunc(@.zCLI.utils.uninstall.uninstall_clean)"
-  "Dependencies Only": "zFunc(@.zCLI.utils.uninstall.uninstall_dependencies)"
+  "Framework Only": "zFunc(@.zKernel.utils.uninstall.uninstall_framework_only)"
+  "Clean Uninstall": "zFunc(@.zKernel.utils.uninstall.uninstall_clean)"
+  "Dependencies Only": "zFunc(@.zKernel.utils.uninstall.uninstall_dependencies)"
 
 Traceback:
   ~Root*: ["^View Details", "^Full Traceback", "exit"]

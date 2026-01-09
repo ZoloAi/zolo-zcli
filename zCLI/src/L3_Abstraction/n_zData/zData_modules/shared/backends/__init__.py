@@ -70,19 +70,19 @@ This package exports 6 main items for external use:
 Usage Examples
 -------------
 **1. Factory Pattern (Recommended):**
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends import AdapterFactory
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends import AdapterFactory
     >>> config = {"path": "/data/myapp", "label": "sqlite"}
     >>> adapter = AdapterFactory.create_adapter("sqlite", config)
     >>> adapter.connect()
 
 **2. Direct Adapter Import:**
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends import SQLiteAdapter
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends import SQLiteAdapter
     >>> config = {"path": "/data/myapp", "label": "sqlite"}
     >>> adapter = SQLiteAdapter(config, logger=logger)
     >>> adapter.connect()
 
 **3. Plugin Registration (Custom Adapters):**
-    >>> from zCLI.L3_Abstraction.n_zData.zData_modules.shared.backends import (
+    >>> from zKernel.L3_Abstraction.n_zData.zData_modules.shared.backends import (
     ...     BaseDataAdapter, register_custom_adapter
     ... )
     >>> 

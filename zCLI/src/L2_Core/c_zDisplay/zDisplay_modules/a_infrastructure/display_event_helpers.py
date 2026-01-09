@@ -42,11 +42,11 @@ Purpose:
 Dependencies:
     - typing: Type hints
     - asyncio, json: WebSocket emission
-    - zCLI constants: MODE_TERMINAL, MODE_WALKER, MODE_EMPTY
+    - zKernel constants: MODE_TERMINAL, MODE_WALKER, MODE_EMPTY
 """
 
 # Centralized imports from zCLI
-from zCLI import asyncio, json, uuid, Any, Dict, Optional
+from zKernel import asyncio, json, uuid, Any, Dict, Optional
 
 # Import mode constants from display_constants
 from ..display_constants import MODE_TERMINAL, MODE_WALKER, MODE_EMPTY

@@ -3,7 +3,7 @@
 """
 Primary User-Facing API for zDisplay - Modular Composition.
 
-This module provides the main interface for all display operations in zCLI.
+This module provides the main interface for all display operations in zKernel.
 The delegate methods are the PRIMARY way to interact with zDisplay, not a
 backward-compatibility layer. Usage analysis shows 460+ calls to these methods
 across 91 files, versus only 20 direct handle() calls.
@@ -33,7 +33,7 @@ Layer 1 Position:
     - zConfig: Provides session dict and logger
     - zComm: Provides WebSocket infrastructure for zBifrost mode
     
-    Integration (zCLI.__init__ line 68-69):
+    Integration (zKernel.__init__ line 68-69):
         self.display = zDisplay(self)
         
     The display instance is then available to all higher-layer subsystems
@@ -78,7 +78,7 @@ Method Categories:
 
 Usage Pattern:
     ```python
-    # Throughout zCLI subsystems (460+ usages):
+    # Throughout zKernel subsystems (460+ usages):
     zcli.display.error("Connection failed")
     zcli.display.success("User created successfully")
     zcli.display.zTable("Users", columns, rows)
@@ -104,7 +104,7 @@ Industry-Grade Refactoring (Week 6.4.1):
     - Replaced 100+ magic strings with constants
     - Rewrote documentation to reflect true purpose (PRIMARY API, not legacy)
     - Enhanced method docstrings with Args, Returns, Examples
-    - Clarified architectural role and zCLI integration
+    - Clarified architectural role and zKernel integration
     
     Phase 2 (Modular Refactoring):
     - Split 758 lines into 6 files (main + 5 categories)

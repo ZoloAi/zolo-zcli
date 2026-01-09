@@ -135,7 +135,7 @@ Internal:
     - loader_cache_plugin.PluginCache (Tier 2)
 
 External:
-    - zCLI imports: Any, Dict, Optional (for type hints)
+    - zKernel imports: Any, Dict, Optional (for type hints)
 
 See Also
 --------
@@ -152,7 +152,7 @@ Version History
 - v1.5.3: Original implementation (129 lines, 4-tier routing, batch operations)
 """
 
-from zCLI import Any, Dict, Optional
+from zKernel import Any, Dict, Optional
 from .loader_cache_system import SystemCache
 from .loader_cache_pinned import PinnedCache
 from .loader_cache_schema import SchemaCache
@@ -208,7 +208,7 @@ class CacheOrchestrator:
     logger : Any
         Logger instance for orchestrator logging.
     zcli : Optional[Any]
-        zCLI instance for plugin cache session injection (optional).
+        zKernel instance for plugin cache session injection (optional).
     system_cache : SystemCache
         System cache for UI/config files (Tier 2).
     pinned_cache : PinnedCache
@@ -244,7 +244,7 @@ class CacheOrchestrator:
         logger : Any
             Logger instance for orchestrator logging.
         zcli : Optional[Any], optional
-            zCLI instance for plugin cache session injection (default: None).
+            zKernel instance for plugin cache session injection (default: None).
 
         Notes
         -----

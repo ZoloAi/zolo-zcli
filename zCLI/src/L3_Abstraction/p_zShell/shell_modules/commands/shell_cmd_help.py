@@ -14,12 +14,12 @@ Two-Tier Help System:
     • shell_cmd_help.py   → Shell terminal commands (where, shortcut, cd, cwd, ls)
                             Scope: Group A - Basic terminal navigation
     • shell_help.py       → System/general help (welcome messages, tips)
-                            Scope: General zCLI information
+                            Scope: General zKernel information
 
 Command Scope (Group A Only):
     This help system covers ONLY Group A commands - basic terminal navigation and
     convenience commands that users interact with when IN the shell. It does NOT
-    cover zCLI subsystem operations (data, func, auth, etc.) as those belong to
+    cover zKernel subsystem operations (data, func, auth, etc.) as those belong to
     their respective subsystems and are documented in zUI.zcli_sys.yaml.
 
 ═══════════════════════════════════════════════════════════════════════════════
@@ -36,12 +36,12 @@ Mode 2: Declarative Help UI (Walker Navigation)
     Usage:    help (no args)
     Method:   Launch walker with zUI.zcli_sys.yaml Help block
     Display:  Interactive menu via zWalker
-    Example:  help → Opens Help menu with all zCLI documentation
+    Example:  help → Opens Help menu with all zKernel documentation
 
 Walker Integration:
     The declarative help UI is launched via zWalker, which reads the Help block
     from zUI.zcli_sys.yaml. This provides an interactive navigation experience
-    across all zCLI documentation sections.
+    across all zKernel documentation sections.
 
 ═══════════════════════════════════════════════════════════════════════════════
 SESSION REQUIREMENTS
@@ -109,7 +109,7 @@ Walker Mode (Declarative Help):
     zCLI> help
     
     ══════════════════════════════════════════════════════════
-                          zCLI Help
+                          zKernel Help
     ══════════════════════════════════════════════════════════
     
     [1] CD - Change Directory
@@ -121,7 +121,7 @@ Walker Mode (Declarative Help):
 from typing import Any, Dict, List
 
 # Import session constants from zConfig
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZSPARK
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_KEY_ZSPARK
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -129,7 +129,7 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SESSION_
 # ═══════════════════════════════════════════════════════════════════════════
 
 # Walker Configuration
-HELP_VAFILE_PATH: str = "@.zCLI.UI.zUI.zcli_sys"
+HELP_VAFILE_PATH: str = "@.zKernel.UI.zUI.zcli_sys"
 HELP_BLOCK_NAME: str = "Help"
 
 # Error Messages
@@ -210,7 +210,7 @@ SHELL_COMMANDS: Dict[str, Dict[str, Any]] = {
         ],
         "prompt_formats": [
             "Default (off):  zCLI> ",
-            "Enabled (on):   zCLI [~.Projects.zolo-zcli]> ",
+            "Enabled (on):   zKernel [~.Projects.zolo-zcli]> ",
         ],
     },
     "shortcut": {
@@ -263,7 +263,7 @@ SHELL_COMMANDS: Dict[str, Dict[str, Any]] = {
         "syntax": "cwd  or  pwd",
         "display": [
             "1. OS Path     - Standard filesystem path",
-            "2. zPath       - zCLI declarative path format",
+            "2. zPath       - zKernel declarative path format",
         ],
         "examples": [
             "cwd                   # Show current directory (both formats)",
@@ -332,7 +332,7 @@ def execute_help(zcli: Any, parsed: Dict[str, Any]) -> None:
         2. No args (help): Launch declarative help UI via walker
     
     Args:
-        zcli: zCLI instance with display, session, and walker subsystems
+        zcli: zKernel instance with display, session, and walker subsystems
         parsed: Parsed command dictionary with optional args
         
     Returns:
@@ -399,7 +399,7 @@ def _show_command_help(zcli: Any, command_name: str) -> None:
     zDisplay's list event for consistent formatting.
     
     Args:
-        zcli: zCLI instance with display and logger
+        zcli: zKernel instance with display and logger
         command_name: Name of command to show help for (aliases supported)
         
     Returns:

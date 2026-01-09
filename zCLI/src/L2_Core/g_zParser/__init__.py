@@ -1,9 +1,9 @@
 # zCLI/subsystems/zParser/__init__.py
 
 """
-zParser subsystem - comprehensive parsing operations for the zCLI framework.
+zParser subsystem - comprehensive parsing operations for the zKernel framework.
 
-This package provides unified parsing functionality for the zCLI framework,
+This package provides unified parsing functionality for the zKernel framework,
 organized in a four-tier architecture from foundational utilities to a high-level
 facade. The zParser subsystem handles:
 
@@ -45,10 +45,10 @@ Public API:
         - zExpr_eval: Expression evaluation (commonly used standalone)
 
 Usage:
-    The zParser subsystem is initialized by zCLI during framework startup:
+    The zParser subsystem is initialized by zKernel during framework startup:
     
-    >>> # In zCLI.py
-    >>> from zCLI.L2_Core.g_zParser import zParser
+    >>> # In zKernel.py
+    >>> from zKernel.L2_Core.g_zParser import zParser
     >>> self.parser = zParser(self)
     
     >>> # Throughout the framework
@@ -57,7 +57,7 @@ Usage:
     >>> data = self.parser.parse_file_content(raw_yaml, ".yaml")
     
     >>> # Direct function import (for special cases)
-    >>> from zCLI.L2_Core.g_zParser import zExpr_eval
+    >>> from zKernel.L2_Core.g_zParser import zExpr_eval
     >>> result = zExpr_eval(expr, logger, display)
 
 Module Organization:
@@ -105,7 +105,7 @@ Thread Safety:
 
 Examples:
     >>> # Initialize (done by zCLI)
-    >>> from zCLI.L2_Core.g_zParser import zParser
+    >>> from zKernel.L2_Core.g_zParser import zParser
     >>> parser = zParser(zcli)
     
     >>> # Path resolution
@@ -146,7 +146,7 @@ See Also:
     - parser_modules: Specialized parser modules
 
 Notes:
-    The zParser subsystem is a critical component of the zCLI framework,
+    The zParser subsystem is a critical component of the zKernel framework,
     serving as the foundation for the declarative paradigm. All file parsing,
     path resolution, and expression evaluation flows through this subsystem.
 """

@@ -5,14 +5,14 @@ Plugin cache for dynamically loaded modules with collision detection and session
 
 This module provides a specialized caching layer for plugin modules within the zLoader
 subsystem. Unlike other caches, the PluginCache uses filename-based keys (not full paths)
-with collision detection, automatic mtime invalidation, and zCLI session injection for
+with collision detection, automatic mtime invalidation, and zKernel session injection for
 every loaded plugin. It's the largest and most feature-rich cache implementation.
 
 Purpose
 -------
 The PluginCache serves as Tier 2 (Cache Implementations) in the zLoader architecture,
 providing plugin module caching with collision detection, LRU eviction, mtime-based
-freshness checking, and automatic zCLI session injection. It sits alongside other cache
+freshness checking, and automatic zKernel session injection. It sits alongside other cache
 implementations but is the only one that caches executable code (modules).
 
 Architecture
@@ -141,7 +141,7 @@ Internal:
     - None (standalone cache implementation)
 
 External:
-    - zCLI imports: os, time, OrderedDict, Any, Dict, List, Optional
+    - zKernel imports: os, time, OrderedDict, Any, Dict, List, Optional
     - pathlib: Path (for filename extraction)
     - importlib.util: spec_from_file_location, module_from_spec (for dynamic loading)
     - zConfig constants: SESSION_KEY_ZCACHE, ZCACHE_KEY_PLUGIN
@@ -158,7 +158,7 @@ Performance Considerations
 Thread Safety
 -------------
 This class is NOT thread-safe. Both in-memory OrderedDict and session dict access are not
-synchronized. If using zCLI in a multi-threaded environment, ensure proper locking around
+synchronized. If using zKernel in a multi-threaded environment, ensure proper locking around
 plugin cache access.
 
 See Also
@@ -177,8 +177,8 @@ Version History
           mtime invalidation, LRU eviction)
 """
 
-from zCLI import os, time, OrderedDict, Any, Dict, List, Optional
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZCACHE
+from zKernel import os, time, OrderedDict, Any, Dict, List, Optional
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import SESSION_KEY_ZCACHE
 from pathlib import Path
 import importlib.util
 
@@ -253,7 +253,7 @@ class PluginCache:
     Cache for dynamically loaded plugin modules with collision detection and session injection.
 
     This class implements a specialized caching layer for plugin modules using filename-based
-    keys (not full paths) with collision detection, automatic mtime invalidation, zCLI session
+    keys (not full paths) with collision detection, automatic mtime invalidation, zKernel session
     injection, and LRU eviction.
 
     The PluginCache is the largest and most feature-rich cache implementation, providing:
@@ -270,7 +270,7 @@ class PluginCache:
     logger : Any
         Logger instance for cache operation logging.
     zcli : Any
-        zCLI instance for session injection into plugins.
+        zKernel instance for session injection into plugins.
     max_size : int
         Maximum number of cached plugins (default: 50).
     stats : Dict[str, int]
@@ -302,7 +302,7 @@ class PluginCache:
         logger : Any
             Logger instance for cache operation logging.
         zcli : Any
-            zCLI instance for session injection into plugins.
+            zKernel instance for session injection into plugins.
         max_size : int, optional
             Maximum number of cached plugins (default: DEFAULT_MAX_SIZE = 50).
 

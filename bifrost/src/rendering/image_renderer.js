@@ -8,7 +8,7 @@
  * - Terminal displays metadata + button to open
  * - Bifrost renders <img> element with zTheme styling
  *
- * Renders image display events from zCLI backend. Creates image
+ * Renders image display events from zKernel backend. Creates image
  * elements using primitives-first architecture.
  *
  * @module rendering/image_renderer

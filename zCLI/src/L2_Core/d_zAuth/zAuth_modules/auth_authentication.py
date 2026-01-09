@@ -3,7 +3,7 @@ Authentication Module - CORE three-tier authentication and session management (v
 
 ARCHITECTURE OVERVIEW
 
-This is the CORE authentication module for the zCLI framework, implementing a
+This is the CORE authentication module for the zKernel framework, implementing a
 sophisticated three-tier authentication model that supports:
 
 1. **zSession Authentication** (Internal zCLI/Zolo users)
@@ -18,8 +18,8 @@ THREE-TIER AUTHENTICATION MODEL
 **Layer 1 - zSession Authentication (Internal Users):**
     Purpose:
         - Authenticate zCLI/Zolo platform users
-        - Grant access to premium zCLI features, plugins, and Zolo cloud services
-        - Manage developer accounts and zCLI premium subscriptions
+        - Grant access to premium zKernel features, plugins, and Zolo cloud services
+        - Manage developer accounts and zKernel premium subscriptions
     
     Authentication Flow:
         1. User calls: zcli.auth.login(username, password)
@@ -37,15 +37,15 @@ THREE-TIER AUTHENTICATION MODEL
         }
     
     Use Cases:
-        - zCLI developer authenticating to access premium plugins
-        - Store owner authenticating to Zolo cloud for zCLI features
-        - Admin managing zCLI system settings
+        - zKernel developer authenticating to access premium plugins
+        - Store owner authenticating to Zolo cloud for zKernel features
+        - Admin managing zKernel system settings
 
 **Layer 2 - Application Authentication (External Users):**
     Purpose:
         - Authenticate end-users of applications BUILT with zCLI
         - Enable multi-app simultaneous authentication
-        - Isolate application user data from zCLI system users
+        - Isolate application user data from zKernel system users
     
     Authentication Flow:
         1. App calls: zcli.auth.authenticate_app_user(app_name, token, config)
@@ -81,7 +81,7 @@ THREE-TIER AUTHENTICATION MODEL
 **Layer 3 - Dual-Mode Authentication (Both Contexts):**
     Purpose:
         - Enable simultaneous zSession AND application authentication
-        - Allow zCLI developers to work on their own applications
+        - Allow zKernel developers to work on their own applications
         - Support admin/owner scenarios with dual identity
     
     Authentication Flow:
@@ -95,7 +95,7 @@ THREE-TIER AUTHENTICATION MODEL
         session[SESSION_KEY_ZAUTH] = {
             ZAUTH_KEY_ACTIVE_CONTEXT: CONTEXT_DUAL,
             ZAUTH_KEY_DUAL_MODE: True,
-            ZAUTH_KEY_ZSESSION: {...},  # zCLI developer credentials
+            ZAUTH_KEY_ZSESSION: {...},  # zKernel developer credentials
             ZAUTH_KEY_APPLICATIONS: {
                 "my_store": {...}  # Store owner credentials
             }
@@ -254,7 +254,7 @@ USAGE EXAMPLES
     analytics_user = zcli.auth.get_app_user("analytics")
 
 **Example 6: Context-Aware Logout**
-    # Logout from zCLI only
+    # Logout from zKernel only
     zcli.auth.logout("zSession")
     
     # Logout from specific app
@@ -268,16 +268,16 @@ USAGE EXAMPLES
 
 THREAD SAFETY & CONCURRENT AUTHENTICATION
 
-This module operates on the zCLI session object, which is NOT thread-safe by design.
-Each zCLI instance maintains a single session dictionary. For multi-threaded
-applications, each thread should use its own zCLI instance.
+This module operates on the zKernel session object, which is NOT thread-safe by design.
+Each zKernel instance maintains a single session dictionary. For multi-threaded
+applications, each thread should use its own zKernel instance.
 
 Multi-app authentication within a SINGLE session is fully supported and isolated
 by app_name keys in the applications dictionary.
 """
 
-from zCLI import os, Dict, Optional, Any, Tuple
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
+from zKernel import os, Dict, Optional, Any, Tuple
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import (
     SESSION_KEY_ZAUTH,         # CRITICAL: Session key for all auth data
     ZAUTH_KEY_ZSESSION,
     ZAUTH_KEY_APPLICATIONS,    # Multi-app support
@@ -293,7 +293,7 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
     CONTEXT_APPLICATION,
     CONTEXT_DUAL
 )
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import SessionConfig
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import SessionConfig
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -395,7 +395,7 @@ class Authentication:
     """
     CORE authentication module implementing three-tier authentication model.
     
-    This class is the primary authentication interface for the zCLI framework,
+    This class is the primary authentication interface for the zKernel framework,
     providing unified API for:
     
     **Three-Tier Authentication:**
@@ -451,7 +451,7 @@ class Authentication:
         - Context automatically updates on login/logout
     
     **Thread Safety:**
-        NOT thread-safe by design. Each thread should use its own zCLI instance.
+        NOT thread-safe by design. Each thread should use its own zKernel instance.
         Multi-app authentication within a single session is fully supported.
     
     **Usage:**
@@ -468,9 +468,9 @@ class Authentication:
         zcli.auth.logout("all")
     
     Attributes:
-        zcli: zCLI instance (provides session, display, comm, logger)
-        session: Session dictionary (zCLI.session)
-        logger: Logger instance (zCLI.logger)
+        zcli: zKernel instance (provides session, display, comm, logger)
+        session: Session dictionary (zKernel.session)
+        logger: Logger instance (zKernel.logger)
     """
     
     # Class-level type declarations
@@ -482,7 +482,7 @@ class Authentication:
         """Initialize authentication module.
         
         Args:
-            zcli: zCLI instance (provides access to session, display, comm, logger)
+            zcli: zKernel instance (provides access to session, display, comm, logger)
         
         Returns:
             None

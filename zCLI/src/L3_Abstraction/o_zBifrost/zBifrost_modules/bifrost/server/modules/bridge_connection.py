@@ -15,11 +15,11 @@ Integration:
     - Used by zBifrost during client authentication
     - Relies on CacheManager for cache stats
     - Integrates with zData for model discovery
-    - Accesses session via zCLI instance (dependency injection pattern)
+    - Accesses session via zKernel instance (dependency injection pattern)
 """
 
-from zCLI import Optional, Dict, List, Any
-from version import __version__
+from zKernel import Optional, Dict, List, Any
+from zKernel.version import __version__
 
 # ═══════════════════════════════════════════════════════════
 # Module-Level Constants
@@ -107,7 +107,7 @@ class ConnectionInfoManager:
     Args:
         logger: Logger instance (required)
         cache_manager: CacheManager instance for cache stats
-        zcli: zCLI instance for session access
+        zcli: zKernel instance for session access
         walker: Walker instance for zData access
     
     Raises:
@@ -127,7 +127,7 @@ class ConnectionInfoManager:
         Args:
             logger: Logger instance (required, cannot be None)
             cache_manager: CacheManager instance for cache statistics
-            zcli: Optional zCLI instance for session metadata
+            zcli: Optional zKernel instance for session metadata
             walker: Optional Walker instance for zData model discovery
         
         Raises:
@@ -151,7 +151,7 @@ class ConnectionInfoManager:
         
         Returns:
             Connection info dict with keys:
-                - server_version (str): Current zCLI version
+                - server_version (str): Current zKernel version
                 - features (list): Enabled feature names
                 - cache_stats (dict): Cache hit/miss statistics
                 - available_models (list, optional): Discovered data models

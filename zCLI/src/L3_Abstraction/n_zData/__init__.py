@@ -1,6 +1,6 @@
 # zCLI/subsystems/zData/__init__.py
 """
-Unified data management subsystem for zCLI.
+Unified data management subsystem for zKernel.
 
 The zData subsystem provides comprehensive database operations with support for
 multiple backends (SQLite, PostgreSQL, CSV), declarative schema definitions,
@@ -91,8 +91,8 @@ directly into zData.py, simplifying the architecture.
 Usage Examples
 -------------
 **Basic Schema Loading and INSERT:**
-    >>> from zCLI import zCLI
-    >>> z = zCLI()
+    >>> from zKernel import zKernel
+    >>> z = zKernel()
     >>> z.data.load_schema("@myapp.users.yaml")
     >>> z.data.insert("users", {"name": "Alice", "age": 30, "email": "alice@example.com"})
 

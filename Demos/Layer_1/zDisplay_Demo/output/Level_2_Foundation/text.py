@@ -11,12 +11,12 @@ Run:
     python Demos/Layer_1/zDisplay_Demo/output/Level_2_Foundation/text.py
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
     """Demonstrate text display with indentation."""
-    z = zCLI({"logger": "PROD"})
+    z = zKernel({"logger": "PROD"})
 
     z.display.line("")
     z.display.header("Level 2B: text() - Text with Indentation", color="GREEN", style="wave")

@@ -1,17 +1,17 @@
-# zCLI/__init__.py
+# zKernel/__init__.py
 # ═══════════════════════════════════════════════════════════════════════════════
 """
-zCLI Package - Main Entry Point for the zCLI Framework
+zKernel Package - Main Entry Point for the zKernel Framework
 ═══════════════════════════════════════════════════════════════════════════════
 
-This is the top-level package for zCLI, a declarative, mode-agnostic Python CLI
-framework with support for Terminal mode (interactive shell) and zBifrost mode
+This is the top-level package for zKernel, a declarative, mode-agnostic Python
+kernel framework with support for Terminal mode (interactive shell) and zBifrost mode
 (WebSocket server for network-based UI).
 
 PACKAGE OVERVIEW
 ─────────────────────────────────────────────────────────────────────────────────
 
-zCLI is a comprehensive CLI framework that orchestrates 17 subsystems across 4
+zKernel is a comprehensive orchestration kernel that manages 17 subsystems across 4
 architectural layers to provide a unified interface for building declarative,
 YAML-driven command-line applications.
 
@@ -28,7 +28,7 @@ Key Features:
 ARCHITECTURE SUMMARY
 ─────────────────────────────────────────────────────────────────────────────────
 
-zCLI follows a 4-layer bottom-up architecture:
+zKernel follows a 4-layer bottom-up architecture:
 
     Layer 3: Orchestration (1 subsystem)
         • zWalker → UI/menu navigation orchestrator
@@ -88,19 +88,19 @@ EXPORT STRATEGY
 ─────────────────────────────────────────────────────────────────────────────────
 
 This package exports standard library modules and third-party dependencies to
-provide a single import point for zCLI and its ecosystem. This simplifies imports
+provide a single import point for zKernel and its ecosystem. This simplifies imports
 for plugins and applications:
 
-    from zCLI import zCLI, json, yaml, Path, Optional
+    from zKernel import zKernel, json, yaml, Path, Optional
     # Instead of:
-    # from zCLI import zCLI
+    # from zKernel import zKernel
     # import json
     # import yaml
     # from pathlib import Path
     # from typing import Optional
 
 Exported Categories:
-    • **Core Class**: zCLI (main orchestrator)
+    • **Core Class**: zKernel (main orchestrator)
     • **Standard Library**: asyncio, datetime, json, logging, os, sys, etc.
     • **Third-Party**: platformdirs, requests, websockets, yaml
     • **Typing Helpers**: Any, Callable, Dict, List, Optional, Tuple, Union
@@ -124,32 +124,32 @@ USAGE EXAMPLES
 
 Example 1: Basic CLI Usage (Terminal Mode)
     ```python
-    from zCLI import zCLI
+    from zKernel import zKernel
 
-    z = zCLI()
+    z = zKernel()
     z.run()  # Starts interactive shell
     ```
 
 Example 2: zBifrost Mode (WebSocket Server)
     ```python
-    from zCLI import zCLI
+    from zKernel import zKernel
 
-    z = zCLI(zSpark_obj={"zMode": "zBifrost", "port": 8765})
+    z = zKernel(zSpark_obj={"zMode": "zBifrost", "port": 8765})
     z.run()  # Starts WebSocket server
     ```
 
 Example 3: Programmatic Command Execution
     ```python
-    from zCLI import zCLI
+    from zKernel import zKernel
 
-    z = zCLI()
+    z = zKernel()
     users = z.run_command("data select users where role=admin")
     print(f"Found {len(users)} admins")
     ```
 
 Example 4: Context Manager with Automatic Cleanup
     ```python
-    from zCLI import zCLI
+    from zKernel import zKernel
 
     with zCLI() as z:
         z.run_command("data insert users name='Alice' role='admin'")
@@ -159,9 +159,9 @@ Example 4: Context Manager with Automatic Cleanup
 
 Example 5: Custom Configuration with Plugins
     ```python
-    from zCLI import zCLI
+    from zKernel import zKernel
 
-    z = zCLI(zSpark_obj={
+    z = zKernel(zSpark_obj={
         "zMode": "Terminal",
         "plugins": ["@MyValidator.py", "@DataProcessor.py"],
         "log_level": "DEBUG",
@@ -172,14 +172,14 @@ Example 5: Custom Configuration with Plugins
 
 Example 6: Using Exported Modules
     ```python
-    from zCLI import zCLI, json, Path, Optional
+    from zKernel import zCLI, json, Path, Optional
 
     def process_config(config_path: Optional[str] = None) -> dict:
         path = Path(config_path) if config_path else Path.cwd() / "config.json"
         with path.open() as f:
             return json.load(f)
 
-    z = zCLI()
+    z = zKernel()
     config = process_config("@app.json")
     ```
 
@@ -197,11 +197,11 @@ Lines: 100 → 215 (+115%)
 
 See Also
 --------
-zCLI.zCLI : Main orchestrator class
+zKernel.zCLI : Main orchestrator class
 get_current_zcli : Thread-safe context access
 """
 
-# Central imports for the entire zCLI system
+# Central imports for the entire zKernel system
 # Standard library imports
 import argparse
 import ast
@@ -309,8 +309,8 @@ from zSys.formatting import Colors
 # Import JSON utilities (framework primitives for safe serialization)
 from .L4_Orchestration.r_zServer.zServer_modules.json_utils import safe_json_dumps
 
-# Import the zCLI Core and Walker
-from .engine import zCLI
+# Import the zKernel Core and Walker
+from .engine import zKernel
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # PUBLIC API EXPORTS
@@ -319,7 +319,7 @@ from .engine import zCLI
 # Export the main interfaces with type hint (List already imported above)
 __all__: List[str] = [
     # Core class
-    "zCLI",
+    "zKernel",
 
     # System modules
     "argparse", "ast", "asyncio", "contextvars", "datetime", "date", "time", "timedelta", "getpass", "hashlib", "importlib", "inspect", "json", 

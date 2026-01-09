@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Layer 3 - RBAC Deniability Demo (Declarative zCLI Way)"""
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 # Step 1: Import zCLI
 # Step 2: Create spark with zUI file
-z = zCLI({
+z = zKernel({
     "zSpace": "/Users/galnachshon/Projects/zolo-zcli/Demos/03_Web_Server",
     "zVaFile": "@.zUI.rbac_demo",
     "zBlock": "zVaF",

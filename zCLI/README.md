@@ -1,17 +1,17 @@
-# zCLI  
+# zKernel  
 
 ## **Declare once—run everywhere.**
 
-**zCLI** is not just a Command Line Interface, but a **Context Layer Interface**—a declarative cross-platform **Python framework** where context flows through layers to determine how your application manifests.
+**zKernel** is not just a Command Line Interface, but a **Context Layer Interface**—a declarative cross-platform **Python framework** where context flows through layers to determine how your application manifests.
 
-Write once, adapt to any context: **user role**, **deployment environment**, **device**, or **runtime mode** (**Terminal** or **Web**). **zCLI** handles the heavy lifting, turning ideas into working tools faster.
+Write once, adapt to any context: **user role**, **deployment environment**, **device**, or **runtime mode** (**Terminal** or **Web**). **zKernel** handles the heavy lifting, turning ideas into working tools faster.
 
 ---
 
 ## 🚀 Quick Start
 
 ```bash
-# Install zCLI
+# Install zKernel
 pip install git+https://github.com/ZoloAi/Zolo.git
 
 # Verify installation
@@ -28,7 +28,7 @@ zolo shell
 ## 📚 New to **Zolo**?
 
 Start with **[The zPhilosophy](Documentation/zPhilosophy.md)**.  
-It introduces the core concepts of **zCLI** and smoothly leads into the layer-by-layer guides with ready-made demos.
+It introduces the core concepts of **zKernel** and smoothly leads into the layer-by-layer guides with ready-made demos.
 
 ### Requirements
 
@@ -71,7 +71,7 @@ uv pip install git+https://github.com/ZoloAi/Zolo.git
 
 ## 🏗️ Architecture
 
-**zCLI v1.5+** (Context Layer Interface) follows a **5-layer architecture** inspired by "*Linux From Scratch*"—each subsystem stands alone, tested independently, then composed into higher abstractions.
+**zKernel v1.5+** (Context Layer Interface) follows a **5-layer architecture** inspired by "*Linux From Scratch*"—each subsystem stands alone, tested independently, then composed into higher abstractions.
 
 ```
 Layer 0: System Foundation (/zSys/)    - Pre-boot utilities (shared by CLI & framework)
@@ -119,7 +119,7 @@ This launches an **interactive menu** where you can choose:
 
 1. **Framework Only** (default) - Removes the package, keeps your data and optional dependencies
 2. **Clean Uninstall** - Removes package AND all user data (configs, databases, cache)
-3. **Dependencies Only** - Removes optional dependencies (pandas, psycopg2) but keeps zCLI
+3. **Dependencies Only** - Removes optional dependencies (pandas, psycopg2) but keeps zKernel
 
 Each option shows you exactly what will be removed and asks for confirmation before proceeding.
 
@@ -132,7 +132,7 @@ MIT License with Ethical Use Clause
 
 Copyright (c) 2024 Gal Nachshon
 
-**Trademarks:** "Zolo" and "zCLI" (Context Layer Interface) are trademarks of Gal Nachshon.
+**Trademarks:** "Zolo" and "zKernel" (Context Layer Interface) are trademarks of Gal Nachshon.
 
 See [LICENSE](LICENSE) for details.
 

@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/shell_modules/commands/shell_cmd_plugin_exec.py
 
 """
-Plugin function execution for zCLI shell.
+Plugin function execution for zKernel shell.
 
 This module provides plugin function execution via the zUtils subsystem. It serves as
 a thin router that validates inputs, executes plugin functions loaded by zUtils, and
@@ -95,7 +95,7 @@ EXAMPLES
 AUTHOR & VERSION
 ═══════════════════════════════════════════════════════════════════════════════
 
-Author: zCLI Development Team
+Author: zKernel Development Team
 Version: 1.5.4
 Last Updated: 2025-11-07
 """
@@ -139,7 +139,7 @@ def _validate_zutils(zcli: Any) -> bool:
     Parameters
     ----------
     zcli : Any
-        zCLI instance to check for utils attribute
+        zKernel instance to check for utils attribute
 
     Returns
     -------
@@ -207,7 +207,7 @@ def execute_plugin_function(zcli: Any, args: List[str]) -> None:
     Parameters
     ----------
     zcli : Any
-        zCLI instance providing access to:
+        zKernel instance providing access to:
             - utils: zUtils subsystem (plugin functions)
             - display: zDisplay for output
             - logger: Logger for debug/info logging

@@ -1,6 +1,6 @@
-"""CLI entry point for the zolo-zcli package."""
+"""CLI entry point for the zolo-zkernel package."""
 
-# Stdlib imports (BEFORE any zCLI imports to avoid triggering framework init)
+# Stdlib imports (BEFORE any zKernel imports to avoid triggering framework init)
 import sys
 import argparse
 from pathlib import Path
@@ -13,20 +13,20 @@ from zSys import cli as cli_commands
 # Version imports (safe to import)
 from .version import get_version, get_package_info
 
-def _get_zcli_package():
-    """Lazy import zCLI package to avoid triggering framework initialization at module load."""
-    import zCLI as zcli_package
-    return zcli_package
+def _get_zkernel_package():
+    """Lazy import zKernel package to avoid triggering framework initialization at module load."""
+    import zKernel as zkernel_package
+    return zkernel_package
 
 # Bootstrap Logger Initialization
 boot_logger = BootstrapLogger()
 
 boot_logger.debug("Python: %s", sys.version.split()[0])
-boot_logger.debug("Installation: %s", detect_installation_type(_get_zcli_package(), detailed=True))
+boot_logger.debug("Installation: %s", detect_installation_type(_get_zkernel_package(), detailed=True))
 
 # Main Entry Point
 def main() -> None:
-    """Main entry point for the zolo-zcli command."""
+    """Main entry point for the zolo-zkernel command."""
 
     try:
         parser = _create_parser()
@@ -61,7 +61,7 @@ def _route_command(args, python_file, zspark_file, verbose, dev_mode):
     # Get zcli_package for handlers that need it
     zcli_package = _get_zcli_package()
 
-    # Command routing (handlers import zCLI locally to avoid premature framework init)
+    # Command routing (handlers import zKernel locally to avoid premature framework init)
     handlers = {
         "shell": lambda: cli_commands.handle_shell_command(boot_logger, verbose=verbose),
         "config": lambda: cli_commands.handle_config_command(boot_logger, verbose=verbose),
@@ -83,7 +83,7 @@ def _route_command(args, python_file, zspark_file, verbose, dev_mode):
 def _create_parser():
     """Create and configure argument parser."""
     parser = argparse.ArgumentParser(
-        description="Zolo zCLI Framework - YAML-driven CLI for interactive applications",
+        description="Zolo zKernel Framework - YAML-driven CLI for interactive applications",
         prog="zolo",
     )
     
@@ -96,7 +96,7 @@ def _create_parser():
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     
     # Shell subcommand
-    shell_parser = subparsers.add_parser("shell", help="Start interactive zCLI shell")
+    shell_parser = subparsers.add_parser("shell", help="Start interactive zKernel shell")
     shell_parser.add_argument("--config", help="Path to custom config file (optional)")
     shell_parser.add_argument("--verbose", "-v", action="store_true", 
                              help="Show bootstrap process and detailed initialization")
@@ -107,7 +107,7 @@ def _create_parser():
                               help="Show bootstrap process and detailed initialization")
     
     # zTests subcommand
-    ztests_parser = subparsers.add_parser("ztests", help="Run zCLI test suite")
+    ztests_parser = subparsers.add_parser("ztests", help="Run zKernel test suite")
     ztests_parser.add_argument("--verbose", "-v", action="store_true", 
                               help="Show bootstrap process and detailed initialization")
     

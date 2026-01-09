@@ -1,20 +1,20 @@
 # zShell Guide
 
-**Interactive Command Center & REPL for zCLI**
+**Interactive Command Center & REPL for zKernel**
 
 ---
 
 ## Overview
 
-`zShell` is zCLI's interactive shell subsystem providing a command-line interface (REPL) for executing commands, managing workflows, and interacting with all zCLI subsystems. Think of it as your text-based control panel.
+`zShell` is zKernel's interactive shell subsystem providing a command-line interface (REPL) for executing commands, managing workflows, and interacting with all zKernel subsystems. Think of it as your text-based control panel.
 
 **Key Features:**
 - **18+ Commands** - Terminal, data, config, auth, and more
 - **Wizard Canvas Mode** - Multi-step workflow orchestration
 - **Command History** - Persistent history with search
-- **zPath Support** - Navigate using zCLI path syntax
+- **zPath Support** - Navigate using zKernel path syntax
 - **Mode-Agnostic** - Works in Terminal and Bifrost modes
-- **Cross-Subsystem** - Direct access to all zCLI features
+- **Cross-Subsystem** - Direct access to all zKernel features
 
 ---
 
@@ -26,7 +26,7 @@
 # Direct entry point (recommended)
 zShell
 
-# Or from zCLI menu
+# Or from zKernel menu
 zolo
 # Select "Enter zShell"
 ```
@@ -702,7 +702,7 @@ zTests
 ### Public API
 
 ```python
-from zCLI.subsystems.zShell import zShell
+from zKernel.subsystems.zShell import zShell
 
 # Initialize shell
 shell = zShell(zcli)
@@ -774,7 +774,7 @@ zShell uses the **Facade pattern** to hide complexity:
 
 **Solution:**
 ```bash
-# Reinstall zCLI
+# Reinstall zKernel
 pip install --upgrade zolo-zcli
 
 # Or check installation
@@ -871,7 +871,7 @@ which zShell
 **A:** Type `exit`, `quit`, or `q` and press Enter.
 
 ### Q: Can I use regular bash commands?
-**A:** No, zShell is not a bash replacement. It's designed for zCLI operations. For bash commands, use your terminal.
+**A:** No, zShell is not a bash replacement. It's designed for zKernel operations. For bash commands, use your terminal.
 
 ### Q: How do I see my command history?
 **A:** Use up/down arrows (if readline available) or check `~/.zolo/.zcli_history` file.
@@ -919,7 +919,7 @@ exit                # Exit shell
 
 - **Documentation:** `Documentation/zShell_GUIDE.md`
 - **Tests:** `zTestRunner/zUI.zShell_tests.yaml` (100 tests)
-- **Source:** `zCLI/subsystems/zShell/`
+- **Source:** `zKernel/subsystems/zShell/`
 - **Help:** Type `help` in the shell
 
 ---

@@ -1,9 +1,9 @@
 /**
  * ═══════════════════════════════════════════════════════════════
- * zTheme Utilities - zCLI to zTheme Class Mappings
+ * zTheme Utilities - zKernel to zTheme Class Mappings
  * ═══════════════════════════════════════════════════════════════
  *
- * Pure functions for mapping zCLI color/style names to zTheme CSS classes.
+ * Pure functions for mapping zKernel color/style names to zTheme CSS classes.
  * Uses lookup tables for O(1) performance and consistency.
  *
  * @module utils/ztheme_utils
@@ -14,12 +14,12 @@
  * - Layer 0: None (pure JavaScript)
  *
  * Exports:
- * - getButtonColorClass: Map zCLI color to zTheme button class
+ * - getButtonColorClass: Map zKernel color to zTheme button class
  * - getButtonSizeClass: Map size to zTheme button size class
  * - getButtonStyleClass: Map style variant to zTheme button style class
  * - getAlertColorClass: Map event type to zTheme alert class
- * - getBadgeColorClass: Map zCLI color to zTheme badge class
- * - getTextColorClass: Map zCLI color to zTheme text color class
+ * - getBadgeColorClass: Map zKernel color to zTheme badge class
+ * - getTextColorClass: Map zKernel color to zTheme text color class
  * - isValidZThemeClass: Validate if string is valid zTheme class
  * - indentToHeaderTag: Convert indent level to HTML header tag
  *
@@ -33,11 +33,11 @@
  */
 
 // ─────────────────────────────────────────────────────────────────
-// Color Mappings (zCLI → zTheme)
+// Color Mappings (zKernel → zTheme)
 // ─────────────────────────────────────────────────────────────────
 
 /**
- * Button color mapping: zCLI color names → zTheme button classes
+ * Button color mapping: zKernel color names → zTheme button classes
  * @const {Object<string, string>}
  */
 const BUTTON_COLOR_MAP = {
@@ -53,7 +53,7 @@ const BUTTON_COLOR_MAP = {
 };
 
 /**
- * Alert color mapping: zCLI event types → zTheme zSignal classes
+ * Alert color mapping: zKernel event types → zTheme zSignal classes
  * Returns ONLY the color-specific class (base zSignal class added by renderer)
  * @const {Object<string, string>}
  */
@@ -70,7 +70,7 @@ const ALERT_COLOR_MAP = {
 };
 
 /**
- * Badge color mapping: zCLI colors → zTheme badge classes
+ * Badge color mapping: zKernel colors → zTheme badge classes
  * @const {Object<string, string>}
  */
 const BADGE_COLOR_MAP = {
@@ -85,7 +85,7 @@ const BADGE_COLOR_MAP = {
 };
 
 /**
- * Text color mapping: zCLI colors → zTheme text color classes
+ * Text color mapping: zKernel colors → zTheme text color classes
  * @const {Object<string, string>}
  */
 const TEXT_COLOR_MAP = {
@@ -106,9 +106,9 @@ const TEXT_COLOR_MAP = {
 // ─────────────────────────────────────────────────────────────────
 
 /**
- * Get zTheme button color class from zCLI color name
+ * Get zTheme button color class from zKernel color name
  *
- * @param {string} zColor - zCLI color name (primary, danger, success, etc)
+ * @param {string} zColor - zKernel color name (primary, danger, success, etc)
  * @returns {string} zTheme button class (zBtn-primary, zBtn-danger, etc)
  *
  * @example
@@ -177,7 +177,7 @@ export function getButtonStyleClass(style) {
 /**
  * Get zTheme outline button class (color-specific)
  *
- * @param {string} zColor - zCLI color name
+ * @param {string} zColor - zKernel color name
  * @returns {string} zTheme outline button class (e.g., 'zBtn-outline-primary')
  *
  * @example
@@ -194,12 +194,12 @@ export function getButtonOutlineClass(zColor) {
 // ─────────────────────────────────────────────────────────────────
 
 /**
- * Get zTheme signal color class from zCLI event type
+ * Get zTheme signal color class from zKernel event type
  *
  * Returns ONLY the color-specific class (e.g., 'zSignal-success').
  * The base 'zSignal' class should be added separately by the renderer.
  *
- * @param {string} eventType - zCLI event type (error, warning, success, info)
+ * @param {string} eventType - zKernel event type (error, warning, success, info)
  * @returns {string} zTheme signal color class (e.g., 'zSignal-success')
  *
  * @example
@@ -218,9 +218,9 @@ export function getAlertColorClass(eventType) {
 // ─────────────────────────────────────────────────────────────────
 
 /**
- * Get zTheme badge color classes from zCLI color
+ * Get zTheme badge color classes from zKernel color
  *
- * @param {string} zColor - zCLI color name
+ * @param {string} zColor - zKernel color name
  * @returns {string} zTheme badge classes (e.g., 'zBadge zBgPrimary')
  *
  * @example
@@ -237,9 +237,9 @@ export function getBadgeColorClass(zColor) {
 // ─────────────────────────────────────────────────────────────────
 
 /**
- * Get zTheme text color class from zCLI color
+ * Get zTheme text color class from zKernel color
  *
- * @param {string} zColor - zCLI color name
+ * @param {string} zColor - zKernel color name
  * @returns {string} zTheme text color class (e.g., 'zText-primary')
  *
  * @example

@@ -3,7 +3,7 @@
  * BifrostClient - Production JavaScript Client for zBifrost
  * ═══════════════════════════════════════════════════════════════
  *
- * A production-ready WebSocket client for zCLI's zBifrost bridge.
+ * A production-ready WebSocket client for zKernel's zBifrost bridge.
  * Modular architecture with lazy loading and automatic zTheme integration.
  *
  * @version 1.5.5
@@ -195,7 +195,7 @@
         autoConnect: options.autoConnect || false, // Default false
         zTheme: options.zTheme || false, // Load zTheme from CDN (CSS + JS)
         zIcons: options.zIcons || false, // Load zTheme icons from CDN (SVG sprite)
-        targetElement: options.targetElement || 'zVaF', // Default zCLI parent tag (zView and Function)
+        targetElement: options.targetElement || 'zVaF', // Default zKernel parent tag (zView and Function)
         autoRequest: autoRequest, // Auto-send on connect (generated or explicit)
         autoReconnect: options.autoReconnect !== false, // Default true
         reconnectDelay: reconnectDelay,
@@ -1474,7 +1474,7 @@
     }
 
     // ═══════════════════════════════════════════════════════════
-    // zCLI Operations
+    // zKernel Operations
     // ═══════════════════════════════════════════════════════════
 
     /**

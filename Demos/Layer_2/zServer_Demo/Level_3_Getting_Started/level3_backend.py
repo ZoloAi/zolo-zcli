@@ -27,11 +27,11 @@ Goal: Serve simple HTML strings via HTTP (exactly like Flask Part 1)
 """
 import time
 import os
-from zCLI import zCLI
+from zKernel import zKernel
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
-z = zCLI({
+z = zKernel({
     "zWorkspace": current_dir,
     "zSpace": current_dir,
     "zMode": "Terminal"

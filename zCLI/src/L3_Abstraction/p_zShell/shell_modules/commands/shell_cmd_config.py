@@ -1,7 +1,7 @@
 """
-Configuration System Management Command for zCLI Shell.
+Configuration System Management Command for zKernel Shell.
 
-Provides comprehensive `config` command for zCLI configuration system diagnostics,
+Provides comprehensive `config` command for zKernel configuration system diagnostics,
 display, and modification (get, set, reset operations).
 
 Command Syntax:
@@ -73,7 +73,7 @@ Examples:
 Version: 1.5.4 | Week: 6.13.7 + 6.13.8 + 6.13.11 (Unified) | Grade: A+
 """
 
-from zCLI import os, Any, Dict, List
+from zKernel import os, Any, Dict, List
 
 # ═══════════════════════════════════════════════════════════════════════════
 # MODULE CONSTANTS
@@ -225,7 +225,7 @@ def execute_config(zcli: Any, parsed: Dict[str, Any]) -> None:
     (uses zDisplay for output).
     
     Args:
-        zcli: zCLI instance with config, display, logger
+        zcli: zKernel instance with config, display, logger
         parsed: Parsed command dictionary with:
             - action: Command action (check, show, get, set, reset)
             - args: Command arguments (list) - [target, key?, value?]
@@ -298,7 +298,7 @@ def show_config(zcli: Any, args: List[str]) -> None:
     configuration in a formatted, consistent manner (like session info).
     
     Args:
-        zcli: zCLI instance with config and display subsystems
+        zcli: zKernel instance with config and display subsystems
         args: Command arguments (currently unused, future: filtering support)
     
     Returns:
@@ -341,7 +341,7 @@ def get_config_value(zcli: Any, args: List[str]) -> None:
     Supports both machine and environment config.
     
     Args:
-        zcli: zCLI instance with config and display subsystems
+        zcli: zKernel instance with config and display subsystems
         args: Command arguments - [target, key?]
               - target: 'machine' or 'env' (required)
               - key: Config key to retrieve (optional, shows all if omitted)
@@ -428,7 +428,7 @@ def set_config_value(zcli: Any, args: List[str], show: bool = False) -> None:
     Optionally displays the updated config after setting.
     
     Args:
-        zcli: zCLI instance with config and display subsystems
+        zcli: zKernel instance with config and display subsystems
         args: Command arguments - [target, key, value]
               - target: 'machine' or 'env' (required)
               - key: Config key to set (required)
@@ -515,7 +515,7 @@ def reset_config_value(zcli: Any, args: List[str], show: bool = False) -> None:
     Persists the reset to the appropriate YAML file.
     
     Args:
-        zcli: zCLI instance with config and display subsystems
+        zcli: zKernel instance with config and display subsystems
         args: Command arguments - [target, key?]
               - target: 'machine' or 'env' (required)
               - key: Config key to reset (optional, resets all if omitted)
@@ -608,14 +608,14 @@ def reset_config_value(zcli: Any, args: List[str], show: bool = False) -> None:
 
 def check_config_system(zcli: Any) -> None:
     """
-    Check zCLI configuration system (orchestrator).
+    Check zKernel configuration system (orchestrator).
     
     Main orchestration function that runs all configuration checks and displays
     comprehensive results. Coordinates directory checks, file checks, and integration
     checks, then displays formatted results via zDisplay.
     
     Args:
-        zcli: zCLI instance with config, display, logger
+        zcli: zKernel instance with config, display, logger
     
     Returns:
         None: Results displayed via zDisplay
@@ -639,7 +639,7 @@ def check_config_system(zcli: Any) -> None:
         - OS-aware: Only checks paths relevant to current OS
           (e.g., /etc/zolo-zcli only checked on Linux)
     """
-    zcli.logger.info("Checking zCLI configuration system...")
+    zcli.logger.info("Checking zKernel configuration system...")
 
     # Initialize results structure
     results: DiagnosticResults = {
@@ -780,7 +780,7 @@ def _run_file_checks(results: DiagnosticResults, paths_info: Dict[str, str]) -> 
     Notes:
         - Uses check_file() for actual validation
         - Files located in user_zconfigs_dir (user_config_dir/zConfigs/)
-        - Files auto-created on first zCLI run if missing
+        - Files auto-created on first zKernel run if missing
     """
     # Get zConfigs directory path
     user_zconfigs_dir = paths_info.get(PATHS_KEY_USER_ZCONFIGS, VALUE_NOT_AVAILABLE)
@@ -1001,7 +1001,7 @@ def check_config_loader(zcli: Any) -> CheckResult:
     Uses zcli.config.get_config_sources() to get list of loaded sources.
     
     Args:
-        zcli: zCLI instance with config subsystem
+        zcli: zKernel instance with config subsystem
     
     Returns:
         CheckResult: Dictionary with:
@@ -1055,7 +1055,7 @@ def check_machine_config_loading(zcli: Any) -> CheckResult:
     with required fields (os, hostname, deployment).
     
     Args:
-        zcli: zCLI instance with config.machine subsystem
+        zcli: zKernel instance with config.machine subsystem
     
     Returns:
         CheckResult: Dictionary with:
@@ -1136,7 +1136,7 @@ def _display_config_check_results(zcli: Any, results: DiagnosticResults) -> None
     color-coded indicators (GREEN/YELLOW/RED).
     
     Args:
-        zcli: zCLI instance with display subsystem
+        zcli: zKernel instance with display subsystem
         results: Diagnostic results from check_config_system()
     
     Returns:

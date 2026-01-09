@@ -6,7 +6,7 @@ zLoader facade for file loading, caching, and zParser delegation.
 This module provides the main facade (Tier 5) for zLoader subsystem, handling
 zVaFile (UI, Schema, Config) loading with intelligent caching and delegation to
 zParser for path resolution and content parsing. It serves as the public interface
-between zCLI and the internal zLoader 6-tier architecture.
+between zKernel and the internal zLoader 6-tier architecture.
 
 Purpose
 -------
@@ -19,9 +19,9 @@ a simple, unified interface for loading and parsing zVaFiles. It delegates to:
 Architecture
 ------------
 **Tier 5 - Facade (Public Interface to zCLI)**
-    - Position: Public interface between zCLI and internal zLoader components
+    - Position: Public interface between zKernel and internal zLoader components
     - Delegates To: CacheOrchestrator (Tier 3), zParser, load_file_raw (Tier 1)
-    - Used By: zCLI.py, zDispatch, zNavigation (via walker)
+    - Used By: zKernel.py, zDispatch, zNavigation (via walker)
     - Purpose: Unified file loading + intelligent caching + zParser delegation
 
 **6-Tier Architecture**:
@@ -77,7 +77,7 @@ Integration Points
 External Usage
 --------------
 **Used By**:
-    - zCLI.py: zcli.loader.handle(zPath)
+    - zKernel.py: zcli.loader.handle(zPath)
     - zDispatch (via zcli.loader): self.zcli.loader.handle(zVaFile)
     - zNavigation (via walker.loader): walker.loader.handle()
 
@@ -121,7 +121,7 @@ Internal:
     - zParser.zpath_decoder, identify_zfile, parse_file_content
 
 External:
-    - zCLI imports: Any, Dict, Optional (for type hints)
+    - zKernel imports: Any, Dict, Optional (for type hints)
 
 See Also
 --------
@@ -136,7 +136,7 @@ Version History
 - v1.5.3: Original implementation (file loading, caching, zParser delegation)
 """
 
-from zCLI import Any, Dict, Optional
+from zKernel import Any, Dict, Optional
 from .loader_modules import CacheOrchestrator, load_file_raw
 
 # ============================================================================
@@ -195,11 +195,11 @@ class zLoader:
     Attributes
     ----------
     zcli : Any
-        Reference to main zCLI instance (provides access to all subsystems)
+        Reference to main zKernel instance (provides access to all subsystems)
     logger : Any
-        Reference to zCLI logger for debug/info logging
+        Reference to zKernel logger for debug/info logging
     zSession : Dict[str, Any]
-        Reference to zCLI session dictionary for state management
+        Reference to zKernel session dictionary for state management
     display : Any
         Reference to zDisplay for visual feedback (zDeclare calls)
     mycolor : str
@@ -229,12 +229,12 @@ class zLoader:
 
     def __init__(self, zcli: Any) -> None:
         """
-        Initialize zLoader with zCLI instance.
+        Initialize zLoader with zKernel instance.
 
         Parameters
         ----------
         zcli : Any
-            Main zCLI instance providing access to:
+            Main zKernel instance providing access to:
                 - session: Session dictionary for state management
                 - logger: Logger for debug/info logging
                 - display: zDisplay for visual feedback

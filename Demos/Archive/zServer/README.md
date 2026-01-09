@@ -1,10 +1,10 @@
 # zServer Demo
 
-Comprehensive demonstration of zCLI's lightweight HTTP static file server.
+Comprehensive demonstration of zKernel's lightweight HTTP static file server.
 
 ## What is zServer?
 
-zServer is an optional zCLI subsystem that serves static files (HTML, CSS, JavaScript) using Python's built-in `http.server`. It requires **zero external dependencies** and runs in a background thread.
+zServer is an optional zKernel subsystem that serves static files (HTML, CSS, JavaScript) using Python's built-in `http.server`. It requires **zero external dependencies** and runs in a background thread.
 
 ## Features Demonstrated
 
@@ -57,9 +57,9 @@ Shows: Server auto-starts when `enabled: True` in config
 ### Manual Start
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({"zWorkspace": "."})
+z = zKernel({"zWorkspace": "."})
 
 # Create and start HTTP server manually
 http_server = z.comm.create_http_server(port=8080)
@@ -71,9 +71,9 @@ print(f"Server: {http_server.get_url()}")
 ### Auto-Start
 
 ```python
-from zCLI import zCLI
+from zKernel import zKernel
 
-z = zCLI({
+z = zKernel({
     "zWorkspace": ".",
     "http_server": {
         "port": 8080,
@@ -117,7 +117,7 @@ zServer/
    - Clean shutdown
 
 4. **Integration**
-   - Works with zCLI framework
+   - Works with zKernel framework
    - Logger integration
    - Config system
 
@@ -149,8 +149,8 @@ Press `Ctrl+C` in the terminal to stop the server cleanly.
 ### Use in Your Project
 
 ```python
-# Add to your zCLI application
-z = zCLI({
+# Add to your zKernel application
+z = zKernel({
     "zWorkspace": ".",
     "http_server": {
         "port": 8080,

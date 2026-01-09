@@ -1,5 +1,5 @@
 """
-Export Command for zCLI Shell (DEPRECATED).
+Export Command for zKernel Shell (DEPRECATED).
 
 ⚠️  DEPRECATION NOTICE:
     This command is DEPRECATED as of v1.5.4 and will be REMOVED in v1.6.0.
@@ -46,7 +46,7 @@ Dependencies:
 Version: 1.5.4 (DEPRECATED) | Removal: v1.6.0 | Grade: A (90/100)
 """
 
-from zCLI import Any, Dict
+from zKernel import Any, Dict
 
 # ═══════════════════════════════════════════════════════════════════════════
 # MODULE CONSTANTS
@@ -92,7 +92,7 @@ def execute_export(zcli: Any, parsed: Dict[str, Any]) -> None:
     Displays a deprecation warning and delegates to shell_cmd_config.
     
     Args:
-        zcli: zCLI instance with config, display, logger
+        zcli: zKernel instance with config, display, logger
         parsed: Parsed command dictionary with:
             - action: Target ('machine' or 'config')
             - args: Command arguments [key, value?]

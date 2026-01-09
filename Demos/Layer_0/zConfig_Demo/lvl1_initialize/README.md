@@ -1,14 +1,14 @@
-# Level 1: Initialize - Getting Started with zCLI
+# Level 1: Initialize - Getting Started with zKernel
 
-**Goal:** Learn the basics of zCLI initialization and configuration entry point (zSpark).
+**Goal:** Learn the basics of zKernel initialization and configuration entry point (zSpark).
 
 ## Demos
 
 ### 1. Initialize (`1_initialize.py`)
-Basic zCLI initialization - one line does everything.
+Basic zKernel initialization - one line does everything.
 
 ```python
-z = zCLI()  # Auto-detects machine, loads configs, initializes logger
+z = zKernel()  # Auto-detects machine, loads configs, initializes logger
 ```
 
 **Run:**
@@ -23,7 +23,7 @@ Use zSpark to override configuration at runtime (highest priority).
 
 ```python
 zSpark = {"deployment": "Production"}  # Silent mode
-z = zCLI(zSpark)
+z = zKernel(zSpark)
 ```
 
 **Run:**
@@ -52,7 +52,7 @@ python3 Demos/Layer_0/zConfig_Demo/lvl1_initialize/3_deployment.py
 
 ## Key Concepts
 
-- **zCLI()** - One-line initialization
+- **zKernel()** - One-line initialization
 - **zSpark** - Runtime configuration override (highest priority)
 - **deployment** - Controls environment behavior:
   - `Development` - Full output (banners + INFO logs)

@@ -14,14 +14,14 @@ from pathlib import Path
 # Add zCLI to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 print("\n" + "="*70)
 print("🎯 zDialog Auto-Validation Demo (Week 5.2)")
 print("="*70)
 
 # Initialize zCLI with workspace path
-z = zCLI({"zWorkspace": str(Path(__file__).parent)})
+z = zKernel({"zWorkspace": str(Path(__file__).parent)})
 
 # Create the users table from schema
 print("\n📋 Step 1: Creating users table from zSchema.demo_users...")

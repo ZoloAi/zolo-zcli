@@ -1,7 +1,7 @@
 # zCLI/subsystems/zShell/shell_modules/commands/__init__.py
 
 """
-Command Executors Registry - Modular command execution for zCLI shell.
+Command Executors Registry - Modular command execution for zKernel shell.
 
 This module serves as the central registry for all Level 1 command executors
 in the zShell subsystem. Each executor is a specialized module that handles
@@ -95,7 +95,7 @@ USAGE
 
 **Direct Import:**
     ```python
-    from zCLI.L3_Abstraction.p_zShell.shell_modules.commands import execute_data
+    from zKernel.L3_Abstraction.p_zShell.shell_modules.commands import execute_data
     
     # Execute data command
     parsed = {"action": "read", "args": ["users"], "options": {}}

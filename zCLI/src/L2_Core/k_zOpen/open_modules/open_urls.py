@@ -37,7 +37,7 @@ Dependencies:
     - zConfig constants: SESSION_KEY_ZMACHINE for session dict keys
 
 Usage Example:
-    from zCLI.L2_Core.k_zOpen.open_modules.open_urls import open_url
+    from zKernel.L2_Core.k_zOpen.open_modules.open_urls import open_url
 
     session = {"zMachine": {"browser": "firefox"}}
     display = zcli.display
@@ -51,19 +51,19 @@ Version History:
     - v1.5.4: Added type hints, constants, and session modernization
     - v1.5.4: Enhanced error handling and fallback strategies
 
-Author: zCLI Development Team
+Author: zKernel Development Team
 """
 
-from zCLI import subprocess, webbrowser, urlparse, Any
+from zKernel import subprocess, webbrowser, urlparse, Any
 
 # Import centralized session constants
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZMACHINE,
     SESSION_KEY_BROWSER,
 )
 
 # Import platform-specific browser launch command helper from zConfig
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_browser_launch_command
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.helpers import get_browser_launch_command
 from .open_constants import (
     COLOR_ERROR,
     COLOR_INFO,
@@ -138,7 +138,7 @@ def open_url(
 
     Args:
         url: Full URL to open (must include scheme: http:// or https://)
-        session: zCLI session dictionary containing machine configuration
+        session: zKernel session dictionary containing machine configuration
         display: zDisplay instance for output and status messages
         logger: Logger instance for debug/error output
 

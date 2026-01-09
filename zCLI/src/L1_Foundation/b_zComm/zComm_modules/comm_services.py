@@ -19,7 +19,7 @@ Example:
     >>> manager.stop('postgresql')
 """
 
-from zCLI import Any, Dict, Optional
+from zKernel import Any, Dict, Optional
 from .services.postgresql_service import PostgreSQLService
 from .comm_constants import SERVICE_POSTGRESQL, STATUS_KEY_ERROR
 

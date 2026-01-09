@@ -151,7 +151,7 @@ See Also
 """
 
 from abc import ABC, abstractmethod
-from zCLI import Dict, List, Optional, Any, Path, Callable
+from zKernel import Dict, List, Optional, Any, Path, Callable
 
 # ============================================================
 # Module Constants - Config Keys

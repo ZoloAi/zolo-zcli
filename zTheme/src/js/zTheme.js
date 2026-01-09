@@ -11,7 +11,7 @@
  * rendering system when connecting zTheme to the zBifrost client.
  * 
  * Integration points:
- * - zCLI/subsystems/zBifrost/zBifrost_modules/bifrost/client/src/rendering/theme_loader.js
+ * - zKernel/subsystems/zBifrost/zBifrost_modules/bifrost/client/src/rendering/theme_loader.js
  * - Should be loaded automatically alongside CSS when ThemeLoader.load() is called
  * - Consider adding as a module export for better integration
  * 

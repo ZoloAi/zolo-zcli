@@ -17,7 +17,7 @@
  * - Generates class names programmatically (no hardcoded strings)
  *
  * zTheme Semantic Colors:
- * - primary: Brand color (green in zCLI)
+ * - primary: Brand color (green in zKernel)
  * - secondary: Supporting brand
  * - success: Green - positive actions/states
  * - danger/error: Red - errors/critical

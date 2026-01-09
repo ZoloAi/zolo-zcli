@@ -3,7 +3,7 @@
 Service Management Implementations for Local Database Services.
 
 This package contains concrete service implementations for managing local database
-and cache services that zCLI applications may depend on. Each service follows a
+and cache services that zKernel applications may depend on. Each service follows a
 common interface for lifecycle management and status reporting.
 
 Current Services:
@@ -37,7 +37,7 @@ Architecture:
 
 Usage:
     ```python
-    from zCLI.L1_Foundation.b_zComm.zComm_modules.services import PostgreSQLService
+    from zKernel.L1_Foundation.b_zComm.zComm_modules.services import PostgreSQLService
     
     # Typically accessed via ServiceManager
     service = PostgreSQLService(logger)

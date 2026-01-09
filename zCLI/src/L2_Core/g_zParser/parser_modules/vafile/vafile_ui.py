@@ -6,7 +6,7 @@ UI file parsing for zVaFile package.
 Handles parsing, validation, and metadata extraction for zUI.* files.
 """
 
-from zCLI import Any, Dict, List, Optional
+from zKernel import Any, Dict, List, Optional
 
 # Import constants from parent package
 from . import (

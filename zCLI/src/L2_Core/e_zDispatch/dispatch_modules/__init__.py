@@ -32,12 +32,12 @@ Exported Components:
 
 Usage:
     # Import entire package
-    from zCLI.L2_Core.e_zDispatch import dispatch_modules
+    from zKernel.L2_Core.e_zDispatch import dispatch_modules
     launcher = dispatch_modules.CommandLauncher(dispatch)
     modifiers = dispatch_modules.ModifierProcessor(dispatch)
     
     # Import specific components
-    from zCLI.L2_Core.e_zDispatch.dispatch_modules import CommandLauncher, ModifierProcessor
+    from zKernel.L2_Core.e_zDispatch.dispatch_modules import CommandLauncher, ModifierProcessor
     launcher = CommandLauncher(dispatch)
     modifiers = ModifierProcessor(dispatch)
 
@@ -47,7 +47,7 @@ Integration:
     - Forward Dependencies: 7 subsystems (zNavigation, zParser, zLoader, zFunc, zDialog, zWizard, zData)
 
 Thread Safety:
-    Both components rely on thread-safe instances from zCLI (logger, display, session).
+    Both components rely on thread-safe instances from zKernel (logger, display, session).
     No internal state mutation during processing.
 
 Version History:
@@ -66,7 +66,7 @@ Version History:
 
 __version__ = "1.5.4"
 __author__ = "Zolo"
-__description__ = "Command dispatch and routing components for zCLI subsystem"
+__description__ = "Command dispatch and routing components for zKernel subsystem"
 
 # ============================================================================
 # COMPONENT IMPORTS (Tier 1 - Foundation)

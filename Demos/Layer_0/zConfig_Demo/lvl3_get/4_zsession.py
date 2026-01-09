@@ -15,7 +15,7 @@ Key Discovery:
   - Copy-paste any accessor line you need
 """
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 
 def run_demo():
@@ -31,7 +31,7 @@ def run_demo():
         "logger_path": "./logs",
         "zTraceback": True,
     }
-    z = zCLI(zSpark)
+    z = zKernel(zSpark)
 
     # Get session dictionary (copy this pattern)
     session = z.session

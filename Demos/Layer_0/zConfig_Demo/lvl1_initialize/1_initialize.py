@@ -2,11 +2,11 @@
 """Level 0: Hello zConfig
 A minimal demo to initialize zCLI and understand what happens."""
 
-from zCLI import zCLI
+from zKernel import zKernel
 
 def run_demo():
     """Initialize zCLI - that's it!"""
-    z = zCLI()
+    z = zKernel()
 
     print()
     print("✓ zCLI initialized - 18 subsystems ready")

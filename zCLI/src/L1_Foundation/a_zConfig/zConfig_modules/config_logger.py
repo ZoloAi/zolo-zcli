@@ -6,8 +6,8 @@ Uses unified logging format from zSys.logger for consistency
 across all logging systems (bootstrap, framework, app).
 """
 
-from zCLI import Colors, logging, os, Path, Any, Dict, Optional
-from zCLI.utils import print_ready_message, validate_zcli_instance
+from zKernel import Colors, logging, os, Path, Any, Dict, Optional
+from zKernel.utils import print_ready_message, validate_zkernel_instance
 from zSys.logger import UnifiedFormatter
 from .config_session import SESSION_KEY_ZLOGGER
 
@@ -63,7 +63,7 @@ class LoggerConfig:
 
     # Type hints for instance attributes
     environment: Any  # EnvironmentConfig
-    zcli: Any  # zCLI instance
+    zcli: Any  # zKernel instance
     session_data: Dict[str, Any]
     log_level: str  # App log level (backward compatibility)
     _framework_logger: logging.Logger  # Pure framework logs (global, session-agnostic)
@@ -74,12 +74,12 @@ class LoggerConfig:
         """Initialize three-tier logger system with framework, session framework, and application loggers.
         
         Creates three separate loggers:
-        1. Framework logger: Pure zCLI internals → zcli-framework.log (global, minimal)
+        1. Framework logger: Pure zKernel internals → zcli-framework.log (global, minimal)
         2. Session framework logger: Session execution trace → {session}.framework.log (bootstrap, flow)
         3. Application logger: User code → {session}.log (optional, customizable)
         """
         # Validate required parameters
-        validate_zcli_instance(zcli, _SUBSYSTEM_NAME, require_session=False)
+        validate_zkernel_instance(zcli, _SUBSYSTEM_NAME, require_session=False)
         if session_data is None:
             raise ValueError("session_data parameter is required and cannot be None")
 
@@ -194,7 +194,7 @@ class LoggerConfig:
         """
         Extract caller file information from log record.
         
-        Provides hierarchical naming for zCLI subsystems (e.g., 'zComm.http_server')
+        Provides hierarchical naming for zKernel subsystems (e.g., 'zComm.http_server')
         and simple filenames for other modules.
         
         Args:
@@ -205,7 +205,7 @@ class LoggerConfig:
         """
         pathname = record.pathname
         
-        # For zCLI subsystems, show hierarchical subsystem/module names
+        # For zKernel subsystems, show hierarchical subsystem/module names
         if _PATH_SUBSYSTEMS_MARKER in pathname:
             # Extract subsystem name from path like: /path/to/zCLI/subsystems/zComm/zComm.py
             parts = pathname.split(_PATH_SUBSYSTEMS_MARKER)
@@ -229,7 +229,7 @@ class LoggerConfig:
 
                 return subsystem
         
-        # For zCLI core files, show the module name
+        # For zKernel core files, show the module name
         if _PATH_ZCLI_MARKER in pathname and _PATH_SUBSYSTEMS_DIR not in pathname:
             filename = os.path.basename(pathname)
             return self._strip_py_extension(filename)
@@ -243,13 +243,13 @@ class LoggerConfig:
         Setup PURE framework logger for global, session-agnostic operations.
         
         Pure framework logger characteristics:
-            - Logger name: "zCLI.framework"
-            - Purpose: Global zCLI concerns (NOT session-specific)
+            - Logger name: "zKernel.framework"
+            - Purpose: Global zKernel concerns (NOT session-specific)
             - Use: System-level errors, import failures, critical bugs
             - Level: Always DEBUG (for rare cases when used)
             - File: zcli-framework.log (fixed path, shared across sessions)
             - Console: Disabled in Production/Testing, ERROR+ otherwise
-            - Path: Non-configurable (always zCLI support folder)
+            - Path: Non-configurable (always zKernel support folder)
         
         NOTE: Most logs should go to session_framework instead!
         This logger is MINIMAL and should rarely be used.
@@ -266,7 +266,7 @@ class LoggerConfig:
         is_production = self.environment.is_production()
         is_testing = self.environment.is_testing()
         
-        # Framework log file path (fixed to zCLI support folder)
+        # Framework log file path (fixed to zKernel support folder)
         if hasattr(self.zcli, 'config') and hasattr(self.zcli.config, 'sys_paths'):
             logs_dir = self.zcli.config.sys_paths.user_logs_dir
             file_path = str(logs_dir / _LOG_FILENAME_FRAMEWORK)
@@ -283,7 +283,7 @@ class LoggerConfig:
             file_path = str(logs_dir / _LOG_FILENAME_FRAMEWORK)
         
         # Create framework logger
-        self._framework_logger = logging.getLogger("zCLI.framework")
+        self._framework_logger = logging.getLogger("zKernel.framework")
         self._framework_logger.setLevel(getattr(logging, framework_level))
         
         # Clear existing handlers to avoid duplicates
@@ -324,7 +324,7 @@ class LoggerConfig:
         Setup session framework logger for THIS execution.
         
         Session framework logger characteristics:
-            - Logger name: "zCLI.session.framework"
+            - Logger name: "zKernel.session.framework"
             - File: {session_title}.framework.log (e.g., zCloud.framework.log)
             - Location: Fixed at ~/Library/.../zolo-zcli/logs/ (no override)
             - Level: DEBUG (capture everything for this session)
@@ -360,7 +360,7 @@ class LoggerConfig:
             file_path = str(logs_dir / log_filename)
         
         # Create session framework logger
-        self._session_framework_logger = logging.getLogger("zCLI.session.framework")
+        self._session_framework_logger = logging.getLogger("zKernel.session.framework")
         self._session_framework_logger.setLevel(logging.DEBUG)  # Capture everything
         
         # Clear existing handlers to avoid duplicates
@@ -400,11 +400,11 @@ class LoggerConfig:
         Setup application logger for user code.
         
         Application logger characteristics:
-            - Logger name: "zCLI.app"
+            - Logger name: "zKernel.app"
             - Level: Configurable (default: INFO, smart defaults per deployment)
             - File: zcli-app.log (customizable path)
             - Console: Always enabled (respects level)
-            - Path: Defaults to zCLI support folder, user-configurable via config
+            - Path: Defaults to zKernel support folder, user-configurable via config
         """
         # Get logging configuration
         logging_config = self.environment.get(_CONFIG_KEY_LOGGING, {})
@@ -456,7 +456,7 @@ class LoggerConfig:
         # Create application logger
         # In PROD mode, set logger to DEBUG to capture everything, but disable console
         effective_log_level = _LOG_LEVEL_DEBUG if app_log_level == _LOG_LEVEL_PROD else app_log_level
-        self._app_logger = logging.getLogger("zCLI.app")
+        self._app_logger = logging.getLogger("zKernel.app")
         self._app_logger.setLevel(getattr(logging, effective_log_level))
         
         # Clear existing handlers to avoid duplicates
@@ -513,7 +513,7 @@ class LoggerConfig:
         """
         Get the pure framework logger (global, session-agnostic).
         
-        This logger is for PURE zCLI framework internals that are NOT
+        This logger is for PURE zKernel framework internals that are NOT
         session-specific (e.g., import errors, system-level failures).
         
         Use sparingly - most logs should go to session_framework instead.
@@ -613,7 +613,7 @@ class LoggerConfig:
         Log debug message → framework logger ONLY.
         
         Routes to: framework logger (zcli-framework.log)
-        Audience: zCLI developers debugging framework internals
+        Audience: zKernel developers debugging framework internals
         
         Use for:
             - Implementation details (path resolution, cache hits)

@@ -172,7 +172,7 @@ With this modular structure, we can easily:
 
 ## Naming Convention
 
-The module follows zCLI's naming philosophy:
+The module follows zKernel's naming philosophy:
 - **zBifrost** = The rainbow bridge (WebSocket) connecting Terminal to GUI
 - **BifrostManager** = Manages the zBifrost lifecycle
 - Clear distinction between the concept (zBifrost) and its manager

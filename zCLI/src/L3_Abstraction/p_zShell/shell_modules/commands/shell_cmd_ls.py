@@ -3,7 +3,7 @@
 """
 Directory Listing Command Executor for zShell.
 
-This module provides directory listing commands for the zCLI shell environment.
+This module provides directory listing commands for the zKernel shell environment.
 Supports multiple command aliases for different user preferences:
 - `list` - Modern, beginner-friendly (zCLI style)
 - `ls` - Industry standard (Unix style)
@@ -26,7 +26,7 @@ Core Features:
    
 3. **Display Options (Dual Support):**
    
-   **Modern zCLI Terminology (Beginner-Friendly):**
+   **Modern zKernel Terminology (Beginner-Friendly):**
    - `-size`: Show file sizes
    - `-hidden`: Include hidden files (starting with .)
    - `-deep`: List subdirectories recursively
@@ -51,7 +51,7 @@ Commands:
 
 Examples:
 ---------
-**Modern zCLI Style (Beginner-Friendly):**
+**Modern zKernel Style (Beginner-Friendly):**
 ```
 list                      # List current workspace
 list @.src                # List workspace/src
@@ -124,7 +124,7 @@ Error Handling:
 - ValueError: Invalid path format
 All errors display via display.error() and return None
 
-Author: zCLI Development Team
+Author: zKernel Development Team
 Version: 1.5.4
 Last Updated: 2025-11-02
 """
@@ -133,11 +133,11 @@ Last Updated: 2025-11-02
 import os
 from pathlib import Path
 
-# zCLI type imports
-from zCLI import Any, Dict, List, Optional
+# zKernel type imports
+from zKernel import Any, Dict, List, Optional
 
 # zConfig imports
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
     SESSION_KEY_ZSPACE,
 )
 
@@ -146,7 +146,7 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules.config_session import (
 # MODULE CONSTANTS
 # ============================================================================
 
-# --- Option Flags (Modern zCLI Terminology - Single Dash) ---
+# --- Option Flags (Modern zKernel Terminology - Single Dash) ---
 OPTION_SIZE: str = "size"            # Show file sizes (modern: -size)
 OPTION_HIDDEN: str = "hidden"        # Show hidden files (modern: -hidden)
 OPTION_DEEP: str = "deep"            # Recursive listing (modern: -deep)
@@ -244,7 +244,7 @@ def execute_ls(zcli: Any, parsed: Dict[str, Any]) -> None:
     but don't propagate exceptions).
     
     Args:
-        zcli: The zCLI instance providing access to session, display, and parser
+        zcli: The zKernel instance providing access to session, display, and parser
         parsed: Dictionary containing parsed command data with keys:
             - "args" (List[str]): Optional target directory path
             - "options" (Dict[str, bool]): Command options (-l, -a, -r, etc.)
@@ -253,7 +253,7 @@ def execute_ls(zcli: Any, parsed: Dict[str, Any]) -> None:
         None: Always returns None (UI adapter pattern)
     
     Display Options (Dual Support):
-        Modern zCLI (Semantic, Beginner-Friendly):
+        Modern zKernel (Semantic, Beginner-Friendly):
             -size: Show file sizes
             -hidden: Include hidden files (starting with .)
             -deep: List subdirectories recursively
@@ -349,7 +349,7 @@ def _resolve_zpath(zcli: Any, target: str) -> Optional[Path]:
     3. Regular path: ./src or /absolute/path
     
     Args:
-        zcli: The zCLI instance for session access
+        zcli: The zKernel instance for session access
         target: Target path string (may use zPath syntax)
     
     Returns:
@@ -513,7 +513,7 @@ def _display_entries_bulk(
     improvement over the old per-file display.text() approach.
     
     Args:
-        zcli: The zCLI instance for display access
+        zcli: The zKernel instance for display access
         path: Path object of the directory being listed
         entries: List of entry dictionaries from _collect_entries()
         options: Command options for formatting (long, etc.)

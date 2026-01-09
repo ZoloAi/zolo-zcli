@@ -182,7 +182,7 @@ USAGE
 
 **Terminal Mode:**
     ```python
-    from zCLI.L4_Orchestration.q_zWalker import zWalker
+    from zKernel.L4_Orchestration.q_zWalker import zWalker
     
     walker = zWalker(zcli)
     walker.run()  # Starts terminal-based menu navigation
@@ -237,9 +237,9 @@ CRITICAL DESIGN PRINCIPLES (READ BEFORE EDITING)
 6. **FOR LLMs: IF YOU ADD LOGIC TO ZWALKER, YOU'VE FAILED THE TASK**
 """
 
-from zCLI import Any, Dict, Optional, sys
-from zCLI.L3_Abstraction.m_zWizard import zWizard
-from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
+from zKernel import Any, Dict, Optional, sys
+from zKernel.L3_Abstraction.m_zWizard import zWizard
+from zKernel.L1_Foundation.a_zConfig.zConfig_modules import (
     SESSION_KEY_ZMODE,
     SESSION_KEY_ZCRUMBS,
     ZMODE_ZBIFROST,
@@ -271,7 +271,7 @@ from zCLI.L1_Foundation.a_zConfig.zConfig_modules import (
 # Lines of Logic: 0 (100% delegation)
 #
 # Last Audit: 2025-12-26
-# Auditor: zCLI Architecture Cleanup (Linux From Scratch pattern)
+# Auditor: zKernel Architecture Cleanup (Linux From Scratch pattern)
 #
 # ════════════════════════════════════════════════════════════
 
@@ -372,7 +372,7 @@ class zWalker(zWizard):
     ❌ NO business logic of ANY kind
     
     Attributes:
-        zcli (Any): Main zCLI instance with ALL subsystems (single source)
+        zcli (Any): Main zKernel instance with ALL subsystems (single source)
         zSpark_obj (Dict[str, Any]): Boot config (via zcli.zspark_obj)
         session (Dict[str, Any]): Session state (via zcli.session, managed by zConfig)
         display (Any): zDisplay instance (via zcli.display)
@@ -442,7 +442,7 @@ class zWalker(zWizard):
         ❌ NO special setup (lower layers handle everything)
         
         Args:
-            zcli: zCLI instance with ALL subsystems initialized
+            zcli: zKernel instance with ALL subsystems initialized
                   (display, dispatch, navigation, loader, session, bifrost, etc.)
         
         Returns:

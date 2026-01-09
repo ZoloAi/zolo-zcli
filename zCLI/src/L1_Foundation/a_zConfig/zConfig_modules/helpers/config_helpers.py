@@ -2,7 +2,7 @@
 """Shared helper functions for configuration loading across zConfig subsystems."""
 
 import logging
-from zCLI import yaml, Path, Dict, Any, Callable, Optional
+from zKernel import yaml, Path, Dict, Any, Callable, Optional
 import shutil
 
 # Module-level logger
@@ -118,8 +118,8 @@ def initialize_system_ui(paths: Any) -> None:
             return
         
         # Get source file from package (zCLI/UI/)
-        import zCLI
-        zcli_package_dir = Path(zCLI.__file__).parent
+        import zKernel
+        zcli_package_dir = Path(zKernel.__file__).parent
         source_file = zcli_package_dir / "UI" / ZUI_CLI_SYS_FILENAME
         
         # Copy file if source exists
@@ -159,8 +159,8 @@ def initialize_system_migration_schema(paths: Any) -> None:
             return
         
         # Get source file from package (zCLI/Schemas/)
-        import zCLI
-        zcli_package_dir = Path(zCLI.__file__).parent
+        import zKernel
+        zcli_package_dir = Path(zKernel.__file__).parent
         source_file = zcli_package_dir / "Schemas" / ZMIGRATION_SCHEMA_FILENAME
         
         # Copy file if source exists

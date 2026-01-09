@@ -7,7 +7,7 @@ PACKAGE OVERVIEW
 ═══════════════════════════════════════════════════════════════════════════════
 
 The zAuth subsystem provides comprehensive authentication and authorization for
-the zCLI framework, implementing a sophisticated three-tier authentication model
+the zKernel framework, implementing a sophisticated three-tier authentication model
 that supports both internal platform users and external application users.
 
 This is NOT a "session-only" authentication system. It's a complete three-tier
@@ -19,7 +19,7 @@ THREE-TIER AUTHENTICATION MODEL
 
 **Tier 1 - zSession Authentication (Internal Users):**
     Authenticates zCLI/Zolo platform users for access to:
-    - Premium zCLI features
+    - Premium zKernel features
     - Plugin marketplace
     - Zolo cloud services
     - Administrative functions
@@ -27,7 +27,7 @@ THREE-TIER AUTHENTICATION MODEL
     Session Key: session[SESSION_KEY_ZAUTH][ZAUTH_KEY_ZSESSION]
 
 **Tier 2 - Application Authentication (External Users - Multi-App):**
-    Authenticates end-users of applications BUILT with zCLI. Key features:
+    Authenticates end-users of applications BUILT with zKernel. Key features:
     - Each app maintains independent user database and credentials
     - Multiple apps can be authenticated simultaneously
     - Each app has isolated authentication context
@@ -159,9 +159,9 @@ USAGE EXAMPLES
 ═══════════════════════════════════════════════════════════════════════════════
 
 Basic zSession Authentication:
-    from zCLI import zCLI
+    from zKernel import zKernel
     
-    zcli = zCLI()
+    zcli = zKernel()
     
     # Login (prompts for credentials)
     result = zcli.auth.login()
@@ -233,11 +233,11 @@ Multi-App Authentication:
 THREAD SAFETY
 ═══════════════════════════════════════════════════════════════════════════════
 
-All modules operate on the zCLI session object, which is NOT thread-safe by design.
-Each zCLI instance maintains a single session dictionary.
+All modules operate on the zKernel session object, which is NOT thread-safe by design.
+Each zKernel instance maintains a single session dictionary.
 
 For multi-threaded applications:
-- Each thread should use its own zCLI instance
+- Each thread should use its own zKernel instance
 - Multi-app authentication within a SINGLE session is fully supported and isolated
 
 ═══════════════════════════════════════════════════════════════════════════════
@@ -249,7 +249,7 @@ For multi-threaded applications:
 
 __version__ = "1.5.4"
 __author__ = "Zolo"
-__description__ = "Three-tier authentication subsystem for zCLI framework"
+__description__ = "Three-tier authentication subsystem for zKernel framework"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # IMPORTS

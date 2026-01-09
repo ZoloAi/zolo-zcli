@@ -1,8 +1,8 @@
 # zCLI/subsystems/zComm/zComm.py
 """
-Communication & Service Management Subsystem for zCLI.
+Communication & Service Management Subsystem for zKernel.
 
-This module provides low-level communication infrastructure for zCLI:
+This module provides low-level communication infrastructure for zKernel:
 - HTTP client (GET, POST, PUT, PATCH, DELETE)
 - Service management (PostgreSQL, Redis, MongoDB)  
 - Network utilities (port checking)
@@ -35,7 +35,7 @@ Delegation Pattern:
 
 Auto-Initialization:
     zComm automatically:
-    1. Validates zCLI instance (session, logger required)
+    1. Validates zKernel instance (session, logger required)
     2. Creates all managers
     3. Prints ready message (before zDisplay available)
     4. Logs ready state
@@ -67,7 +67,7 @@ Note:
 
 Usage:
     ```python
-    from zCLI.L1_Foundation.b_zComm import zComm
+    from zKernel.L1_Foundation.b_zComm import zComm
     
     # Initialize (done automatically by zCLI)
     comm = zComm(zcli_instance)
@@ -93,8 +93,8 @@ See Also:
     - zBifrost (Layer 2): WebSocket orchestration for Terminal↔Web
 """
 
-from zCLI import Any, Dict, Optional
-from zCLI.utils import print_ready_message, validate_zcli_instance
+from zKernel import Any, Dict, Optional
+from zKernel.utils import print_ready_message, validate_zkernel_instance
 from .zComm_modules import ServiceManager, HTTPClient, NetworkUtils, WebSocketServer, StorageClient
 
 # ═══════════════════════════════════════════════════════════
@@ -149,7 +149,7 @@ DEFAULT_HTTP_SERVE_PATH = "."
 
 class zComm:
     """
-    Communication & Service Management Facade for zCLI.
+    Communication & Service Management Facade for zKernel.
     
     Provides unified interface to low-level communication infrastructure including
     HTTP client, service management, and network utilities. Delegates to specialized
@@ -163,13 +163,13 @@ class zComm:
     
     Auto-Initialization:
         On __init__:
-        1. Validates zCLI instance (session + logger required)
+        1. Validates zKernel instance (session + logger required)
         2. Creates all managers
         3. Prints ready message (Layer 0, no zDisplay yet)
         4. Logs ready state
     
     Attributes:
-        zcli: zCLI instance (dependency injection)
+        zcli: zKernel instance (dependency injection)
         session: Reference to zcli.session (read-only from zComm perspective)
         logger: Reference to zcli.logger
         mycolor: Color code for console output
@@ -209,7 +209,7 @@ class zComm:
     """
 
     # Type hints for instance attributes
-    zcli: Any  # zCLI instance
+    zcli: Any  # zKernel instance
     session: Dict[str, Any]
     logger: Any
     mycolor: str
@@ -221,11 +221,11 @@ class zComm:
         """
         Initialize zComm subsystem with automatic configuration and service setup.
         
-        Validates zCLI instance, creates all managers, and logs ready state.
-        This is called automatically by zCLI during initialization.
+        Validates zKernel instance, creates all managers, and logs ready state.
+        This is called automatically by zKernel during initialization.
         
         Args:
-            zcli: zCLI instance with session and logger attributes
+            zcli: zKernel instance with session and logger attributes
         
         Raises:
             ValueError: If zcli is None or missing required attributes (session, logger)
@@ -241,8 +241,8 @@ class zComm:
             comm = zComm(zcli_instance)
             ```
         """
-        # Validate zCLI instance FIRST - session is always required
-        validate_zcli_instance(zcli, "zComm")
+        # Validate zKernel instance FIRST - session is always required
+        validate_zkernel_instance(zcli, "zComm")
 
         self.zcli = zcli
         self.session = zcli.session
