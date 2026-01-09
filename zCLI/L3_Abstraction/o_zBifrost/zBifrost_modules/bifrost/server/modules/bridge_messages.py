@@ -1278,6 +1278,9 @@ class MessageHandler:
         Example:
             data = {"src": "@.static.brand.logo.png"}
             result = {"src": "/static/brand/logo.png"}  # Ready for zServer
+            
+            data = {"zLink": "@.UI.zProducts.zUI.zTheme.zTheme_Details"}
+            result = {"zLink": "/zProducts/zTheme"}  # Navigation route
         """
         from pathlib import Path
         
@@ -1290,6 +1293,14 @@ class MessageHandler:
         elif isinstance(data, str) and data.startswith(("@", "~")):
             # Resolve zPath to web-relative URL
             try:
+                # Check if this is a navigation zPath (@.UI.*)
+                if data.startswith("@.UI."):
+                    # Navigation path: convert to HTTP route
+                    web_path = self._convert_ui_zpath_to_http_route(data, zcli)
+                    self.logger.debug(f"[zPath] Navigation: {data} → {web_path}")
+                    return web_path
+                
+                # Resource path logic (static, templates, etc.)
                 # Step 1: Resolve zPath to absolute filesystem path
                 resolved_path = zcli.zparser.resolve_data_path(data)
                 self.logger.debug(f"[zPath] Resolved: {data} → {resolved_path}")
@@ -1321,6 +1332,50 @@ class MessageHandler:
         else:
             # Return primitives and non-zPath strings as-is
             return data
+    
+    def _convert_ui_zpath_to_http_route(self, ui_zpath: str, zcli: Any) -> str:
+        """
+        Convert UI zPath to HTTP route format for navigation.
+        
+        Navigation zPaths follow the pattern: @.UI.<folders>.zUI.<file>.<block>
+        HTTP routes strip the zUI. prefix and block name to create clean URLs.
+        
+        Args:
+            ui_zpath: UI zPath string (e.g., @.UI.zProducts.zUI.zTheme.zTheme_Details)
+            zcli: zCLI instance (currently unused but available for future enhancements)
+        
+        Returns:
+            str: HTTP route (e.g., /zProducts/zTheme)
+        
+        Examples:
+            @.UI.zProducts.zUI.zTheme.zTheme_Details → /zProducts/zTheme
+            @.UI.zUI.zVaF.zVaF → /
+            @.UI.zUI.zAbout.meta → /zAbout
+            @.UI.zProducts.zTheme.zUI.zBreakpoints.zBreakpoints_Details → /zProducts/zTheme/zBreakpoints
+        
+        Notes:
+            - Strips @.UI. prefix
+            - Removes zUI. prefixes from parts
+            - Removes block name (last part)
+            - Returns "/" for root routes
+        """
+        # Strip @.UI. prefix (5 characters)
+        path_after_ui = ui_zpath[5:]
+        
+        # Split into parts
+        parts = path_after_ui.split('.')
+        
+        # Remove zUI. prefixes and block names (last part)
+        route_parts = []
+        for part in parts[:-1]:  # Skip last part (block name)
+            if not part.startswith('zUI'):
+                route_parts.append(part)
+        
+        # Build HTTP route
+        if not route_parts:
+            return "/"  # Root route
+        else:
+            return "/" + "/".join(route_parts)
     
     async def _extract_and_send_special_events(
         self,
