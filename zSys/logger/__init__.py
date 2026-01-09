@@ -55,6 +55,7 @@ from .formats import (
 from .config import (
     get_log_level_from_zspark,
     should_suppress_init_prints,
+    LOG_LEVEL_SESSION,
     LOG_LEVEL_PROD,
 )
 
@@ -70,6 +71,7 @@ __all__ = [
     # Logger configuration
     "get_log_level_from_zspark",
     "should_suppress_init_prints",
+    "LOG_LEVEL_SESSION",
     "LOG_LEVEL_PROD",
     # Legacy constants
     "FORMAT_SIMPLE",

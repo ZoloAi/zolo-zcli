@@ -21,8 +21,8 @@ KEY_DEPLOYMENT = "deployment"
 KEY_ROLE = "role"
 
 # Default values
-DEFAULT_DEPLOYMENT = "Development"
-DEFAULT_ROLE = "development"
+DEFAULT_DEPLOYMENT = "Production"  # Changed in v1.5.9: Clean UI for most users (Development is opt-in for demos)
+DEFAULT_ROLE = "production"
 
 # Deprecated deployment mode mappings (for backward compatibility)
 DEPRECATED_DEPLOYMENTS = {

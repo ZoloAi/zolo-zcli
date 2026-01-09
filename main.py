@@ -1,23 +1,18 @@
 """CLI entry point for the zolo-zcli package."""
 
+# Local imports - zSys (system utilities)
 from zSys.logger import BootstrapLogger
 from zSys.install import detect_installation_type
-import cli_commands
+from zSys import cli as cli_commands
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# BOOTSTRAP LOGGER - ALWAYS FIRST
-# ═══════════════════════════════════════════════════════════════════════════════
-# Initialize bootstrap logger before ANY other imports or operations.
-# This ensures we capture the complete pre-boot process in framework.log.
-
-boot_logger = BootstrapLogger()
-boot_logger.info("zolo-zcli entry point started")
-
-# Now safe to import zCLI (bootstrap logger will catch any import errors)
-# Use centralized imports from zCLI package
+# Local imports - zCLI (main framework)
 import zCLI as zcli_package
 from zCLI import argparse, sys, Path, zCLI
+
+# Local imports - version
 from version import get_version, get_package_info
+
+boot_logger = BootstrapLogger()
 
 boot_logger.debug("Python: %s", sys.version.split()[0])
 
@@ -40,6 +35,8 @@ def main() -> None:
         parser.add_argument("--version", action="version", version=f"zolo-zcli {get_version()}")
         parser.add_argument("--verbose", "-v", action="store_true", 
                           help="Show bootstrap process and detailed initialization")
+        parser.add_argument("--dev", action="store_true",
+                          help="Enable Development mode (show framework banners and internal flow)")
         
         subparsers = parser.add_subparsers(dest="command", help="Available commands")
         
@@ -122,17 +119,18 @@ def main() -> None:
             # Normal command parsing
             args = parser.parse_args()
         
-        # Get verbose flag (default False if not present - for info banner case)
+        # Get verbose and dev flags (default False if not present)
         verbose = getattr(args, 'verbose', False)
-        boot_logger.debug("Command: %s, Script: %s, Verbose: %s", args.command or "info", script_file, verbose)
+        dev_mode = getattr(args, 'dev', False)
+        boot_logger.debug("Command: %s, Script: %s, Verbose: %s, Dev: %s", args.command or "info", script_file, verbose, dev_mode)
 
-        # Route to handlers (with verbose flag) - all handlers in cli_commands.py
+        # Route to handlers (with verbose and dev flags) - all handlers in cli_commands.py
         if script_file:
             # Direct Python script execution (e.g., zolo zTest.py)
             return cli_commands.handle_script_command(boot_logger, sys, Path, script_file, verbose=verbose)
         elif zspark_file:
             # zSpark.*.zolo execution (e.g., zolo zCloud)
-            return cli_commands.handle_zspark_command(boot_logger, zCLI, Path, zspark_file, verbose=verbose)
+            return cli_commands.handle_zspark_command(boot_logger, zCLI, Path, zspark_file, verbose=verbose, dev_mode=dev_mode)
         elif args.command == "shell":
             cli_commands.handle_shell_command(boot_logger, zCLI, verbose=verbose)
         elif args.command == "config":

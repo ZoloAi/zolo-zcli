@@ -142,6 +142,10 @@ _ENV_VAR_PATH = "PATH"
 _CONFIG_KEY_LOGGING = "logging"
 _CONFIG_KEY_LEVEL = "level"
 
+# Logger level constants (for PROD deprecation handling)
+from zSys.logger import LOG_LEVEL_PROD as _LOG_LEVEL_PROD
+_LOG_LEVEL_INFO = "INFO"
+
 
 class SessionConfig:
     """
@@ -426,6 +430,16 @@ class SessionConfig:
             explicit_logger = True
             level = str(zSpark_logger).upper()
             
+            # Handle deprecated PROD level
+            if level == _LOG_LEVEL_PROD:
+                from zCLI.utils import Colors
+                if not self.environment.is_production():
+                    print(f"{Colors.WARNING}{_LOG_PREFIX} 'PROD' log level is deprecated.{Colors.RESET}")
+                    print(f"{Colors.WARNING}{_LOG_PREFIX} Deployment and logger level are now separate!{Colors.RESET}")
+                    print(f"{Colors.WARNING}{_LOG_PREFIX} Use: deployment: 'Production' (clean UI) + logger: 'INFO' (reasonable logs){Colors.RESET}")
+                    print(f"{Colors.WARNING}{_LOG_PREFIX} Defaulting to INFO for now.{Colors.RESET}")
+                level = _LOG_LEVEL_INFO
+            
             # Only print if not in Production (deployment-aware)
             if not self.environment.is_production():
                 print(f"{_LOG_PREFIX} Logger level from zSpark: {level}")
@@ -473,26 +487,19 @@ class SessionConfig:
                     )
             
             if level:
-                # Smart default: If Production deployment and config has INFO (default),
-                # treat it as implicit and use ERROR instead for minimal logging
-                if self.environment.is_production() and str(level).upper() == "INFO" and not explicit_logger:
-                    level = "ERROR"
-                    if not self.environment.is_production():
-                        print(f"{_LOG_PREFIX} Production mode: Logger defaulting to ERROR (override with explicit logger setting)")
-                else:
-                    # Only print if not in Production
-                    if not self.environment.is_production():
-                        print(f"{_LOG_PREFIX} Logger level from zEnvironment config: {level}")
+                # Only print if not in Production (UI decision)
+                if not self.environment.is_production():
+                    print(f"{_LOG_PREFIX} Logger level from zEnvironment config: {level}")
                 
                 return level
 
-        # 5. Default fallback (deployment-aware)
-        # Production deployment defaults to ERROR, others default to INFO
-        if self.environment.is_production():
-            default = "ERROR"
-            # Silent in Production, no need to print
-        else:
-            default = _DEFAULT_LOG_LEVEL
+        # 5. Default fallback (deployment-independent)
+        # Logger level is independent of deployment mode
+        # Production/Development/Testing all default to INFO
+        default = _DEFAULT_LOG_LEVEL  # INFO
+        
+        # UI Decision: Only print in Development (keep console clean in Production)
+        if not self.environment.is_production():
             print(f"{_LOG_PREFIX} Logger level defaulting to: {default}")
         
         return default

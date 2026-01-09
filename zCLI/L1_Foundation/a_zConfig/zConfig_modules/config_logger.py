@@ -24,13 +24,14 @@ _LOG_FILENAME_APP = "zcli-app.log"
 
 # Log Levels
 _LOG_LEVEL_DEBUG = "DEBUG"
+_LOG_LEVEL_SESSION = "SESSION"
 _LOG_LEVEL_INFO = "INFO"
 _LOG_LEVEL_WARNING = "WARNING"
 _LOG_LEVEL_ERROR = "ERROR"
 _LOG_LEVEL_CRITICAL = "CRITICAL"
 # Import from zSys.logger (single source of truth)
-from zSys.logger import LOG_LEVEL_PROD as _LOG_LEVEL_PROD
-_VALID_LOG_LEVELS = (_LOG_LEVEL_DEBUG, _LOG_LEVEL_INFO, _LOG_LEVEL_WARNING, _LOG_LEVEL_ERROR, _LOG_LEVEL_CRITICAL, _LOG_LEVEL_PROD)
+from zSys.logger import LOG_LEVEL_SESSION, LOG_LEVEL_PROD as _LOG_LEVEL_PROD
+_VALID_LOG_LEVELS = (_LOG_LEVEL_DEBUG, _LOG_LEVEL_SESSION, _LOG_LEVEL_INFO, _LOG_LEVEL_WARNING, _LOG_LEVEL_ERROR, _LOG_LEVEL_CRITICAL, _LOG_LEVEL_PROD)
 _DEFAULT_LOG_LEVEL = _LOG_LEVEL_INFO
 
 # Config Keys
@@ -58,22 +59,24 @@ _PATH_SUBSYSTEMS_DIR = "subsystems"
 _PYTHON_EXTENSION = ".py"
 
 class LoggerConfig:
-    """Manages dual logging configuration: framework (internal) and app (user) logs."""
+    """Manages three-tier logging configuration: framework, session framework, and app logs."""
 
     # Type hints for instance attributes
     environment: Any  # EnvironmentConfig
     zcli: Any  # zCLI instance
     session_data: Dict[str, Any]
     log_level: str  # App log level (backward compatibility)
-    _framework_logger: logging.Logger  # Internal zCLI framework logs
-    _app_logger: logging.Logger  # User application logs
+    _framework_logger: logging.Logger  # Pure framework logs (global, session-agnostic)
+    _session_framework_logger: logging.Logger  # Session-specific framework logs (bootstrap, ready banners, flow)
+    _app_logger: logging.Logger  # User application logs (optional)
 
     def __init__(self, environment_config: Any, zcli: Any, session_data: Dict[str, Any]) -> None:
-        """Initialize dual logger system with framework and application loggers.
+        """Initialize three-tier logger system with framework, session framework, and application loggers.
         
-        Creates two separate loggers:
-        - Framework logger: Internal zCLI operations → zcli-framework.log (fixed path)
-        - Application logger: User code → zcli-app.log (customizable path)
+        Creates three separate loggers:
+        1. Framework logger: Pure zCLI internals → zcli-framework.log (global, minimal)
+        2. Session framework logger: Session execution trace → {session}.framework.log (bootstrap, flow)
+        3. Application logger: User code → {session}.log (optional, customizable)
         """
         # Validate required parameters
         validate_zcli_instance(zcli, _SUBSYSTEM_NAME, require_session=False)
@@ -87,12 +90,16 @@ class LoggerConfig:
         # Get logger configuration from session (which uses environment detection)
         self.log_level = self._get_log_level()
 
-        # Initialize dual logging system
-        self._setup_framework_logging()
-        self._setup_app_logging()
+        # Initialize three-tier logging system
+        self._setup_framework_logging()              # #1 Pure framework (global)
+        self._setup_session_framework_logging()      # #2 Session framework (THIS execution)
+        self._setup_app_logging()                    # #3 User app (optional)
 
         # Print ready message (deployment-aware)
         print_ready_message(_READY_MESSAGE, color="CONFIG", is_production=self.environment.is_production(), is_testing=self.environment.is_testing())
+        
+        # Log ready message to session framework
+        self._session_framework_logger.info("zLogger Ready")
 
     def _normalize_log_level(self, level: Any) -> str:
         """Normalize log level to uppercase string."""
@@ -233,14 +240,19 @@ class LoggerConfig:
     
     def _setup_framework_logging(self) -> None:
         """
-        Setup framework logger for internal zCLI operations.
+        Setup PURE framework logger for global, session-agnostic operations.
         
-        Framework logger characteristics:
+        Pure framework logger characteristics:
             - Logger name: "zCLI.framework"
-            - Level: Always DEBUG (captures everything)
-            - File: zcli-framework.log (fixed path in zCLI support folder)
-            - Console: Disabled in Production/Testing, enabled otherwise
+            - Purpose: Global zCLI concerns (NOT session-specific)
+            - Use: System-level errors, import failures, critical bugs
+            - Level: Always DEBUG (for rare cases when used)
+            - File: zcli-framework.log (fixed path, shared across sessions)
+            - Console: Disabled in Production/Testing, ERROR+ otherwise
             - Path: Non-configurable (always zCLI support folder)
+        
+        NOTE: Most logs should go to session_framework instead!
+        This logger is MINIMAL and should rarely be used.
         """
         # Get logging configuration for format only
         logging_config = self.environment.get(_CONFIG_KEY_LOGGING, {})
@@ -306,6 +318,82 @@ class LoggerConfig:
             # Silent setup (framework logs are transparent)
         except Exception as e:
             print(f"{Colors.ERROR}{_LOG_PREFIX} Failed to setup framework logging: {e}{Colors.RESET}")
+    
+    def _setup_session_framework_logging(self) -> None:
+        """
+        Setup session framework logger for THIS execution.
+        
+        Session framework logger characteristics:
+            - Logger name: "zCLI.session.framework"
+            - File: {session_title}.framework.log (e.g., zCloud.framework.log)
+            - Location: Fixed at ~/Library/.../zolo-zcli/logs/ (no override)
+            - Level: DEBUG (capture everything for this session)
+            - Console: WARNING+ in Development only
+            - Content: Bootstrap, Ready banners, SESSION logs, framework flow
+        
+        This logger contains the complete execution trace for THIS session,
+        making it easy to audit and debug specific runs.
+        """
+        # Get session title for filename
+        from .config_session import SESSION_KEY_TITLE
+        session_title = self.session_data.get(SESSION_KEY_TITLE, "session")
+        log_filename = f"{session_title}.framework.log"
+        
+        # Check deployment mode
+        is_production = self.environment.is_production()
+        is_testing = self.environment.is_testing()
+        
+        # Get fixed log directory (no override for session framework)
+        if hasattr(self.zcli, 'config') and hasattr(self.zcli.config, 'sys_paths'):
+            logs_dir = self.zcli.config.sys_paths.user_logs_dir
+            file_path = str(logs_dir / log_filename)
+        else:
+            # Fallback if config not available yet
+            home_path = Path.home()
+            import platform
+            if platform.system() == "Windows":
+                logs_dir = home_path / "AppData" / "Local" / "zolo-zcli" / "logs"
+            elif platform.system() == "Darwin":  # macOS
+                logs_dir = home_path / "Library" / "Application Support" / "zolo-zcli" / "logs"
+            else:  # Linux
+                logs_dir = home_path / ".local" / "share" / "zolo-zcli" / "logs"
+            file_path = str(logs_dir / log_filename)
+        
+        # Create session framework logger
+        self._session_framework_logger = logging.getLogger("zCLI.session.framework")
+        self._session_framework_logger.setLevel(logging.DEBUG)  # Capture everything
+        
+        # Clear existing handlers to avoid duplicates
+        self._session_framework_logger.handlers.clear()
+        
+        # Use unified formatter from zSys (consistent with bootstrap and framework)
+        console_formatter = UnifiedFormatter("SessionFramework", include_details=False)
+        file_formatter = UnifiedFormatter("SessionFramework", include_details=True)
+        
+        # Console handler: Only in Development, minimal (WARNING+)
+        if not (is_production or is_testing):
+            console_handler = logging.StreamHandler()
+            console_handler.setLevel(logging.WARNING)  # Only warnings and errors
+            console_handler.setFormatter(console_formatter)
+            self._session_framework_logger.addHandler(console_handler)
+        
+        # File handler (always enabled for session framework logs)
+        try:
+            # Ensure log directory exists
+            log_file = Path(file_path)
+            log_file.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Create file handler
+            file_handler = logging.FileHandler(str(log_file))
+            file_handler.setLevel(logging.DEBUG)  # Capture everything to file
+            file_handler.setFormatter(file_formatter)
+            self._session_framework_logger.addHandler(file_handler)
+            
+            # Log session framework initialization
+            if not is_production:
+                print(f"{_LOG_PREFIX} Session framework logging enabled: {log_filename}")
+        except Exception as e:
+            print(f"{Colors.ERROR}{_LOG_PREFIX} Failed to setup session framework logging: {e}{Colors.RESET}")
     
     def _setup_app_logging(self) -> None:
         """
@@ -423,15 +511,41 @@ class LoggerConfig:
     @property
     def framework(self) -> logging.Logger:
         """
-        Get the framework logger instance (internal zCLI operations).
+        Get the pure framework logger (global, session-agnostic).
         
-        This logger is used internally by zCLI subsystems for framework-level
-        logging. Logs go to zcli-framework.log (separate from app logs).
+        This logger is for PURE zCLI framework internals that are NOT
+        session-specific (e.g., import errors, system-level failures).
+        
+        Use sparingly - most logs should go to session_framework instead.
+        
+        File: zcli-framework.log (fixed, global)
         
         Returns:
-            logging.Logger: The framework logger instance
+            logging.Logger: The pure framework logger instance
         """
         return self._framework_logger
+    
+    @property
+    def session_framework(self) -> logging.Logger:
+        """
+        Get the session framework logger (execution trace for THIS session).
+        
+        This logger contains the complete execution trace for THIS specific
+        session, including bootstrap, ready banners, SESSION logs, and
+        framework flow.
+        
+        Use for:
+            - Bootstrap logs
+            - Ready banners (zMachine, zEnv, zParser, etc.)
+            - SESSION level logs (zSpark values, config)
+            - Framework execution flow (dispatch, navigation)
+        
+        File: {session_title}.framework.log (e.g., zCloud.framework.log)
+        
+        Returns:
+            logging.Logger: The session framework logger instance
+        """
+        return self._session_framework_logger
     
     def set_level(self, level: Any) -> None:
         """
@@ -448,16 +562,18 @@ class LoggerConfig:
         
         # Handle deprecated PROD level
         if level == _LOG_LEVEL_PROD:
-            print(f"{Colors.WARNING}{_LOG_PREFIX} 'PROD' log level is deprecated. "
-                  f"Use deployment: 'Production' instead. Defaulting to INFO.{Colors.RESET}")
+            print(f"{Colors.WARNING}{_LOG_PREFIX} 'PROD' log level is deprecated.{Colors.RESET}")
+            print(f"{Colors.WARNING}{_LOG_PREFIX} Deployment and logger level are now separate!{Colors.RESET}")
+            print(f"{Colors.WARNING}{_LOG_PREFIX} Use: deployment: 'Production' (clean UI) + logger: 'INFO' (reasonable logs){Colors.RESET}")
+            print(f"{Colors.WARNING}{_LOG_PREFIX} Defaulting to INFO for now.{Colors.RESET}")
             level = _LOG_LEVEL_INFO
         
         if level in _VALID_LOG_LEVELS:
-            self._logger.setLevel(getattr(logging, level))
+            self._app_logger.setLevel(getattr(logging, level))
             self.log_level = level
             
             # Update all handlers
-            for handler in self._logger.handlers:
+            for handler in self._app_logger.handlers:
                 handler.setLevel(getattr(logging, level))
         else:
             print(f"{Colors.WARNING}{_LOG_PREFIX} Invalid log level: {level}{Colors.RESET}")
@@ -489,63 +605,155 @@ class LoggerConfig:
         return not (self.environment.is_production() or self.environment.is_testing())
     
     # ═══════════════════════════════════════════════════════════
-    # Logging Interface
+    # Logging Interface (Semantic Routing)
     # ═══════════════════════════════════════════════════════════
     
     def debug(self, message: str, *args: Any, **kwargs: Any) -> None:
         """
-        Log debug message (application logger).
+        Log debug message → framework logger ONLY.
+        
+        Routes to: framework logger (zcli-framework.log)
+        Audience: zCLI developers debugging framework internals
+        
+        Use for:
+            - Implementation details (path resolution, cache hits)
+            - Performance metrics for optimization
+            - Internal algorithm debugging
+            - Framework bug diagnosis
         
         Args:
             message: Log message (supports % formatting with args)
             *args: Positional arguments for message formatting
             **kwargs: Keyword arguments passed to logger
+        
+        Examples:
+            z.logger.debug("zParser path resolution: @.UI → /Users/.../UI")
+            z.logger.debug("Cache hit: 3/5 files")
         """
-        self._app_logger.debug(message, *args, **kwargs)
+        self._framework_logger.debug(message, *args, **kwargs)
     
     def info(self, message: str, *args: Any, **kwargs: Any) -> None:
         """
-        Log info message (application logger).
+        Log info message → session framework logger ONLY.
+        
+        Routes to: session framework logger ({title}.framework.log)
+        Audience: Users debugging their application flow
+        
+        Use for:
+            - User-facing events (zParser Ready, subsystem loaded)
+            - High-level flow (loading zVaFile, processing request)
+            - Ready banners (zMachine, zEnv, zParser)
+            - Configuration summary (non-detailed)
         
         Args:
             message: Log message (supports % formatting with args)
             *args: Positional arguments for message formatting
             **kwargs: Keyword arguments passed to logger
+        
+        Examples:
+            z.logger.info("zParser Ready")
+            z.logger.info("Loading zVaFile: @.UI.zProducts")
         """
-        self._app_logger.info(message, *args, **kwargs)
+        self._session_framework_logger.info(message, *args, **kwargs)
+    
+    def session(self, message: str, *args: Any, **kwargs: Any) -> None:
+        """
+        Log session/environment/system information → session framework logger ONLY.
+        
+        Routes to: session framework logger ({title}.framework.log)
+        Audience: Users understanding session configuration and context
+        
+        SESSION level (15) sits between INFO (20) and DEBUG (10).
+        
+        Use for:
+            - Session initialization details (Python version, OS)
+            - Configuration detection (zSpark values, deployment, mode)
+            - Environment setup (installation type, paths)
+            - Session-specific context (dry information)
+        
+        Args:
+            message: Log message (supports % formatting with args)
+            *args: Positional arguments for message formatting
+            **kwargs: Keyword arguments passed to logger
+        
+        Examples:
+            z.logger.session("Python %s on %s", version, platform)
+            z.logger.session("zSpark configuration loaded: %d keys", len(config))
+            z.logger.session("Deployment: %s, Mode: %s", deployment, mode)
+        """
+        self._session_framework_logger.log(logging.SESSION, message, *args, **kwargs)
     
     def warning(self, message: str, *args: Any, **kwargs: Any) -> None:
         """
-        Log warning message (application logger).
+        Log warning message → BOTH framework and session framework loggers.
+        
+        Routes to: BOTH zcli-framework.log AND {title}.framework.log
+        Audience: Both developers (might be bug) and users (needs attention)
+        
+        Use for:
+            - Potential issues (file not found, deprecated usage)
+            - Configuration problems (invalid setting, missing key)
+            - Non-critical failures (fallback used, retry succeeded)
         
         Args:
             message: Log message (supports % formatting with args)
             *args: Positional arguments for message formatting
             **kwargs: Keyword arguments passed to logger
+        
+        Examples:
+            z.logger.warning("zVaFile not found: @.UI.Missing")
+            z.logger.warning("Deprecated usage: PROD log level")
         """
-        self._app_logger.warning(message, *args, **kwargs)
+        self._framework_logger.warning(message, *args, **kwargs)
+        self._session_framework_logger.warning(message, *args, **kwargs)
     
     def error(self, message: str, *args: Any, **kwargs: Any) -> None:
         """
-        Log error message (application logger).
+        Log error message → BOTH framework and session framework loggers.
+        
+        Routes to: BOTH zcli-framework.log AND {title}.framework.log
+        Audience: Both developers (framework bug?) and users (what failed?)
+        
+        Use for:
+            - Critical failures (initialization failed, cannot proceed)
+            - Runtime errors (database connection failed, API error)
+            - System-level problems (permission denied, disk full)
         
         Args:
             message: Log message (supports % formatting with args)
             *args: Positional arguments for message formatting
             **kwargs: Keyword arguments passed to logger
+        
+        Examples:
+            z.logger.error("zParser initialization failed: %s", error)
+            z.logger.error("Database connection failed")
         """
-        self._app_logger.error(message, *args, **kwargs)
+        self._framework_logger.error(message, *args, **kwargs)
+        self._session_framework_logger.error(message, *args, **kwargs)
     
     def critical(self, message: str, *args: Any, **kwargs: Any) -> None:
         """
-        Log critical message (application logger).
+        Log critical message → BOTH framework and session framework loggers.
+        
+        Routes to: BOTH zcli-framework.log AND {title}.framework.log
+        Audience: Both developers (system failure) and users (cannot continue)
+        
+        Use for:
+            - System-level failures (cannot load core subsystem)
+            - Unrecoverable errors (corruption detected, out of memory)
+            - Emergency shutdowns (data integrity at risk)
         
         Args:
             message: Log message (supports % formatting with args)
             *args: Positional arguments for message formatting
             **kwargs: Keyword arguments passed to logger
+        
+        Examples:
+            z.logger.critical("Core subsystem failed to load")
+            z.logger.critical("Data corruption detected in config")
         """
-        self._app_logger.critical(message, *args, **kwargs)
+        self._framework_logger.critical(message, *args, **kwargs)
+        self._session_framework_logger.critical(message, *args, **kwargs)
     
     def dev(self, message: str, *args: Any, **kwargs: Any) -> None:
         """

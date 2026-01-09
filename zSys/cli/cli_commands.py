@@ -1,4 +1,4 @@
-# cli_commands.py
+# zSys/cli/cli_commands.py
 """
 CLI command handlers for zolo entry point.
 
@@ -7,9 +7,9 @@ are called from main.py after argument parsing and bootstrap logger initializati
 
 Architecture Context
 --------------------
-**Location**: Root level (paired with main.py entry point)
+**Location**: zSys/cli/ (system-level CLI utilities)
 **Purpose**: CLI command orchestration and zCLI initialization
-**Layer**: Entry point layer (above all zCLI layers)
+**Layer**: System layer (peer to logger, install, formatting)
 
 This module bridges the gap between the CLI entry point (main.py) and the zCLI
 framework. It handles:
@@ -59,7 +59,8 @@ See Also
 
 Version History
 ---------------
-- v1.5.9: Moved from zSys/ to root level (architectural correction)
+- v1.5.9.1: Moved back to zSys/cli/ for better organization (consistency with logger, install, etc.)
+- v1.5.9: Moved from zSys/ to root level (temporary)
 - v1.5.8: Original implementation in zSys/cli_handlers.py
 """
 
@@ -103,7 +104,7 @@ def handle_shell_command(boot_logger, zCLI, verbose: bool = False):
     """
     boot_logger.info("Launching zShell...")
     cli = zCLI()
-    boot_logger.flush_to_framework(cli.logger.framework, verbose=verbose)
+    boot_logger.flush_to_framework(cli.logger, verbose=verbose)
     cli.run_shell()
 
 
@@ -118,7 +119,7 @@ def handle_config_command(boot_logger, zCLI, verbose: bool = False):
     """
     boot_logger.info("Loading config display...")
     cli = zCLI({'zMode': 'Terminal', 'logger': 'PROD', 'deployment': 'Production'})
-    boot_logger.flush_to_framework(cli.logger.framework, verbose=verbose)
+    boot_logger.flush_to_framework(cli.logger, verbose=verbose)
     
     cli.config.persistence.show_machine_config()
     cli.config.persistence.show_environment_config()
@@ -156,7 +157,7 @@ def handle_ztests_command(boot_logger, zCLI, Path, zcli_package, verbose: bool =
     if not test_runner_dir.exists():
         boot_logger.error("zTestRunner directory not found: %s", test_runner_dir)
         temp_cli = zCLI({'zMode': 'Terminal'})
-        boot_logger.flush_to_framework(temp_cli.logger.framework, verbose=verbose)
+        boot_logger.flush_to_framework(temp_cli.logger, verbose=verbose)
         temp_cli.display.text(f"Error: zTestRunner directory not found at {test_runner_dir}")
         return 1
     
@@ -165,7 +166,7 @@ def handle_ztests_command(boot_logger, zCLI, Path, zcli_package, verbose: bool =
         "zSpace": str(test_runner_dir.absolute()),
         "zMode": "Terminal"
     })
-    boot_logger.flush_to_framework(test_cli.logger.framework, verbose=verbose)
+    boot_logger.flush_to_framework(test_cli.logger, verbose=verbose)
     
     test_cli.zspark_obj["zVaFile"] = "@.zUI.test_menu"
     test_cli.zspark_obj["zBlock"] = "zVaF"
@@ -193,13 +194,13 @@ def handle_migrate_command(boot_logger, zCLI, Path, args, verbose: bool = False)
     if not Path(app_file).exists():
         boot_logger.error("App file not found: %s", app_file)
         temp_z = zCLI({'zMode': 'Terminal', 'logger': 'PROD', 'deployment': 'Production'})
-        boot_logger.flush_to_framework(temp_z.logger.framework, verbose=verbose)
+        boot_logger.flush_to_framework(temp_z.logger, verbose=verbose)
         temp_z.display.text(f"❌ Error: App file not found: {app_file}")
         return 1
     
     boot_logger.debug("Initializing zCLI for migration...")
     z = zCLI({'zMode': 'Terminal'})
-    boot_logger.flush_to_framework(z.logger.framework, verbose=verbose)
+    boot_logger.flush_to_framework(z.logger, verbose=verbose)
     
     return z.data.cli_migrate(
         app_file=str(Path(app_file).resolve()),
@@ -231,7 +232,7 @@ def handle_uninstall_command(boot_logger, zCLI, Path, zcli_package, verbose: boo
         "zVaFile": "@.UI.zUI.zcli_sys",
         "zBlock": "Uninstall"
     })
-    boot_logger.flush_to_framework(uninstall_cli.logger.framework, verbose=verbose)
+    boot_logger.flush_to_framework(uninstall_cli.logger, verbose=verbose)
     
     uninstall_cli.walker.run()
 
@@ -318,7 +319,7 @@ def handle_script_command(boot_logger, sys, Path, script_path: str, verbose: boo
         return 1
 
 
-def handle_zspark_command(boot_logger, zCLI, Path, zspark_path: str, verbose: bool = False):
+def handle_zspark_command(boot_logger, zCLI, Path, zspark_path: str, verbose: bool = False, dev_mode: bool = False):
     """
     Execute a zSpark configuration file (.zolo format).
     
@@ -338,6 +339,7 @@ def handle_zspark_command(boot_logger, zCLI, Path, zspark_path: str, verbose: bo
         Path: pathlib.Path class
         zspark_path: Path to zSpark.*.zolo file (e.g., "zSpark.zCloud.zolo")
         verbose: If True, show bootstrap logs on stdout
+        dev_mode: If True, override deployment to Development (show banners)
     
     Returns:
         int: Exit code (0 = success, 1 = error)
@@ -350,6 +352,14 @@ def handle_zspark_command(boot_logger, zCLI, Path, zspark_path: str, verbose: bo
         >>> # With verbose logging
         >>> zolo zCloud --verbose
         # Shows bootstrap process and parsing details
+        
+        >>> # With development mode (show banners)
+        >>> zolo zCloud --dev
+        # Forces Development deployment (shows framework flow)
+        
+        >>> # Full visibility
+        >>> zolo zCloud --dev --verbose
+        # Development mode + verbose bootstrap logs
     
     File Format:
         zSpark.*.zolo files must contain a root 'zSpark' key with configuration:
@@ -393,8 +403,9 @@ def handle_zspark_command(boot_logger, zCLI, Path, zspark_path: str, verbose: bo
     try:
         # Import zolo parser
         import sys
-        # Add parent directory to sys.path so 'zolo' package can be imported
-        project_root = Path(__file__).parent
+        # Add project root to sys.path so 'zolo' package can be imported
+        # __file__ is in zSys/cli/cli_commands.py, so go up 3 levels to get project root
+        project_root = Path(__file__).parent.parent.parent
         if str(project_root) not in sys.path:
             sys.path.insert(0, str(project_root))
         
@@ -444,6 +455,12 @@ def handle_zspark_command(boot_logger, zCLI, Path, zspark_path: str, verbose: bo
         zspark_config = result.data['zSpark']
         boot_logger.debug("Extracted zSpark configuration: %d keys", len(zspark_config))
         
+        # Override deployment if --dev flag is set
+        if dev_mode:
+            original_deployment = zspark_config.get('deployment', 'N/A')
+            zspark_config['deployment'] = 'Development'
+            boot_logger.debug("Dev mode: Overriding deployment '%s' → 'Development'", original_deployment)
+        
         # Override logger level if --verbose flag is set
         if verbose:
             original_logger = zspark_config.get('logger', 'N/A')
@@ -459,10 +476,23 @@ def handle_zspark_command(boot_logger, zCLI, Path, zspark_path: str, verbose: bo
         print(f"{'=' * 60}")
         print(f"  File:       {zspark_file.name}")
         print(f"  Keys:       {len(zspark_config)}")
-        print(f"  Deployment: {zspark_config.get('deployment', 'N/A')}")
+        
+        # Show deployment (with override indicator)
+        deployment = zspark_config.get('deployment', 'Production (default)')
+        if dev_mode:
+            print(f"  Deployment: {deployment} (--dev override)")
+        else:
+            print(f"  Deployment: {deployment}")
+        
         print(f"  Mode:       {zspark_config.get('zMode', 'N/A')}")
+        
+        # Show logger (with override indicator)
         if verbose:
             print(f"  Logger:     DEBUG (--verbose override)")
+        else:
+            logger_level = zspark_config.get('logger', 'INFO (default)')
+            print(f"  Logger:     {logger_level}")
+        
         print(f"{'=' * 60}\n")
         
         # Show bootstrap logs if verbose (before zCLI init)
@@ -473,9 +503,9 @@ def handle_zspark_command(boot_logger, zCLI, Path, zspark_path: str, verbose: bo
         boot_logger.info("Initializing zCLI with zSpark configuration...")
         zcli = zCLI(zspark_config)
         
-        # Flush remaining bootstrap logs to framework logger
-        if hasattr(zcli, 'logger') and hasattr(zcli.logger, 'framework'):
-            boot_logger.flush_to_framework(zcli.logger.framework, verbose=False)
+        # Flush remaining bootstrap logs with semantic routing
+        if hasattr(zcli, 'logger'):
+            boot_logger.flush_to_framework(zcli.logger, verbose=False)
         
         # Run zCLI application
         boot_logger.info("Running zCLI application...")

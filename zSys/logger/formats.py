@@ -107,6 +107,7 @@ def format_bootstrap_verbose(timestamp: datetime, level: str, message: str) -> s
     # ANSI color codes for terminal output
     colors = {
         'DEBUG': '\033[90m',     # Gray
+        'SESSION': '\033[96m',   # Bright Cyan (session/environment info)
         'INFO': '\033[36m',      # Cyan
         'WARNING': '\033[33m',   # Yellow
         'ERROR': '\033[31m',     # Red

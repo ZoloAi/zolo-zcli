@@ -9,8 +9,15 @@ from typing import Optional, Dict, Any
 
 
 # Log Level Constants
+LOG_LEVEL_SESSION = "SESSION"  # Session/environment/system information (level 15)
 LOG_LEVEL_PROD = "PROD"  # Special level: silent console, file-only logging
 LOG_LEVEL_KEY_ALIASES = ("logger", "log_level", "logLevel", "zLogger")
+
+# Register SESSION level with Python logging (between INFO:20 and DEBUG:10)
+import logging
+if not hasattr(logging, 'SESSION'):
+    logging.addLevelName(15, 'SESSION')
+    logging.SESSION = 15
 
 
 def get_log_level_from_zspark(zspark_obj: Optional[Dict[str, Any]]) -> Optional[str]:

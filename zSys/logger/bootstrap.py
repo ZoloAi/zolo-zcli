@@ -2,34 +2,35 @@
 """
 Bootstrap logger for pre-boot logging (Layer 0).
 
-Buffers log messages before zCLI framework is initialized, then injects
+Uses Python's standard logging.MemoryHandler for industry-grade buffering.
+Buffers log messages before zCLI framework is initialized, then flushes
 them into zcli-framework.log once the framework logger is available.
 
 Supports --verbose flag for CLI commands to display bootstrap process.
-
-Uses unified logging format from formats.py for consistency.
 """
 
 import logging
+from logging.handlers import MemoryHandler
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Optional
 
-# Import unified format functions
-from .formats import format_log_message, format_bootstrap_verbose
+# Import unified format functions and SESSION level
+from .formats import format_bootstrap_verbose
+from .config import LOG_LEVEL_SESSION
 
 
 class BootstrapLogger:
     """
-    Pre-boot logger that buffers messages until framework logger is ready.
+    Pre-boot logger using Python's standard logging.MemoryHandler.
     
     Features:
+        - Uses stdlib MemoryHandler (industry standard)
         - Buffers all pre-boot logs in memory
-        - Injects into zcli-framework.log when framework ready
+        - Flushes to zcli-framework.log when framework ready
         - Supports --verbose flag for stdout display
         - Emergency dump on init failure
-        - Zero zCLI dependencies (pure Python stdlib)
     
     Usage:
         # In main.py (ALWAYS use from first line)
@@ -43,7 +44,7 @@ class BootstrapLogger:
             cli = zCLI()
             # Inject buffered logs (verbose=True shows on stdout)
             boot_logger.flush_to_framework(
-                cli.logger.framework, 
+                cli.logger,  # Pass LoggerConfig instance
                 verbose=args.verbose
             )
         except Exception as e:
@@ -53,115 +54,155 @@ class BootstrapLogger:
     """
     
     def __init__(self, name: str = "zCLI.bootstrap"):
-        """Initialize bootstrap logger with in-memory buffer."""
-        self.name = name
-        self.buffer: List[Dict[str, Any]] = []
+        """Initialize bootstrap logger with Python's MemoryHandler."""
         self.start_time = datetime.now()
+        
+        # Create logger instance
+        self.logger = logging.getLogger(name)
+        self.logger.setLevel(logging.DEBUG)
+        self.logger.propagate = False  # Don't propagate to root logger
+        
+        # Create memory handler (buffers until target is set)
+        self.memory_handler = MemoryHandler(
+            capacity=1000,  # Buffer up to 1000 records
+            flushLevel=logging.CRITICAL + 1,  # Never auto-flush (we flush manually)
+            target=None  # No target yet (set during flush_to_framework)
+        )
+        self.memory_handler.setLevel(logging.DEBUG)
+        
+        # Add memory handler to logger
+        self.logger.addHandler(self.memory_handler)
+        
+        # Store records for verbose printing and emergency dump
+        # We keep our own reference for easier access
+        self.buffered_records: List[logging.LogRecord] = []
+        
+        # Add a secondary handler to capture records for verbose/emergency
+        class RecordCapture(logging.Handler):
+            """Captures records without emitting (for verbose/emergency access)."""
+            def __init__(self, records_list):
+                super().__init__()
+                self.records = records_list
+            
+            def emit(self, record):
+                self.records.append(record)
+        
+        self.capture_handler = RecordCapture(self.buffered_records)
+        self.capture_handler.setLevel(logging.DEBUG)
+        self.logger.addHandler(self.capture_handler)
     
+    # Convenience methods (delegate to stdlib logger)
     def debug(self, msg: str, *args):
-        """Log debug message to buffer."""
-        formatted_msg = msg % args if args else msg
-        self._buffer_message("DEBUG", formatted_msg)
+        """Log debug message."""
+        self.logger.debug(msg, *args)
     
     def info(self, msg: str, *args):
-        """Log info message to buffer."""
-        formatted_msg = msg % args if args else msg
-        self._buffer_message("INFO", formatted_msg)
+        """Log info message."""
+        self.logger.info(msg, *args)
+    
+    def session(self, msg: str, *args):
+        """Log session/environment/system information."""
+        # Use custom SESSION level (value 15, between DEBUG and INFO)
+        self.logger.log(LOG_LEVEL_SESSION, msg, *args)
     
     def warning(self, msg: str, *args):
-        """Log warning message to buffer."""
-        formatted_msg = msg % args if args else msg
-        self._buffer_message("WARNING", formatted_msg)
+        """Log warning message."""
+        self.logger.warning(msg, *args)
     
     def error(self, msg: str, *args):
-        """Log error message to buffer."""
-        formatted_msg = msg % args if args else msg
-        self._buffer_message("ERROR", formatted_msg)
+        """Log error message."""
+        self.logger.error(msg, *args)
     
     def critical(self, msg: str, *args):
-        """Log critical message to buffer."""
-        formatted_msg = msg % args if args else msg
-        self._buffer_message("CRITICAL", formatted_msg)
+        """Log critical message."""
+        self.logger.critical(msg, *args)
     
-    def _buffer_message(self, level: str, msg: str):
-        """Store message in buffer with metadata."""
-        self.buffer.append({
-            'timestamp': datetime.now(),
-            'level': level,
-            'message': msg,
-            'source': 'bootstrap'
-        })
-    
-    def flush_to_framework(self, framework_logger: logging.Logger, verbose: bool = False):
+    def flush_to_framework(self, logger_config, verbose: bool = False):
         """
-        Inject buffered messages into framework logger.
+        Flush buffered messages to appropriate loggers with semantic routing.
+        
+        Routing strategy:
+            - ERROR/CRITICAL → BOTH framework and session_framework (all audiences)
+            - DEBUG/INFO/SESSION → session_framework ONLY (user context)
         
         Args:
-            framework_logger: The zCLI framework logger instance
+            logger_config: LoggerConfig instance (zcli.logger)
             verbose: If True, also print to stdout (for --verbose flag)
         """
-        if not self.buffer:
+        if not self.buffered_records:
             return
         
         # Calculate elapsed time
         elapsed = (datetime.now() - self.start_time).total_seconds()
         
-        # Write to framework.log
-        framework_logger.info("=" * 70)
-        framework_logger.info("[Bootstrap] Pre-boot log injection (%d messages, %.3fs)", 
-                             len(self.buffer), elapsed)
-        framework_logger.info("=" * 70)
+        # Write injection header to session framework log
+        logger_config.session_framework.info("=" * 70)
+        logger_config.session_framework.info("[Bootstrap] Pre-boot log injection (%d messages, %.3fs)", 
+                                            len(self.buffered_records), elapsed)
+        logger_config.session_framework.info("=" * 70)
         
-        # Inject all buffered messages
-        for entry in self.buffer:
-            level = entry['level'].lower()
-            log_method = getattr(framework_logger, level)
-            timestamp = entry['timestamp'].strftime("%H:%M:%S.%f")[:-3]
-            log_method("[Bootstrap:%s] %s", timestamp, entry['message'])
+        # Inject all buffered records with semantic routing
+        for record in self.buffered_records:
+            # Format with [Bootstrap:timestamp] prefix
+            timestamp = datetime.fromtimestamp(record.created).strftime("%H:%M:%S.%f")[:-3]
+            prefixed_msg = f"[Bootstrap:{timestamp}] {record.getMessage()}"
+            
+            # Route by severity level
+            if record.levelno >= logging.ERROR:
+                # ERROR/CRITICAL → BOTH loggers (framework devs + users)
+                logger_config.framework.log(record.levelno, prefixed_msg)
+                logger_config.session_framework.log(record.levelno, prefixed_msg)
+            else:
+                # DEBUG/INFO/SESSION → session_framework ONLY (user context)
+                logger_config.session_framework.log(record.levelno, prefixed_msg)
             
             # If --verbose, also print to stdout
             if verbose:
-                self._print_verbose_message(entry)
+                self._print_verbose_message(record)
         
-        framework_logger.info("=" * 70)
-        framework_logger.info("[Bootstrap] Injection complete (%.3fs total)", elapsed)
-        framework_logger.info("=" * 70)
+        logger_config.session_framework.info("=" * 70)
+        logger_config.session_framework.info("[Bootstrap] Injection complete (%.3fs total)", elapsed)
+        logger_config.session_framework.info("=" * 70)
         
         # If verbose, show completion
         if verbose:
             print(f"[Bootstrap] ✓ Initialized in {elapsed:.3f}s\n")
         
-        # Clear buffer
-        self.buffer.clear()
+        # Clear our capture buffer
+        self.buffered_records.clear()
+        
+        # Clear memory handler buffer (standard way)
+        self.memory_handler.flush()
+        self.memory_handler.buffer.clear()
     
     def print_buffered_logs(self):
         """
-        Print buffered logs to stdout (for cases without framework logger).
+        Print all buffered logs to stdout (for cases without framework logger).
         
         Used when running commands that don't initialize zCLI (e.g., info banner)
         but still want to show bootstrap process with --verbose flag.
         """
-        if not self.buffer:
+        if not self.buffered_records:
             return
         
         # Print all buffered messages
-        for entry in self.buffer:
-            self._print_verbose_message(entry)
+        for record in self.buffered_records:
+            self._print_verbose_message(record)
         
         # Show completion
         elapsed = (datetime.now() - self.start_time).total_seconds()
         print(f"[Bootstrap] ✓ Initialized in {elapsed:.3f}s\n")
         
         # Clear buffer
-        self.buffer.clear()
+        self.buffered_records.clear()
     
-    def _print_verbose_message(self, entry: Dict[str, Any]):
-        """Print log entry to stdout in verbose mode using unified format."""
-        formatted = format_bootstrap_verbose(
-            timestamp=entry['timestamp'],
-            level=entry['level'],
-            message=entry['message']
-        )
+    def _print_verbose_message(self, record: logging.LogRecord):
+        """Print log record to stdout in verbose mode using unified format."""
+        timestamp = datetime.fromtimestamp(record.created)
+        level = record.levelname
+        message = record.getMessage()
+        
+        formatted = format_bootstrap_verbose(timestamp, level, message)
         print(formatted)
     
     def emergency_dump(self, exception: Optional[Exception] = None):
@@ -180,18 +221,12 @@ class BootstrapLogger:
             import traceback
             traceback.print_exc(file=sys.stderr)
         
-        print(f"\nPre-boot log buffer ({len(self.buffer)} messages):\n", file=sys.stderr)
+        print(f"\nPre-boot log buffer ({len(self.buffered_records)} messages):\n", file=sys.stderr)
         
-        # Dump buffered messages using unified format
-        for entry in self.buffer:
-            formatted = format_log_message(
-                timestamp=entry['timestamp'],
-                level=entry['level'],
-                context="Bootstrap",
-                message=entry['message'],
-                include_details=False
-            )
-            print(formatted, file=sys.stderr)
+        # Dump buffered messages
+        for record in self.buffered_records:
+            timestamp = datetime.fromtimestamp(record.created).strftime("%H:%M:%S.%f")[:-3]
+            print(f"[{timestamp}] {record.levelname}: {record.getMessage()}", file=sys.stderr)
         
         print("\n" + "=" * 70, file=sys.stderr)
         
@@ -213,16 +248,10 @@ class BootstrapLogger:
                 f.write("Pre-boot Log Buffer:\n")
                 f.write("-" * 70 + "\n\n")
                 
-                # Use unified format for consistency
-                for entry in self.buffer:
-                    formatted = format_log_message(
-                        timestamp=entry['timestamp'],
-                        level=entry['level'],
-                        context="Bootstrap",
-                        message=entry['message'],
-                        include_details=False
-                    )
-                    f.write(formatted + "\n")
+                # Dump buffered log records
+                for record in self.buffered_records:
+                    timestamp = datetime.fromtimestamp(record.created).strftime("%H:%M:%S.%f")[:-3]
+                    f.write(f"[{timestamp}] {record.levelname}: {record.getMessage()}\n")
             
             print(f"\n💾 Bootstrap log saved to: {temp_file}", file=sys.stderr)
         except Exception as e:
