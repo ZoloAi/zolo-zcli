@@ -53,7 +53,7 @@ class BootstrapLogger:
             sys.exit(1)
     """
     
-    def __init__(self, name: str = "zKernel.bootstrap"):
+    def __init__(self, name: str = "zolo.zKernel.bootstrap"):
         """Initialize bootstrap logger with Python's MemoryHandler."""
         self.start_time = datetime.now()
         
@@ -119,7 +119,7 @@ class BootstrapLogger:
     
     def flush_to_framework(self, logger_config, verbose: bool = False):
         """
-        Flush buffered messages to appropriate loggers with semantic routing.
+        Flush buffered messages to framework loggers with semantic routing.
         
         Routing strategy:
             - ERROR/CRITICAL → BOTH framework and session_framework (all audiences)
@@ -127,60 +127,128 @@ class BootstrapLogger:
         
         Args:
             logger_config: LoggerConfig instance (zcli.logger)
-            verbose: If True, also print to stdout (for --verbose flag)
+            verbose: If True, print bootstrap messages to console first (dark gray)
+        
+        Note:
+            PHASE 1: Print bootstrap messages in real-time order (dark gray)
+            PHASE 2: Flush to framework loggers (standard logging framework)
         """
         if not self.buffered_records:
             return
         
         # Calculate elapsed time
         elapsed = (datetime.now() - self.start_time).total_seconds()
+        message_count = len(self.buffered_records)
         
-        # Write injection header to session framework log
-        logger_config.session_framework.info("=" * 70)
-        logger_config.session_framework.info("[Bootstrap] Pre-boot log injection (%d messages, %.3fs)", 
-                                            len(self.buffered_records), elapsed)
-        logger_config.session_framework.info("=" * 70)
+        # PHASE 1: Print Bootstrap messages in real-time order (dark gray mkna format)
+        # These happened BEFORE framework logger exists, so print them first
+        if verbose:
+            for record in self.buffered_records:
+                self._print_verbose_message(record)
+        
+        # PHASE 2: Flush to framework loggers (standard logging framework)
+        logger_config.session_framework.info(
+            "[Bootstrap] Pre-boot log injection (%d messages, %.3fs)", 
+            message_count, 
+            elapsed
+        )
         
         # Inject all buffered records with semantic routing
         for record in self.buffered_records:
-            # Format with [Bootstrap:timestamp] prefix
-            timestamp = datetime.fromtimestamp(record.created).strftime("%H:%M:%S.%f")[:-3]
-            prefixed_msg = f"[Bootstrap:{timestamp}] {record.getMessage()}"
+            msg = record.getMessage()
             
             # Route by severity level
             if record.levelno >= logging.ERROR:
                 # ERROR/CRITICAL → BOTH loggers (framework devs + users)
-                logger_config.framework.log(record.levelno, prefixed_msg)
-                logger_config.session_framework.log(record.levelno, prefixed_msg)
+                logger_config.framework.log(record.levelno, msg)
+                logger_config.session_framework.log(record.levelno, msg)
             else:
                 # DEBUG/INFO/SESSION → session_framework ONLY (user context)
-                logger_config.session_framework.log(record.levelno, prefixed_msg)
-            
-            # If --verbose, also print to stdout
-            if verbose:
+                logger_config.session_framework.log(record.levelno, msg)
+        
+        # Log injection completion
+        logger_config.session_framework.info(
+            "[Bootstrap] Injection complete: %d messages, %.3fs", 
+            message_count, 
+            elapsed
+        )
+        
+        # Clear buffer
+        self.buffered_records.clear()
+        self.memory_handler.flush()
+        self.memory_handler.buffer.clear()
+    
+    def flush_to_ecosystem(self, ecosystem_logger, verbose: bool = False):
+        """
+        Flush buffered messages to ecosystem logger.
+        
+        Used for zolo CLI commands that don't initialize zKernel:
+            - zolo --version
+            - zolo install
+            - zolo --help
+        
+        Args:
+            ecosystem_logger: EcosystemLogger instance
+            verbose: If True, print to console in mkna format (gray, simple)
+        
+        Note:
+            FILE: Uses full format (timestamp, context, level, details)
+            CONSOLE: Uses mkna format (simple gray bootstrap style)
+            This maintains consistency with mkna pattern philosophy.
+        """
+        if not self.buffered_records:
+            return
+
+        # Calculate elapsed time
+        elapsed = (datetime.now() - self.start_time).total_seconds()
+        message_count = len(self.buffered_records)
+
+        # PHASE 1: Print Bootstrap messages in real-time order (dark gray mkna format)
+        # These happened BEFORE ecosystem logger exists, so print them first
+        if verbose:
+            for record in self.buffered_records:
                 self._print_verbose_message(record)
         
-        logger_config.session_framework.info("=" * 70)
-        logger_config.session_framework.info("[Bootstrap] Injection complete (%.3fs total)", elapsed)
-        logger_config.session_framework.info("=" * 70)
+        # PHASE 2: Log to Ecosystem (file + console if verbose)
+        # This is the flush action happening AFTER bootstrap
+        ecosystem_logger.info(
+            "[Bootstrap] Pre-boot log injection (%d messages, %.3fs)", 
+            message_count, 
+            elapsed
+        )
+
+        # Inject all buffered records to ecosystem logger
+        for record in self.buffered_records:
+            msg = record.getMessage()
+            
+            # Route to appropriate log level
+            if record.levelno >= logging.ERROR:
+                ecosystem_logger.error(msg)
+            elif record.levelno >= logging.WARNING:
+                ecosystem_logger.warning(msg)
+            elif record.levelno >= logging.INFO:
+                ecosystem_logger.info(msg)
+            else:
+                ecosystem_logger.debug(msg)
         
-        # If verbose, show completion
-        if verbose:
-            print(f"[Bootstrap] ✓ Initialized in {elapsed:.3f}s\n")
+        # Log injection completion
+        ecosystem_logger.info(
+            "[Bootstrap] Injection complete: %d messages, %.3fs", 
+            message_count, 
+            elapsed
+        )
         
-        # Clear our capture buffer
+        # Clear buffer
         self.buffered_records.clear()
-        
-        # Clear memory handler buffer (standard way)
         self.memory_handler.flush()
         self.memory_handler.buffer.clear()
     
     def print_buffered_logs(self):
         """
-        Print all buffered logs to stdout (for cases without framework logger).
+        Print all buffered logs to stdout (for cases without any logger).
         
-        Used when running commands that don't initialize zKernel (e.g., info banner)
-        but still want to show bootstrap process with --verbose flag.
+        DEPRECATED: Use flush_to_ecosystem() instead for proper log persistence.
+        This method is kept for backward compatibility but should be phased out.
         """
         if not self.buffered_records:
             return
@@ -189,9 +257,10 @@ class BootstrapLogger:
         for record in self.buffered_records:
             self._print_verbose_message(record)
         
-        # Show completion
+        # Show completion with message count (consistent with flush_to_framework)
         elapsed = (datetime.now() - self.start_time).total_seconds()
-        print(f"[Bootstrap] ✓ Initialized in {elapsed:.3f}s\n")
+        message_count = len(self.buffered_records)
+        print(f"[Bootstrap] ✓ Initialized: {message_count} messages, {elapsed:.3f}s\n")
         
         # Clear buffer
         self.buffered_records.clear()

@@ -110,7 +110,7 @@ def handle_zspark_command(boot_logger, Path, zspark_path: str, verbose: bool = F
         zcli = zKernel(zspark_config)
 
         if hasattr(zcli, 'logger'):
-            boot_logger.flush_to_framework(zcli.logger, verbose=False)
+            boot_logger.flush_to_framework(zcli.logger, verbose=verbose)
 
         from zSys.formatting.colors import Colors
         colors = Colors()
@@ -224,24 +224,65 @@ def _configure_zspark(boot_logger, zspark_config: dict, zspark_file, verbose: bo
 
 
 
-def display_info(boot_logger, zcli_package, get_version, get_package_info, detect_install_type):
+def display_info(boot_logger, zcli_package, zos_version, zos_pkg_info, detect_install_type, zos_logger=None):
     """
-    Display zolo-zcli information banner.
+    Display zOS (Zolo Operating System) information banner.
     
     Args:
         boot_logger: BootstrapLogger instance
-        zcli_package: Imported zKernel package
-        get_version: Function to get package version
-        get_package_info: Function to get package info dict
+        zcli_package: Imported zKernel package (for detection)
+        zos_version: zOS version string
+        zos_pkg_info: zOS package info dict
         detect_install_type: Function to detect install type
+        zos_logger: Optional zOS logger for logging ecosystem activity
     """
-    install_type = detect_install_type(zcli_package, detailed=False)
-    pkg_info = get_package_info()
+    # Get zOS install type
+    install_type = "pip -e" if "editable" in str(zcli_package.__file__) else "pip"
     
-    print(f"\n{pkg_info['name']} {get_version()} ({install_type})")
-    print("A declarative based Framework")
-    print(f"By {pkg_info['author']}")
-    print("License: MIT\n")
+    if zos_logger:
+        zos_logger.info("zOS: %s (%s)", zos_version, install_type)
+    
+    # Display zOS banner
+    print(f"\n{zos_pkg_info['name']} v{zos_version}")
+    print(f"{zos_pkg_info['description']}")
+    print(f"By {zos_pkg_info['author']} • License: {zos_pkg_info['license']}")
+    
+    # Show installed products
+    print(f"\nInstalled Products:")
+    
+    # Collect installed products for single log entry
+    installed_products = []
+    
+    # Try to detect zKernel
+    try:
+        from zKernel.version import get_version as get_zkernel_version
+        zkernel_version = get_zkernel_version()
+        zkernel_install = detect_install_type(zcli_package, detailed=False)
+        installed_products.append(f"zKernel {zkernel_version} ({zkernel_install})")
+        print(f"  • zKernel {zkernel_version} ({zkernel_install})")
+    except ImportError:
+        print(f"  • zKernel (not installed)")
+    
+    # Try to detect zLSP
+    try:
+        import zolo
+        # Try to get version from package metadata
+        try:
+            from importlib.metadata import version as get_pkg_version
+            zlsp_version = get_pkg_version('zolo')
+            zlsp_install = detect_install_type(zolo, detailed=False)
+            installed_products.append(f"zLSP {zlsp_version} ({zlsp_install})")
+            print(f"  • zLSP {zlsp_version} ({zlsp_install})")
+        except Exception:
+            print(f"  • zLSP (installed, version unknown)")
+    except ImportError:
+        print(f"  • zLSP (not installed)")
+    
+    # Log all installed products as single INFO message
+    if zos_logger and installed_products:
+        zos_logger.info("Installed products: %s", ", ".join(installed_products))
+    
+    print()
 
 
 def handle_shell_command(boot_logger, verbose: bool = False):
@@ -340,13 +381,13 @@ def handle_migrate_command(boot_logger, Path, args, verbose: bool = False):
         boot_logger.error("App file not found: %s", app_file)
         from zKernel import zKernel  # Lazy import
         temp_z = zKernel({'zMode': 'Terminal', 'logger': 'PROD', 'deployment': 'Production'})
-        boot_logger.flush_to_framework(temp_z.logger, verbose=verbose)
+        boot_logger.flush_to_framework(temp_z.logger)
         temp_z.display.text(f"❌ Error: App file not found: {app_file}")
         return 1
     
     from zKernel import zKernel  # Lazy import
     z = zKernel({'zMode': 'Terminal'})
-    boot_logger.flush_to_framework(z.logger, verbose=verbose)
+    boot_logger.flush_to_framework(z.logger)
     
     return z.data.cli_migrate(
         app_file=str(Path(app_file).resolve()),
@@ -375,10 +416,102 @@ def handle_uninstall_command(boot_logger, Path, zcli_package, verbose: bool = Fa
         "zVaFile": "@.UI.zUI.zcli_sys",
         "zBlock": "Uninstall"
     })
-    boot_logger.flush_to_framework(uninstall_cli.logger, verbose=verbose)
+    boot_logger.flush_to_framework(uninstall_cli.logger)
     
     uninstall_cli.walker.run()
 
 
+def handle_install_command(boot_logger, sys, Path, args, verbose: bool = False):
+    """
+    Install Zolo ecosystem packages.
+    
+    Args:
+        boot_logger: BootstrapLogger instance
+        sys: sys module (for sys.executable)
+        Path: pathlib.Path class
+        args: Parsed arguments with package, source flags, extras
+        verbose: Show detailed output
+    
+    Returns:
+        int: Exit code (0 = success, non-zero = error)
+    
+    Examples:
+        zolo install zKernel --local --editable
+        zolo install zKernel --git --branch v1.5.8
+        zolo install zKernel --git --branch main --postgres
+    """
+    package = args.package
+    boot_logger.info("Installing %s...", package)
+    
+    # Build pip command
+    pip_cmd = [sys.executable, "-m", "pip", "install"]
+    
+    # Add editable flag
+    if args.editable:
+        pip_cmd.append("-e")
+    
+    # Determine source
+    if args.local:
+        # Local folder
+        package_path = Path.cwd() / package
+        if not package_path.exists():
+            boot_logger.error("Package folder not found: %s", package_path)
+            if verbose:
+                boot_logger.print_buffered_logs()
+            print(f"\n❌ Error: {package} folder not found at {package_path}\n")
+            return 1
+        pip_cmd.append(str(package_path))
+    
+    elif args.git:
+        # From GitHub - branch represents version
+        repo_url = "git+https://github.com/yourusername/Zolo.git"
+        if args.branch != "main":
+            repo_url += f"@{args.branch}"
+        repo_url += f"#subdirectory={package}"
+        pip_cmd.append(repo_url)
+    
+    else:
+        # PyPI not supported - ecosystem uses git branches for versioning
+        boot_logger.error("PyPI installation not supported. Use --local or --git")
+        if verbose:
+            boot_logger.print_buffered_logs()
+        print("\n❌ Error: Please use --local or --git for installation\n")
+        print("   Examples:")
+        print(f"     zolo install {package} --local --editable")
+        print(f"     zolo install {package} --git --branch v1.5.8\n")
+        return 1
+    
+    # Add extras for zKernel
+    if package == "zKernel":
+        extras = []
+        if args.all_extras:
+            extras.append("all")
+        else:
+            if args.postgres:
+                extras.append("postgres")
+            if args.csv:
+                extras.append("csv")
+        
+        if extras and not args.local and not args.git:
+            # Modify last argument to include extras
+            pip_cmd[-1] += f"[{','.join(extras)}]"
+    
+    # Execute pip
+    boot_logger.debug("Running: %s", " ".join(pip_cmd))
+    if verbose:
+        boot_logger.print_buffered_logs()
+    
+    print(f"\n🔧 Installing {package}...\n")
+    try:
+        result = subprocess.run(pip_cmd, check=False)
+        if result.returncode == 0:
+            print(f"\n✅ {package} installed successfully!\n")
+        else:
+            print(f"\n❌ Installation failed (exit code {result.returncode})\n")
+        return result.returncode
+    except Exception as e:
+        boot_logger.error("Installation failed: %s", e)
+        print(f"\n❌ Installation error: {e}\n")
+        return 1
 
 

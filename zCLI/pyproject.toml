@@ -57,9 +57,11 @@ dev = [
     "pylint>=2.0",
 ]
 
-[project.scripts]
-zolo = "zKernel.main:main"
-zTests = "zKernel.main:ztests_main"
+# Entry points removed - zolo command now provided by zSys package
+# zKernel is a framework library, not an executable
+# [project.scripts]
+# Optional: Add framework-specific diagnostics tool here if needed
+# zkernel = "zKernel.diagnostics:main"
 
 [project.urls]
 Homepage = "https://github.com/ZoloAi/Zolo"

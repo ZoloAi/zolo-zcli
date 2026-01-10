@@ -14,6 +14,7 @@ Architecture:
     - Pure utility functions and classes
 
 Modules:
+    - paths: Cross-platform path resolution for ecosystem
     - logger/: Unified logging system (bootstrap, console, formats)
     - install/: Installation detection and removal utilities
     - formatting/: Terminal colors and output utilities
@@ -27,6 +28,13 @@ Usage:
 """
 
 # Export all public APIs
+from .paths import (
+    get_ecosystem_root,
+    get_product_root,
+    get_ecosystem_logs,
+    get_product_logs,
+    get_ecosystem_cache,
+)
 from .logger import (
     BootstrapLogger,
     ConsoleLogger,
@@ -39,6 +47,12 @@ from . import formatting
 from . import errors
 
 __all__ = [
+    # Paths (ecosystem)
+    "get_ecosystem_root",
+    "get_product_root",
+    "get_ecosystem_logs",
+    "get_product_logs",
+    "get_ecosystem_cache",
     # Logger (unified)
     "BootstrapLogger",
     "ConsoleLogger",

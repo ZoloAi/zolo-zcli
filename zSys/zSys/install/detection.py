@@ -1,6 +1,6 @@
 # zSys/install/detection.py
 """
-Installation detection utilities (Layer 0 - System Foundation).
+Installation detection utilities (System Foundation).
 
 Provides portable installation type detection for zKernel without any
 framework dependencies. Used by main.py bootstrap logger and info banner.

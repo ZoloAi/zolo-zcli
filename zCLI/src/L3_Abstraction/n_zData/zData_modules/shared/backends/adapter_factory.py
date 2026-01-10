@@ -238,7 +238,7 @@ class AdapterFactory:
 
         Example:
             >>> import logging
-            >>> logger = logging.getLogger("zKernel.zData")
+            >>> logger = logging.getLogger("zolo.zKernel.zData")
             >>> AdapterFactory.set_logger(logger)
             >>> # Now all created adapters will use this logger
 

@@ -8,11 +8,12 @@ from zKernel import platform, Path, Colors, platformdirs, load_dotenv, Any, Dict
 logger = logging.getLogger(__name__)
 
 class zConfigPaths:
-    """Cross-platform path resolver for zolo-zcli configuration using native OS conventions."""
+    """Cross-platform path resolver for Zolo ecosystem using native OS conventions."""
 
     # Class-level constants
-    APP_NAME = "zolo-zcli"
+    APP_NAME = "Zolo"  # Ecosystem root (changed from "zolo-zcli")
     APP_AUTHOR = "zolo"
+    PRODUCT_NAME = "zKernel"  # This product's subdirectory
     VALID_OS_TYPES = ("Linux", "Darwin", "Windows")
     DOTENV_FILENAME = ".zEnv"
     ZCONFIGS_DIRNAME = "zConfigs"
@@ -416,30 +417,30 @@ class zConfigPaths:
         """
         User zConfigs directory for configuration files.
         
-        Location: user_config_dir/zConfigs/
+        Location: product_root/zConfigs/
         Contains: zConfig.default.yaml, zConfig.dev.yaml, etc.
         """
-        return self.user_config_dir / self.ZCONFIGS_DIRNAME
+        return self.product_root / self.ZCONFIGS_DIRNAME
 
     @property
     def user_zuis_dir(self) -> Path:
         """
         User zUIs directory for UI definition files.
         
-        Location: user_config_dir/zUIs/
+        Location: product_root/zUIs/
         Contains: User-customized UI files for commands and walkers.
         """
-        return self.user_config_dir / self.ZUIS_DIRNAME
+        return self.product_root / self.ZUIS_DIRNAME
 
     @property
     def user_zschemas_dir(self) -> Path:
         """
         User zSchemas directory for system schema files.
         
-        Location: user_config_dir/zSchemas/
+        Location: product_root/zSchemas/
         Contains: System schema templates (e.g., zSchema.zMigration.yaml)
         """
-        return self.user_config_dir / "zSchemas"
+        return self.product_root / "zSchemas"
 
     @property
     def user_data_dir(self) -> Path:
@@ -467,15 +468,26 @@ class zConfigPaths:
         return Path(platformdirs.user_cache_dir(self.app_name, self.app_author))
 
     @property
+    def product_root(self) -> Path:
+        r"""
+        zKernel-specific root directory within ecosystem.
+        
+        Linux:   ~/.local/share/Zolo/zKernel
+        macOS:   ~/Library/Application Support/Zolo/zKernel
+        Windows: %LOCALAPPDATA%\Zolo\zKernel
+        """
+        return self.user_data_dir / self.PRODUCT_NAME
+
+    @property
     def user_logs_dir(self) -> Path:
         r"""
-        User logs directory for application logs.
+        zKernel logs directory (product-specific).
         
-        Linux:   ~/.local/share/zolo-zcli/logs
-        macOS:   ~/Library/Application Support/zolo-zcli/logs
-        Windows: %LOCALAPPDATA%\zolo-zcli\logs
+        Linux:   ~/.local/share/Zolo/zKernel/logs
+        macOS:   ~/Library/Application Support/Zolo/zKernel/logs
+        Windows: %LOCALAPPDATA%\Zolo\zKernel\logs
         """
-        return self.user_data_dir / "logs"
+        return self.product_root / "logs"
 
     # ═══════════════════════════════════════════════════════════
     # System Config Files

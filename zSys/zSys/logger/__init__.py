@@ -38,6 +38,9 @@ Usage:
 # Export bootstrap logger
 from .bootstrap import BootstrapLogger
 
+# Export ecosystem logger
+from .ecosystem import EcosystemLogger
+
 # Export console logger
 from .console import ConsoleLogger
 
@@ -62,6 +65,7 @@ from .config import (
 __all__ = [
     # Loggers
     "BootstrapLogger",
+    "EcosystemLogger",
     "ConsoleLogger",
     # Formatter
     "UnifiedFormatter",

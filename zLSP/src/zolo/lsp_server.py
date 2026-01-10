@@ -33,7 +33,7 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("zolo.zLSP.server")
 
 # Build semantic tokens legend ONCE at module level
 # Per pygls 2.0 convention: pass legend as keyword arg to @feature decorator

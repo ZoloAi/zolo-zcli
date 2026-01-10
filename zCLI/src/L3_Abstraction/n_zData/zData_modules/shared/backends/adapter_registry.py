@@ -140,7 +140,7 @@ _ERR_PSYCOPG2_MISSING = "psycopg2 not installed"
 # ============================================================
 
 # Get logger for this module
-logger = logging.getLogger("zKernel.zData")
+logger = logging.getLogger("zolo.zKernel.zData")
 
 # ============================================================
 # Public API

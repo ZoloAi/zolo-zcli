@@ -275,15 +275,15 @@ class LoggerConfig:
             home_path = Path.home()
             import platform
             if platform.system() == "Windows":
-                logs_dir = home_path / "AppData" / "Local" / "zolo-zcli" / "logs"
+                logs_dir = home_path / "AppData" / "Local" / "Zolo" / "zKernel" / "logs"
             elif platform.system() == "Darwin":  # macOS
-                logs_dir = home_path / "Library" / "Application Support" / "zolo-zcli" / "logs"
+                logs_dir = home_path / "Library" / "Application Support" / "Zolo" / "zKernel" / "logs"
             else:  # Linux
-                logs_dir = home_path / ".local" / "share" / "zolo-zcli" / "logs"
+                logs_dir = home_path / ".local" / "share" / "Zolo" / "zKernel" / "logs"
             file_path = str(logs_dir / _LOG_FILENAME_FRAMEWORK)
         
         # Create framework logger
-        self._framework_logger = logging.getLogger("zKernel.framework")
+        self._framework_logger = logging.getLogger("zolo.zKernel.framework")
         self._framework_logger.setLevel(getattr(logging, framework_level))
         
         # Clear existing handlers to avoid duplicates
@@ -294,12 +294,16 @@ class LoggerConfig:
         console_formatter = UnifiedFormatter("Framework", include_details=False)
         file_formatter = UnifiedFormatter("Framework", include_details=True)
 
+        # Check for verbose mode via environment variable (industry standard)
+        verbose_mode = os.getenv('ZKERNEL_VERBOSE', '').lower() in ('1', 'true', 'yes')
+        
         # Console handler for framework logs: DISABLED by default (framework logs are transparent)
         # Framework logs go to file only (zcli-framework.log)
-        # Only show critical framework errors in console
-        if not (is_production or is_testing):
+        # In verbose mode (ZKERNEL_VERBOSE=1), show ALL framework logs regardless of deployment
+        if verbose_mode or not (is_production or is_testing):
             console_handler = logging.StreamHandler()
-            console_handler.setLevel(logging.ERROR)  # Only show ERROR+ in console
+            console_level = logging.DEBUG if verbose_mode else logging.ERROR
+            console_handler.setLevel(console_level)
             console_handler.setFormatter(console_formatter)
             self._framework_logger.addHandler(console_handler)
 
@@ -352,15 +356,15 @@ class LoggerConfig:
             home_path = Path.home()
             import platform
             if platform.system() == "Windows":
-                logs_dir = home_path / "AppData" / "Local" / "zolo-zcli" / "logs"
+                logs_dir = home_path / "AppData" / "Local" / "Zolo" / "zKernel" / "logs"
             elif platform.system() == "Darwin":  # macOS
-                logs_dir = home_path / "Library" / "Application Support" / "zolo-zcli" / "logs"
+                logs_dir = home_path / "Library" / "Application Support" / "Zolo" / "zKernel" / "logs"
             else:  # Linux
-                logs_dir = home_path / ".local" / "share" / "zolo-zcli" / "logs"
+                logs_dir = home_path / ".local" / "share" / "Zolo" / "zKernel" / "logs"
             file_path = str(logs_dir / log_filename)
         
         # Create session framework logger
-        self._session_framework_logger = logging.getLogger("zKernel.session.framework")
+        self._session_framework_logger = logging.getLogger("zolo.zKernel.session.framework")
         self._session_framework_logger.setLevel(logging.DEBUG)  # Capture everything
         
         # Clear existing handlers to avoid duplicates
@@ -370,10 +374,15 @@ class LoggerConfig:
         console_formatter = UnifiedFormatter("SessionFramework", include_details=False)
         file_formatter = UnifiedFormatter("SessionFramework", include_details=True)
         
-        # Console handler: Only in Development, minimal (WARNING+)
-        if not (is_production or is_testing):
+        # Check for verbose mode via environment variable (industry standard)
+        verbose_mode = os.getenv('ZKERNEL_VERBOSE', '').lower() in ('1', 'true', 'yes')
+        
+        # Console handler: In Development OR verbose mode
+        # Verbose mode overrides production/testing to enable debugging
+        if verbose_mode or not (is_production or is_testing):
             console_handler = logging.StreamHandler()
-            console_handler.setLevel(logging.WARNING)  # Only warnings and errors
+            console_level = logging.DEBUG if verbose_mode else logging.WARNING
+            console_handler.setLevel(console_level)
             console_handler.setFormatter(console_formatter)
             self._session_framework_logger.addHandler(console_handler)
         
@@ -442,11 +451,11 @@ class LoggerConfig:
                 home_path = Path.home()
                 import platform
                 if platform.system() == "Windows":
-                    logs_dir = home_path / "AppData" / "Local" / "zolo-zcli" / "logs"
+                    logs_dir = home_path / "AppData" / "Local" / "Zolo" / "zKernel" / "logs"
                 elif platform.system() == "Darwin":  # macOS
-                    logs_dir = home_path / "Library" / "Application Support" / "zolo-zcli" / "logs"
+                    logs_dir = home_path / "Library" / "Application Support" / "Zolo" / "zKernel" / "logs"
                 else:  # Linux
-                    logs_dir = home_path / ".local" / "share" / "zolo-zcli" / "logs"
+                    logs_dir = home_path / ".local" / "share" / "Zolo" / "zKernel" / "logs"
                 
                 file_path = str(logs_dir / log_filename)
         
@@ -456,7 +465,7 @@ class LoggerConfig:
         # Create application logger
         # In PROD mode, set logger to DEBUG to capture everything, but disable console
         effective_log_level = _LOG_LEVEL_DEBUG if app_log_level == _LOG_LEVEL_PROD else app_log_level
-        self._app_logger = logging.getLogger("zKernel.app")
+        self._app_logger = logging.getLogger("zolo.zKernel.app")
         self._app_logger.setLevel(getattr(logging, effective_log_level))
         
         # Clear existing handlers to avoid duplicates
